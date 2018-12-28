@@ -1,0 +1,12 @@
+# korori
+
+## LTexture
+
+Workflow can be in 2 ways
+
+* load surface -> convert surface to ABGR pixel format -> load texture from pixels
+* _load pixels from file_ -> modify pixel data -> create texture from pixel data
+
+wheres _load pixels from file_ is the process that does
+- load surface
+- convert surface to ABGR
