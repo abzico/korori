@@ -1,7 +1,7 @@
 #ifndef gl_LFont_h_
 #define gl_LFont_h_
 
-#include "glLOpenGL.h"
+#include "gl_common.h"
 #include "gl_LTexture_spritesheet.h"
 #include "ft2build.h"
 #include FT_FREETYPE_H

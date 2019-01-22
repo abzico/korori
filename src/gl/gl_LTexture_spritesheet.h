@@ -1,7 +1,7 @@
 #ifndef gl_LTexture_spritesheet_h_
 #define gl_LTexture_spritesheet_h_
 
-#include "glLOpenGL.h"
+#include "gl_common.h"
 #include "gl_types.h"
 #include "gl_LTexture.h"
 #include "externals/vector.h"

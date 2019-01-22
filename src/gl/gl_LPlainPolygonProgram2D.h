@@ -1,7 +1,7 @@
 #ifndef gl_LPlainPolygonProgram2D_h_
 #define gl_LPlainPolygonProgram2D_h_
 
-#include "gl/glLOpenGL.h"
+#include "gl/gl_common.h"
 #include "gl/gl_LShaderProgram.h"
 #include <stdlib.h>
 

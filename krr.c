@@ -11,7 +11,7 @@
 #include "SDL_image.h"
 #include "foundation/common.h"
 #include "foundation/window.h"
-#include "gl/glLOpenGL.h"
+#include "gl/gl_common.h"
 #include "gl/gl_LTexture.h"
 #include "gl/gl_LTexture_spritesheet.h"
 #include "gl/gl_LFont.h"

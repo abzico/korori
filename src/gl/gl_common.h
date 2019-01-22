@@ -1,5 +1,5 @@
-#ifndef glLOpenGL_h_
-#define glLOpenGL_h_
+#ifndef krr_gl_common_h_
+#define krr_gl_common_h_
 
 #include "glew.h"
 #include "gl.h"

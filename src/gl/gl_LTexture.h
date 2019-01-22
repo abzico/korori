@@ -2,7 +2,7 @@
 #define gl_LTexture_h_
 
 #include <stdbool.h>
-#include "glLOpenGL.h"
+#include "gl_common.h"
 #include "gl_types.h"
 
 /// global shared variable that all instance of gl_LTexture will use

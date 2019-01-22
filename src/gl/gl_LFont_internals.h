@@ -1,7 +1,7 @@
 #ifndef gl_LFont_internals_h_
 #define gl_LFont_internals_h_
 
-#include "gl/glLOpenGL.h"
+#include "gl/gl_common.h"
 #include "gl/gl_LFont.h"
 
 /// This header is meant to be used internally by library itself.

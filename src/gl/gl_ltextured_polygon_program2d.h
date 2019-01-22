@@ -1,7 +1,7 @@
 #ifndef gl_ltextured_polygon_program2d_h_
 #define gl_ltextured_polygon_program2d_h_
 
-#include "gl/glLOpenGL.h"
+#include "gl/gl_common.h"
 #include "gl/gl_LShaderProgram.h"
 
 typedef struct gl_ltextured_polygon_program2d_

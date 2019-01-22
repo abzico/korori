@@ -1,7 +1,7 @@
 #ifndef gl_LShaderProgram_h_
 #define gl_LShaderProgram_h_
 
-#include "gl/glLOpenGL.h"
+#include "gl/gl_common.h"
 #include <stdbool.h>
 
 typedef struct

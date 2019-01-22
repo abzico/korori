@@ -1,7 +1,7 @@
 #ifndef gl_util_h_
 #define gl_util_h_
 
-#include "glLOpenGL.h"
+#include "gl_common.h"
 
 /// Utility functions to work with OpenGL
 
