@@ -1,56 +1,56 @@
-#ifndef LTimer_h_
-#define LTimer_h_
+#ifndef krr_TIMER_h_
+#define krr_TIMER_h_
 
 #include "SDL.h"
 #include <stdbool.h>
 
-typedef struct LTimer {
+typedef struct krr_TIMER {
   // clock time when timer started
-  Uint32 startedTicks;
+  Uint32 started_ticks;
 
   // clock time when timer paused
-  Uint32 pausedTicks;
+  Uint32 paused_ticks;
 
   // states of timer
   bool paused;
   bool started;
-} LTimer;
+} krr_TIMER;
 
 /*
  * \brief Create a new timer.
- * \return Return a newly created LTimer*
+ * \return Return a newly created krr_TIMER*
  */
-extern LTimer* LTimer_CreateNew();
+extern krr_TIMER* krr_TIMER_createNew();
 
 /*
  * \brief Start the timer.
  * \param timer A timer to start
  */
-extern void LTimer_Start(LTimer* timer);
+extern void krr_TIMER_start(krr_TIMER* timer);
 
 /*
  * \brief Stop the timer.
  * \param timer A timer to stop
  */
-extern void LTimer_Stop(LTimer* timer);
+extern void krr_TIMER_stop(krr_TIMER* timer);
 
 /*
  * \brief Pause the timer.
  * \param timer A timer to pause.
  */
-extern void LTimer_Pause(LTimer* timer);
+extern void krr_TIMER_pause(krr_TIMER* timer);
 
 /*
  * \brief Resume the paused timer.
  * \param timer A timer to resume.
  */
-extern void LTimer_Resume(LTimer* timer);
+extern void krr_TIMER_resume(krr_TIMER* timer);
 
 /*
  * \brief Get current ticks of timer in ms.
  * \param timer A timer to get ticks from
  */
-extern Uint32 LTimer_GetTicks(LTimer* timer);
+extern Uint32 krr_TIMER_getTicks(krr_TIMER* timer);
 
 /*
  * \brief Free the timer.
@@ -58,6 +58,6 @@ extern Uint32 LTimer_GetTicks(LTimer* timer);
  *
  * It will set NULL to timer after successfully free it, otherwise it won't.
  */
-extern void LTimer_Free(LTimer* timer);
+extern void krr_TIMER_free(krr_TIMER* timer);
 
-#endif /* LTimer_h_ */
+#endif /* krr_TIMER_h_ */

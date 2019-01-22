@@ -1,4 +1,4 @@
-#include "krr_math.h"
+#include "math.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -127,7 +127,7 @@ bool krr_math_checkCollisions(SDL_Rect* collidersA, int numCollidersA, SDL_Rect*
   return false;
 }
 
-bool krr_math_checkCollision_cc(Circle a, Circle b, int* deltaCollisionX, int* deltaCollisionY)
+bool krr_math_checkCollision_cc(CIRCLE a, CIRCLE b, int* deltaCollisionX, int* deltaCollisionY)
 {
   if (a.x + a.r > b.x - b.r &&
       a.y + a.r > b.y - b.r &&
@@ -165,7 +165,7 @@ bool krr_math_checkCollision_cc(Circle a, Circle b, int* deltaCollisionX, int* d
   }
 }
 
-bool krr_math_checkCollision_cr(Circle colliderA, SDL_Rect colliderB, int* deltaCollisionX, int* deltaCollisionY)
+bool krr_math_checkCollision_cr(CIRCLE colliderA, SDL_Rect colliderB, int* deltaCollisionX, int* deltaCollisionY)
 {
   // not call checkCollision() for better performance
   if (colliderA.x + colliderA.r > colliderB.x &&
@@ -202,7 +202,7 @@ bool krr_math_checkCollision_cr(Circle colliderA, SDL_Rect colliderB, int* delta
   }
 }
 
-bool krr_math_checkCollision_cr_arr(Circle colliderA, SDL_Rect* collidersB, int numCollidersB, int* deltaCollisionX, int* deltaCollisionY)
+bool krr_math_checkCollision_cr_arr(CIRCLE colliderA, SDL_Rect* collidersB, int numCollidersB, int* deltaCollisionX, int* deltaCollisionY)
 {
   SDL_Rect rectB;
 

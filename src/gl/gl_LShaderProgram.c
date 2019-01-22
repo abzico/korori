@@ -1,7 +1,7 @@
 #include "gl_LShaderProgram.h"
 #include "gl_LShaderProgram_internals.h"
 #include "gl/gl_util.h"
-#include "foundation/krr_util.h"
+#include "foundation/util.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

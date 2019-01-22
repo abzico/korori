@@ -1,5 +1,5 @@
-#ifndef LWindow_h_
-#define LWindow_h_
+#ifndef krr_window_h_
+#define krr_window_h_
 
 #include "SDL.h"
 #include <stdbool.h>
@@ -69,23 +69,23 @@ typedef struct {
   ///
   /// It's optional to use this.
   void (*render)(float delta_time);
-} LWindow;
+} krr_WINDOW;
 
 ///
-/// Create a new LWindow.
-/// Use LWindow_free() to free LWindow later.
+/// Create a new krr_WINDOW.
+/// Use krr_WINDOW_free() to free krr_WINDOW later.
 /// \param title Title of window
 /// \param screen_width Screen width
 /// \param screen_height Screen height
 /// \param window_flags Additional flags to set for window. It will logical OR with SDL_WINDOW_SHOWN. Use 0 if no additional flags to be set.
 /// \param renderer_flags Additional flags to set for renderer. It will logical OR with SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC. Use 0 if no additional flags to be set.
-/// \return Newly created LWindow instance on heap.
+/// \return Newly created krr_WINDOW instance on heap.
 ///
-extern LWindow* LWindow_new(const char* title, int screen_width, int screen_height, int window_flags, int renderer_flags);
+extern krr_WINDOW* krr_WINDOW_new(const char* title, int screen_width, int screen_height, int window_flags, int renderer_flags);
 
 ///
-/// Initialize allocated LWindow.
-/// Use LWindow_free_internals() to free LWindow created via this function.
+/// Initialize allocated krr_WINDOW.
+/// Use krr_WINDOW_free_internals() to free krr_WINDOW created via this function.
 /// \param [in,out] window Window instance
 /// \param title Title of window
 /// \param screen_width Screen width
@@ -94,7 +94,7 @@ extern LWindow* LWindow_new(const char* title, int screen_width, int screen_heig
 /// \param renderer_flags Additional flags to set for renderer. It will logical OR with SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC. Use 0 if no additional flags to be set.
 /// \return True if initialize successfully, otherwise return false.
 /// 
-extern bool LWindow_init(LWindow *window, const char* title, int screen_width, int screen_height, int window_flags, int renderer_flags);
+extern bool krr_WINDOW_init(krr_WINDOW *window, const char* title, int screen_width, int screen_height, int window_flags, int renderer_flags);
 
 ///
 /// Handle event associated with window.
@@ -102,7 +102,7 @@ extern bool LWindow_init(LWindow *window, const char* title, int screen_width, i
 /// \param e SDL_Event to handle
 /// \param delta_time Delta time since last frame
 ///
-extern void LWindow_handle_event(LWindow *window, SDL_Event *e, float delta_time);
+extern void krr_WINDOW_handle_event(krr_WINDOW *window, SDL_Event *e, float delta_time);
 
 ///
 /// Set window to fullscreen or windowed mode.
@@ -110,23 +110,23 @@ extern void LWindow_handle_event(LWindow *window, SDL_Event *e, float delta_time
 /// \param window Window instance
 /// \param fullscreen True to set to full screen, otherwise false to set to windowed mode
 ///
-extern void LWindow_set_fullscreen(LWindow* window, bool fullscreen);
+extern void krr_WINDOW_set_fullscreen(krr_WINDOW* window, bool fullscreen);
 
 ///
 /// Make window focused
 /// \param window Window to make focused
 ///
-extern void LWindow_focus(LWindow* window);
+extern void krr_WINDOW_focus(krr_WINDOW* window);
 
 ///
-/// Free internals of LWindow.
-/// Use this to free memory created by LWindow via LWindow_init().
+/// Free internals of krr_WINDOW.
+/// Use this to free memory created by krr_WINDOW via krr_WINDOW_init().
 ///
-extern void LWindow_free_internals(LWindow *window);
+extern void krr_WINDOW_free_internals(krr_WINDOW *window);
 
-/// Free memory of LWindow.
-/// Use this to free memory created by LWindow via LWindow_new().
+/// Free memory of krr_WINDOW.
+/// Use this to free memory created by krr_WINDOW via krr_WINDOW_new().
 ///
-extern void LWindow_free(LWindow *window);
+extern void krr_WINDOW_free(krr_WINDOW *window);
 
 #endif

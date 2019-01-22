@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "SDL_log.h"
-#include "foundation/vector.h"
+#include "externals/vector.h"
 #include "gl/gl_LTexture_internals.h"
 #include FT_BITMAP_H
 #include "gl/gl_LShaderProgram.h"

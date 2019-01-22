@@ -1,10 +1,6 @@
 #include "common.h"
 
-LWindow* gWindow = NULL;
-
-#ifndef DISABLE_SDL_TTF_LIB
-TTF_Font* gFont = NULL;
-#endif
+krr_WINDOW* gWindow = NULL;
 
 float common_frameTime = 0.0f;
 #ifndef DISABLE_FPS_CALC

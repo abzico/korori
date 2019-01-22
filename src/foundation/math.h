@@ -3,7 +3,7 @@
 
 #include "SDL.h"
 #include <stdbool.h>
-#include "Circle.h"
+#include "types.h"
 
 extern float krr_math_lerp(float a, float b, float t);
 
@@ -40,11 +40,11 @@ extern bool krr_math_checkCollision(SDL_Rect a, SDL_Rect b, int* deltaCollisionX
 
 extern bool krr_math_checkCollisions(SDL_Rect *collidersA, int numCollidersA, SDL_Rect* collidersB, int numCollidersB, int* deltaCollisionX, int* deltaCollisionY);
 
-extern bool krr_math_checkCollision_cc(Circle a, Circle b, int* deltaCollisionX, int* deltaCollisionY);
+extern bool krr_math_checkCollision_cc(CIRCLE a, CIRCLE b, int* deltaCollisionX, int* deltaCollisionY);
 
-extern bool krr_math_checkCollision_cr(Circle colliderA, SDL_Rect colliderB, int* deltaCollisionX, int* deltaCollisionY);
+extern bool krr_math_checkCollision_cr(CIRCLE colliderA, SDL_Rect colliderB, int* deltaCollisionX, int* deltaCollisionY);
 
-extern bool krr_math_checkCollision_cr_arr(Circle colliderA, SDL_Rect* collidersB, int numCollidersB, int* deltaCollisionX, int* deltaCollisionY);
+extern bool krr_math_checkCollision_cr_arr(CIRCLE colliderA, SDL_Rect* collidersB, int numCollidersB, int* deltaCollisionX, int* deltaCollisionY);
 
 ///
 /// Find max number from two numbers.

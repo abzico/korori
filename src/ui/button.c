@@ -1,15 +1,15 @@
-#include "LButton.h"
+#include "button.h"
 #include <stdbool.h>
 
-LButton* LButton_Create()
+krr_BUTTON* krr_BUTTON_Create()
 {
-  LButton* ptr = malloc(sizeof(LButton));
-  ptr->state = L_BUTTON_MOUSE_OUT;
+  krr_BUTTON* ptr = malloc(sizeof(krr_BUTTON));
+  ptr->state = BUTTON_MOUSE_OUT;
 
   return ptr;
 }
 
-void LButton_HandleEvent(LButton* button, SDL_Event* e, SDL_Rect buttonRect)
+void krr_BUTTON_HandleEvent(krr_BUTTON* button, SDL_Event* e, SDL_Rect buttonRect)
 {
   // check for mouse event
   if (e->type == SDL_MOUSEMOTION ||
@@ -34,7 +34,7 @@ void LButton_HandleEvent(LButton* button, SDL_Event* e, SDL_Rect buttonRect)
     // mouse is outside button
     if (!inside)
     {
-      button->state = L_BUTTON_MOUSE_OUT;	
+      button->state = BUTTON_MOUSE_OUT;	
     }
     // mouse is inside button
     else {
@@ -42,20 +42,20 @@ void LButton_HandleEvent(LButton* button, SDL_Event* e, SDL_Rect buttonRect)
       switch (e->type)
       {
         case SDL_MOUSEMOTION:
-          button->state = L_BUTTON_MOUSE_OVER_MOTION;
+          button->state = BUTTON_MOUSE_OVER_MOTION;
           break;	
         case SDL_MOUSEBUTTONDOWN:
-          button->state = L_BUTTON_MOUSE_DOWN;
+          button->state = BUTTON_MOUSE_DOWN;
           break;
         case SDL_MOUSEBUTTONUP:
-          button->state = L_BUTTON_MOUSE_UP;
+          button->state = BUTTON_MOUSE_UP;
           break;
       }
     }
   }
 }
 
-void LButton_Free(LButton* ptr)
+void krr_BUTTON_Free(krr_BUTTON* ptr)
 {
   free(ptr);
   ptr = NULL;

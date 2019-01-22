@@ -1,28 +1,28 @@
-#include "LTimer.h"
+#include "timer.h"
 #include <stdlib.h>
 
-LTimer* LTimer_CreateNew()
+krr_TIMER* krr_TIMER_createNew()
 {
-  LTimer *timer = malloc(sizeof(LTimer));
+  krr_TIMER *timer = malloc(sizeof(krr_TIMER));
 
-  timer->startedTicks = 0;
-  timer->pausedTicks = 0;
+  timer->started_ticks = 0;
+  timer->paused_ticks = 0;
   timer->paused = false;
   timer->started = false;
 
   return timer;
 }
 
-void LTimer_Start(LTimer* timer)
+void krr_TIMER_start(krr_TIMER* timer)
 {
   timer->started = true;
   timer->paused = false;
 
-  timer->startedTicks = SDL_GetTicks();
-  timer->pausedTicks = 0;  
+  timer->started_ticks = SDL_GetTicks();
+  timer->paused_ticks = 0;  
 }
 
-void LTimer_Stop(LTimer* timer)
+void krr_TIMER_stop(krr_TIMER* timer)
 {
   // stop the timer
   timer->started = false;
@@ -31,11 +31,11 @@ void LTimer_Stop(LTimer* timer)
   timer->paused = false;
 
   // clear tick variables
-  timer->startedTicks = 0;
-  timer->pausedTicks = 0;
+  timer->started_ticks = 0;
+  timer->paused_ticks = 0;
 }
 
-void LTimer_Pause(LTimer* timer)
+void krr_TIMER_pause(krr_TIMER* timer)
 {
   // if the timer is running and isn't already paused
   if (timer->started && !timer->paused)
@@ -44,12 +44,12 @@ void LTimer_Pause(LTimer* timer)
     timer->paused = true;
 
     // calculate the paused ticks
-    timer->pausedTicks = SDL_GetTicks() - timer->startedTicks;
-    timer->startedTicks = 0;
+    timer->paused_ticks = SDL_GetTicks() - timer->started_ticks;
+    timer->started_ticks = 0;
   }
 }
 
-void LTimer_Resume(LTimer* timer)
+void krr_TIMER_resume(krr_TIMER* timer)
 {
   // the the timer is paused and running
   if (timer->started && timer->paused)
@@ -58,24 +58,24 @@ void LTimer_Resume(LTimer* timer)
     timer->paused = false;
 
     // reset the starting ticks
-    timer->startedTicks = SDL_GetTicks() - timer->pausedTicks;
+    timer->started_ticks = SDL_GetTicks() - timer->paused_ticks;
 
     // reset the paused ticks
-    timer->pausedTicks = 0;
+    timer->paused_ticks = 0;
   }
 }
 
-Uint32 LTimer_GetTicks(LTimer* timer)
+Uint32 krr_TIMER_getTicks(krr_TIMER* timer)
 {
   if (timer->started)
   {
     if (timer->paused)
     {
-      return timer->pausedTicks;
+      return timer->paused_ticks;
     }
     else
     {
-      return SDL_GetTicks() - timer->startedTicks;
+      return SDL_GetTicks() - timer->started_ticks;
     }
   }
 
@@ -83,7 +83,7 @@ Uint32 LTimer_GetTicks(LTimer* timer)
   return 0;
 }
 
-void LTimer_Free(LTimer* timer)
+void krr_TIMER_free(krr_TIMER* timer)
 {
   free(timer);
   timer = NULL;

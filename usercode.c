@@ -1,7 +1,7 @@
 #include "usercode.h"
 #include "foundation/common.h"
-#include "foundation/LWindow.h"
-#include "foundation/krr_util.h"
+#include "foundation/window.h"
+#include "foundation/util.h"
 #include "gl/gl_util.h"
 #include "gl/gl_LTexture.h"
 #include "gl/gl_ltextured_polygon_program2d.h"
@@ -409,7 +409,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       // go windowed mode, currently in fullscreen mode
       if (gWindow->fullscreen)
       {
-        LWindow_set_fullscreen(gWindow, false);
+        krr_WINDOW_set_fullscreen(gWindow, false);
         // set projection matrix back to normal
         gl_util_adapt_to_normal(g_screen_width, g_screen_height);
         // reset relavant values back to normal
@@ -433,7 +433,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       }
       else
       {
-        LWindow_set_fullscreen(gWindow, true);
+        krr_WINDOW_set_fullscreen(gWindow, true);
         // get new window's size
         int w, h;
         SDL_GetWindowSize(gWindow->window, &w, &h);

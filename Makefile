@@ -1,26 +1,32 @@
-PROGRAM=krr
-OUTPUT=krr
+PROGRAM := krr
+OUTPUT := krr
 
-CC = gcc
-EXE = .out
-FDIR = src/foundation
-GLDIR = src/gl
-# use -DGL_SILENCE_DEPRECATION to silence deprecation warnings as we know we use older version of opengl
-# you might want to remove it
-# use -DDISABLE_SDL_TTF_LIB to disable code using SDL2_ttf
-#
-override CFLAGS += -std=c99 -Wall -Isrc/ -Isrc/gl -Isrc/foundation -I/usr/local/include/SDL2 -I/Volumes/Slave/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/usr/local/include/GL -DGL_SILENCE_DEPRECATION -I/usr/local/include/freetype2 -DDISABLE_SDL_TTF_LIB
+CC := gcc
+EXE := 
+FDIR := src/foundation
+GLDIR := src/gl
+UI_DIR := src/ui
+EXTERDIR := src/externals
+
+override CFLAGS += -std=c99 -Wall -Isrc/ -I/usr/local/include/SDL2 -I/Volumes/Slave/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/usr/local/include/GL -I/usr/local/include/freetype2
+
+# add platform specific cflags
+UNAME_S := $(shell uname -s)
+# (only for macOS) use -DGL_SILENCE_DEPRECATION to silence deprecation warnings as if running on macOS will generate ton of it because the platform deprecated opengl
+ifeq ($(UNAME_S),Darwin)
+	CFLAGS += -DGL_SILENCE_DEPRECATION
+endif
 
 # assume you install cglm on your system
-override LIBS += -lSDL2 -lSDL2_image -lSDL2_mixer -framework OpenGL -lGLEW -lfreetype -lcglm
-TARGETS = \
+override LFLAGS += -lSDL2 -lSDL2_image -lSDL2_mixer -framework OpenGL -lGLEW -lfreetype -lcglm
+TARGETS := \
 	  $(FDIR)/common.o \
-	  $(FDIR)/krr_math.o \
-	  $(FDIR)/LWindow.o \
-	  $(FDIR)/LTexture.o \
-	  $(FDIR)/LTimer.o \
-	  $(FDIR)/vector.o \
-	  $(FDIR)/krr_util.o \
+	  $(FDIR)/math.o \
+	  $(FDIR)/util.o \
+	  $(FDIR)/window.o \
+	  $(FDIR)/timer.o \
+	  $(UI_DIR)/button.o \
+	  $(EXTERDIR)/vector.o \
 	  $(GLDIR)/gl_util.o \
 	  $(GLDIR)/gl_LTexture.o \
 	  $(GLDIR)/gl_LSpritesheet.o \
@@ -36,34 +42,34 @@ TARGETS = \
 	  $(OUTPUT)
 
 # targets for linking (just not include $(OUTPUT)
-TARGETS_LINK = $(filter-out $(OUTPUT),$(TARGETS))
+TARGETS_LINK := $(filter-out $(OUTPUT),$(TARGETS))
 
 .PHONY: all clean
 
 all: $(TARGETS) 
 	
 $(OUTPUT): $(TARGETS_LINK)
-	$(CC) $^ -o $(OUTPUT)$(EXE) $(LIBS)
+	$(CC) $^ -o $(OUTPUT)$(EXE) $(LFLAGS)
 
 $(FDIR)/common.o: $(FDIR)/common.c $(FDIR)/common.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(FDIR)/krr_math.o: $(FDIR)/krr_math.c $(FDIR)/krr_math.h $(FDIR)/Circle.h
+$(FDIR)/math.o: $(FDIR)/math.c $(FDIR)/math.h $(FDIR)/types.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(FDIR)/LWindow.o: $(FDIR)/LWindow.c $(FDIR)/LWindow.h
+$(FDIR)/util.o: $(FDIR)/util.c $(FDIR)/util.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(FDIR)/LTexture.o: $(FDIR)/LTexture.c $(FDIR)/LTexture.h
+$(FDIR)/window.o: $(FDIR)/window.c $(FDIR)/window.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(FDIR)/LTimer.o: $(FDIR)/LTimer.c $(FDIR)/LTimer.h
+$(FDIR)/timer.o: $(FDIR)/timer.c $(FDIR)/timer.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(FDIR)/vector.o: $(FDIR)/vector.c $(FDIR)/vector.h
+$(UI_DIR)/button.o: $(UI_DIR)/button.c $(UI_DIR)/button.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(FDIR)/krr_util.o: $(FDIR)/krr_util.c $(FDIR)/krr_util.h
+$(VDRDIR)/vector.o: $(VDRDIR)/vector.c $(VDRDIR)/vector.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(GLDIR)/gl_util.o: $(GLDIR)/gl_util.c $(GLDIR)/gl_util.h
@@ -105,4 +111,5 @@ $(PROGRAM).o: $(PROGRAM).c
 clean:
 	rm -rf src/foundation/*.o
 	rm -rf src/gl/*.o
-	rm -rf *.out *.o *.dSYM
+	rm -rf $(OUTPUT)
+	rm -rf *.o *.dSYM

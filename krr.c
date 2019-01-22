@@ -8,10 +8,9 @@
 #include <string.h>
 
 #include "SDL.h"
+#include "SDL_image.h"
 #include "foundation/common.h"
-#include "foundation/LTimer.h"
-#include "foundation/LTexture.h"
-#include "foundation/LWindow.h"
+#include "foundation/window.h"
 #include "gl/glLOpenGL.h"
 #include "gl/gl_LTexture.h"
 #include "gl/gl_LTexture_spritesheet.h"
@@ -75,8 +74,8 @@ bool init() {
 
   // create window
   // if we set SDL_WINDOW_OPENGL flag then renderer won't be created for this window
-  // thus make sure you cannot use LTexture anymore as it heavilty use renderer as created in LWindow
-  gWindow = LWindow_new("Korori - Test", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL, 0);
+  // thus make sure you cannot use LTexture anymore as it heavilty use renderer as created in krr_WINDOW
+  gWindow = krr_WINDOW_new("Korori - Test", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL, 0);
   if (gWindow == NULL) {
     SDL_Log("Window could not be created! SDL_Error: %s", SDL_GetError());
     return false;
@@ -138,31 +137,12 @@ bool init() {
     return false;
   }
 
-#ifndef DISABLE_SDL_TTF_LIB
-  // initialize SDL_ttf
-  if (TTF_Init() == -1)
-  {
-    SDL_Log("SDL_ttf could not initialize! SDL_ttf Error: %s", TTF_GetError());
-    return false;
-  }
-#endif
-
   return true;
 }
 
 // include any asset loading sequence, and preparation code here
 bool setup()
 {
-#ifndef DISABLE_SDL_TTF_LIB
-  // load font
-  gFont = TTF_OpenFont("res/fonts/Minecraft.ttf", 16);
-  if (gFont == NULL)
-  {
-    SDL_Log("Failed to load Minecraft.ttf font: %s", TTF_GetError());
-    return false;
-  }
-#endif
-
   // load media from usercode
   if (!usercode_loadmedia())
   {
@@ -213,21 +193,8 @@ void close()
   // relay call to user's code in separate file
   usercode_close();
 
-#ifndef DISABLE_SDL_TTF_LIB
-  // free font
-  if (gFont != NULL)
-  {
-    TTF_CloseFont(gFont);
-    gFont = NULL;
-  }
-#endif
-
   // destroy window
-  LWindow_free(gWindow);
-
-#ifndef DISABLE_SDL_TTF_LIB
-  TTF_Quit();
-#endif
+  krr_WINDOW_free(gWindow);
 
   IMG_Quit();
   SDL_Quit();

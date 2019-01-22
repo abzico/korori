@@ -4,7 +4,7 @@
 #include "glLOpenGL.h"
 #include "gl_types.h"
 #include "gl_LTexture.h"
-#include "foundation/vector.h"
+#include "externals/vector.h"
 
 typedef struct
 {
