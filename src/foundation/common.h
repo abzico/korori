@@ -8,7 +8,14 @@
 #include <stdbool.h>
 #include "window.h"
 
-// CAUTION: It's user's resposibility to define these variables before use.
+#include "SDL_log.h"
+#define KRR_LOG(fmt, ...) SDL_Log(fmt, ##__VA_ARGS__)
+#define KRR_LOGV(fmt, ...) SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, fmt, ##__VA_ARGS__)
+#define KRR_LOGD(fmt, ...) SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, fmt, ##__VA_ARGS__)
+#define KRR_LOGI(fmt, ...) SDL_Log(fmt, ##__VA_ARGS__)
+#define KRR_LOGW(fmt, ...) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, fmt, ##__VA_ARGS__)
+#define KRR_LOGE(fmt, ...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, fmt, ##__VA_ARGS__)
+#define KRR_LOGC(fmt, ...) SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, fmt, ##__VA_ARGS__)
 
 /*
  * The window we'll be rendering to.

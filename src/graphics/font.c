@@ -1,7 +1,7 @@
 #include "font.h"
 #include <stdlib.h>
 #include <stddef.h>
-#include "SDL_log.h"
+#include "foundation/common.h"
 #include "externals/vector.h"
 #include "graphics/texture_internals.h"
 #include FT_BITMAP_H
@@ -32,7 +32,7 @@ void init_defaults_(KRR_FONT* font)
 
 void report_freetype_error_(const FT_Error* error)
 {
-  SDL_Log("FreeType error with code: %X", *error);
+  KRR_LOGE("FreeType error with code: %X", *error);
 }
 
 void free_internals_(KRR_FONT* font)
@@ -79,7 +79,7 @@ bool KRR_FONT_load_bitmap(KRR_FONT* font, const char* path)
   // load from grayscale 8-bit image
   if (!KRR_TEXTURE_load_pixels_from_file8(texture, path))
   {
-    SDL_Log("Unable to load pixels from file");
+    KRR_LOGE("Unable to load pixels from file");
     return false;
   }
 
@@ -246,14 +246,14 @@ bool KRR_FONT_load_bitmap(KRR_FONT* font, const char* path)
   // create texture from manipulated pixels
   if (!KRR_TEXTURE_load_texture_from_precreated_pixels8(texture))
   {
-    SDL_Log("Unable to create texture from precreated pixels");
+    KRR_LOGE("Unable to create texture from precreated pixels");
     return false;
   }
 
   // build vertex buffer from spritesheet data
   if (!KRR_SPRITESHEET_generate_databuffer(font->spritesheet))
   {
-    SDL_Log("Unable to generate databuffer for spritesheet");
+    KRR_LOGE("Unable to generate databuffer for spritesheet");
     return false;
   }
 
@@ -414,14 +414,14 @@ bool KRR_FONT_load_freetype(KRR_FONT* font, const char* path, GLuint pixel_size)
   // create texture
   if (!KRR_TEXTURE_load_texture_from_precreated_pixels8(font->spritesheet->ltexture))
   {
-    SDL_Log("Unable to create texture from pre-created pixels8");
+    KRR_LOGE("Unable to create texture from pre-created pixels8");
     return false;
   }
 
   // build vertex buffer from sprite sheet data
   if (!KRR_SPRITESHEET_generate_databuffer(font->spritesheet))
   {
-    SDL_Log("Unable to geneate databuffer");
+    KRR_LOGE("Unable to geneate databuffer");
     return false;
   }
 

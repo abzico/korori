@@ -1,7 +1,6 @@
 #include "util.h"
-#include <stdio.h>
 #include <stdarg.h>
-#include "SDL_log.h"
+#include "foundation/common.h"
 
 void KRR_gputil_adapt_to_normal(int screen_width, int screen_height)
 {
@@ -91,9 +90,9 @@ GLenum KRR_gputil_anyerror(const char* prefix)
   if (error != GL_NO_ERROR)
   {
     if (prefix == NULL)
-      SDL_Log("[] Opengl error code %d: %s", error, KRR_gputil_error_string(error));
+      KRR_LOGE("[] Opengl error code %d: %s", error, KRR_gputil_error_string(error));
     else
-      SDL_Log("[%s] Opengl error code %d: %s", prefix, error, KRR_gputil_error_string(error));
+      KRR_LOGE("[%s] Opengl error code %d: %s", prefix, error, KRR_gputil_error_string(error));
   }
 
   return error;

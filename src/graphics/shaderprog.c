@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "foundation/common.h"
 #include "foundation/util.h"
 #include "graphics/shaderprog_internals.h"
 #include "graphics/util.h"
-#include "SDL_log.h"
 
 void KRR_SHADERPROG_init_defaults(KRR_SHADERPROG* shader_program)
 {
@@ -36,7 +36,7 @@ GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type
   FILE* file = fopen(path, "r");
   if (file == NULL)
   {
-    SDL_Log("Unable to open file for read %s", path);
+    KRR_LOGE("Unable to open file for read %s", path);
     // return 0 for failed case
     return 0;
   }
@@ -49,7 +49,7 @@ GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type
   // check if file size is zero
   if (file_size <= 0)
   {
-    SDL_Log("Shader file has zero bytes");
+    KRR_LOGE("Shader file has zero bytes");
 
     // close the file
     fclose(file);
@@ -70,7 +70,7 @@ GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type
     // check if it's end-of-file error
     if (feof(file))
     {
-      SDL_Log("Read error, end-of-file detected");
+      KRR_LOGE("Read error, end-of-file detected");
       // close the file
       fclose(file);
       file = NULL;
@@ -81,7 +81,7 @@ GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type
     // there's something else
     if (ferror(file))
     {
-      SDL_Log("Read error");
+      KRR_LOGE("Read error");
       // close the file
       fclose(file);
       file = NULL;
@@ -112,7 +112,7 @@ GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type
   glGetShaderiv(shader_id, GL_COMPILE_STATUS, &shader_compiled);
   if (shader_compiled != GL_TRUE)
   {
-    SDL_Log("Unable to compile shader %d. Source: %s", shader_id, shader_source);
+    KRR_LOGE("Unable to compile shader %d. Source: %s", shader_id, shader_source);
     KRR_SHADERPROG_print_shader_log(shader_id);
     
     // delete shader
@@ -139,7 +139,7 @@ bool KRR_SHADERPROG_bind(KRR_SHADERPROG* shader_program)
 	// if such program is already bound, then return now
 	if (current_bound == shader_program->program_id)
 	{
-		SDL_Log("Program is already bound, no need to bind again");
+		KRR_LOGE("Program is already bound, no need to bind again");
 		return true;
 	}
 
@@ -151,7 +151,7 @@ bool KRR_SHADERPROG_bind(KRR_SHADERPROG* shader_program)
   if (error != GL_NO_ERROR)
   {
     KRR_util_print_callstack();
-    SDL_Log("Error use program %u: %s", shader_program->program_id, KRR_gputil_error_string(error));
+    KRR_LOGE("Error use program %u: %s", shader_program->program_id, KRR_gputil_error_string(error));
     return false;
   }
 
@@ -184,12 +184,12 @@ void KRR_SHADERPROG_print_program_log(GLuint program_id)
     if (info_log_length > 0)
     {
       // print log
-      SDL_Log("%s", info_log);
+      fprintf(stdout, "%s\n", info_log);
     }
   }
   else
   {
-    SDL_Log("Name %d is not a program", program_id);
+    KRR_LOGE("Name %d is not a program", program_id);
   }
 }
 
@@ -213,11 +213,11 @@ void KRR_SHADERPROG_print_shader_log(GLuint shader_id)
     if (info_log_length > 0)
     {
       // print log
-      SDL_Log("%s", info_log);
+      fprintf(stderr, "%s\n", info_log);
     }
   }
   else
   {
-    SDL_Log("Name %d is not a shader", shader_id);
+    KRR_LOGE("Name %d is not a shader", shader_id);
   }
 }

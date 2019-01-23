@@ -1,6 +1,6 @@
 #include "fontpp2d.h"
-#include "SDL_log.h"
 #include <stdlib.h>
+#include "foundation/common.h"
 
 static void free_internals_(KRR_FONT_polygon_program2d* program);
 
@@ -65,7 +65,7 @@ bool KRR_FONT_polygon_program2d_load_program(KRR_FONT_polygon_program2d* program
   GLuint vertex_shader_id = KRR_SHADERPROG_load_shader_from_file("res/shaders/fontpp2d.vert", GL_VERTEX_SHADER);
   if (vertex_shader_id == 0)
   {
-    SDL_Log("Unable to load vertex shader from file");
+    KRR_LOGE("Unable to load vertex shader from file");
 
     // delete program
     glDeleteProgram(program_id);
@@ -80,7 +80,7 @@ bool KRR_FONT_polygon_program2d_load_program(KRR_FONT_polygon_program2d* program
   GLenum error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    SDL_Log("Error attaching vertex shader");
+    KRR_LOGE("Error attaching vertex shader");
     KRR_SHADERPROG_print_shader_log(vertex_shader_id);
 
     // delete program
@@ -94,7 +94,7 @@ bool KRR_FONT_polygon_program2d_load_program(KRR_FONT_polygon_program2d* program
   GLuint fragment_shader_id = KRR_SHADERPROG_load_shader_from_file("res/shaders/fontpp2d.frag", GL_FRAGMENT_SHADER);
   if (fragment_shader_id == 0)
   {
-    SDL_Log("Unable to load fragment shader from file");
+    KRR_LOGE("Unable to load fragment shader from file");
 
     // delete vertex shader
     glDeleteShader(vertex_shader_id);
@@ -113,7 +113,7 @@ bool KRR_FONT_polygon_program2d_load_program(KRR_FONT_polygon_program2d* program
   error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    SDL_Log("Error attaching fragment shader");
+    KRR_LOGE("Error attaching fragment shader");
     KRR_SHADERPROG_print_shader_log(fragment_shader_id);
 
     // delete vertex shader
@@ -132,7 +132,7 @@ bool KRR_FONT_polygon_program2d_load_program(KRR_FONT_polygon_program2d* program
   error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    SDL_Log("Error linking program");
+    KRR_LOGE("Error linking program");
     KRR_SHADERPROG_print_program_log(program_id);
 
     // delete vertex shader
@@ -161,34 +161,34 @@ bool KRR_FONT_polygon_program2d_load_program(KRR_FONT_polygon_program2d* program
   program->vertex_pos2d_location = glGetAttribLocation(program_id, "vertex_pos2d");
   if (program->vertex_pos2d_location == -1)
   {
-    SDL_Log("Warning: cannot get location of vertex_pos2d");
+    KRR_LOGW("Warning: cannot get location of vertex_pos2d");
   }
   program->texture_coord_location = glGetAttribLocation(program_id, "texcoord");
   if (program->texture_coord_location == -1)
   {
-    SDL_Log("Warning: cannot get location of texcoord");
+    KRR_LOGW("Warning: cannot get location of texcoord");
   }
 
   // get uniform locations
   program->projection_matrix_location = glGetUniformLocation(program_id, "projection_matrix");
   if (program->projection_matrix_location == -1)
   {
-    SDL_Log("Warning: cannot get location of projection_matrix");
+    KRR_LOGW("Warning: cannot get location of projection_matrix");
   }
   program->modelview_matrix_location = glGetUniformLocation(program_id, "modelview_matrix");
   if (program->modelview_matrix_location == -1)
   {
-    SDL_Log("Warning: cannot get location of modelview_matrix");
+    KRR_LOGW("Warning: cannot get location of modelview_matrix");
   }
   program->texture_sampler_location = glGetUniformLocation(program_id, "texture_sampler");
   if (program->texture_sampler_location == -1)
   {
-    SDL_Log("Warning: cannot get location of texture_sampler");
+    KRR_LOGW("Warning: cannot get location of texture_sampler");
   }
   program->text_color_location = glGetUniformLocation(program_id, "text_color");
   if (program->text_color_location == -1)
   {
-    SDL_Log("Warning: cannot get location of text_color");
+    KRR_LOGW("Warning: cannot get location of text_color");
   }
 
   return true;

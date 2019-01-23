@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include "foundation/common.h"
 #include "graphics/texturedpp2d.h"
 #include "graphics/util.h"
-#include "SDL_log.h"
 
 static void init_defaults(KRR_SPRITESHEET* spritesheet);
 static void free_internals(KRR_SPRITESHEET* spritesheet);
@@ -149,7 +149,7 @@ bool KRR_SPRITESHEET_generate_databuffer(KRR_SPRITESHEET* spritesheet)
 			GLenum error = glGetError();
 			if (error != GL_NO_ERROR)
 			{
-				SDL_Log("Error opengl: %s", KRR_gputil_error_string(error));
+				KRR_LOGE("Error opengl: %s", KRR_gputil_error_string(error));
 				return false;
 			}
     }
@@ -161,7 +161,7 @@ bool KRR_SPRITESHEET_generate_databuffer(KRR_SPRITESHEET* spritesheet)
 		GLenum error = glGetError();
 		if (error != GL_NO_ERROR)
 		{
-			SDL_Log("Error opengl: %s", KRR_gputil_error_string(error));
+			KRR_LOGE("Error opengl: %s", KRR_gputil_error_string(error));
 			return false;
 		}
   }
@@ -169,12 +169,12 @@ bool KRR_SPRITESHEET_generate_databuffer(KRR_SPRITESHEET* spritesheet)
   {
     if (spritesheet->ltexture->texture_id == 0)
     {
-      SDL_Log("No texture to render with!");
+      KRR_LOGE("No texture to render with!");
     }
 
     if (spritesheet->clips->len <= 0)
     {
-      SDL_Log("No clips to generate vertex data from");
+      KRR_LOGE("No clips to generate vertex data from");
     }
 
     return false;

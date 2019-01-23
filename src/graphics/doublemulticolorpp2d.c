@@ -1,6 +1,6 @@
 #include "doublemulticolorpp2d.h"
 #include <stdlib.h>
-#include "SDL_log.h"
+#include "foundation/common.h"
 
 KRR_DMULTICSHADERPROG2D* KRR_DMULTICSHADERPROG2D_new()
 {
@@ -56,7 +56,7 @@ bool KRR_DMULTICSHADERPROG2D_load_program(KRR_DMULTICSHADERPROG2D* program)
   GLuint vertex_shader_id = KRR_SHADERPROG_load_shader_from_file("res/shaders/doublemulticolorpp2d.vert", GL_VERTEX_SHADER);
   if (vertex_shader_id == 0)
   {
-    SDL_Log("Unable to load vertex shader from file");
+    KRR_LOGE("Unable to load vertex shader from file");
 
     // delete program
     glDeleteProgram(program_id);
@@ -71,7 +71,7 @@ bool KRR_DMULTICSHADERPROG2D_load_program(KRR_DMULTICSHADERPROG2D* program)
   GLenum error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    SDL_Log("Error attaching vertex shader");
+    KRR_LOGE("Error attaching vertex shader");
     KRR_SHADERPROG_print_shader_log(vertex_shader_id);
 
     // delete program
@@ -85,7 +85,7 @@ bool KRR_DMULTICSHADERPROG2D_load_program(KRR_DMULTICSHADERPROG2D* program)
   GLuint fragment_shader_id = KRR_SHADERPROG_load_shader_from_file("res/shaders/doublemulticolorpp2d.frag", GL_FRAGMENT_SHADER);
   if (fragment_shader_id == 0)
   {
-    SDL_Log("Unable to load fragment shader from file");
+    KRR_LOGE("Unable to load fragment shader from file");
 
     // delete vertex shader
     glDeleteShader(vertex_shader_id);
@@ -104,7 +104,7 @@ bool KRR_DMULTICSHADERPROG2D_load_program(KRR_DMULTICSHADERPROG2D* program)
   error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    SDL_Log("Error attaching fragment shader");
+    KRR_LOGE("Error attaching fragment shader");
     KRR_SHADERPROG_print_shader_log(fragment_shader_id);
 
     // delete vertex shader
@@ -123,7 +123,7 @@ bool KRR_DMULTICSHADERPROG2D_load_program(KRR_DMULTICSHADERPROG2D* program)
   error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    SDL_Log("Error linking program");
+    KRR_LOGE("Error linking program");
     KRR_SHADERPROG_print_program_log(program_id);
 
     // delete vertex shader
@@ -152,29 +152,29 @@ bool KRR_DMULTICSHADERPROG2D_load_program(KRR_DMULTICSHADERPROG2D* program)
   program->vertex_pos2d_location = glGetAttribLocation(program_id, "vertex_pos2d");
   if (program->vertex_pos2d_location == -1)
   {
-    SDL_Log("Warning: cannot get location of vertex_pos2d");
+    KRR_LOGW("Warning: cannot get location of vertex_pos2d");
   }
   program->multicolor1_location = glGetAttribLocation(program_id, "multicolor1");
   if (program->multicolor1_location == -1)
   {
-    SDL_Log("Warning: cannot get location of multicolor1");
+    KRR_LOGW("Warning: cannot get location of multicolor1");
   }
   program->multicolor2_location = glGetAttribLocation(program_id, "multicolor2");
   if (program->multicolor2_location == -1)
   {
-    SDL_Log("Warning: cannot get location of multicolor2");
+    KRR_LOGW("Warning: cannot get location of multicolor2");
   }
 
   // get uniform locations
   program->projection_matrix_location = glGetUniformLocation(program_id, "projection_matrix");
   if (program->projection_matrix_location == -1)
   {
-    SDL_Log("Warning: cannot get location of projection_matrix");
+    KRR_LOGW("Warning: cannot get location of projection_matrix");
   }
   program->modelview_matrix_location = glGetUniformLocation(program_id, "modelview_matrix");
   if (program->modelview_matrix_location == -1)
   {
-    SDL_Log("Warning: cannot get location of modelview_matrix");
+    KRR_LOGW("Warning: cannot get location of modelview_matrix");
   }
 
   return true; 

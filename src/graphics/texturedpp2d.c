@@ -1,6 +1,6 @@
 #include "texturedpp2d.h"
 #include <stdlib.h>
-#include "SDL_log.h"
+#include "foundation/common.h"
 
 KRR_TEXSHADERPROG2D* KRR_TEXSHADERPROG2D_new()
 {
@@ -79,7 +79,7 @@ bool KRR_TEXSHADERPROG2D_load_program(KRR_TEXSHADERPROG2D* program)
   glGetProgramiv(uprog->program_id, GL_LINK_STATUS, &link_status);
   if (link_status != GL_TRUE)
   {
-    SDL_Log("Link program error %d", uprog->program_id);
+    KRR_LOGE("Link program error %d", uprog->program_id);
     KRR_SHADERPROG_print_program_log(uprog->program_id);
 
     // delete shaders
@@ -104,33 +104,33 @@ bool KRR_TEXSHADERPROG2D_load_program(KRR_TEXSHADERPROG2D* program)
   program->projection_matrix_location = glGetUniformLocation(uprog->program_id, "projection_matrix");
   if (program->projection_matrix_location == -1)
   {
-    SDL_Log("Warning: projection_matrix is invalid glsl variable name");
+    KRR_LOGW("Warning: projection_matrix is invalid glsl variable name");
   }
   program->modelview_matrix_location = glGetUniformLocation(uprog->program_id, "modelview_matrix");
   if (program->modelview_matrix_location == -1)
   {
-    SDL_Log("Warning: modelview_matrix is invalid glsl variable name");
+    KRR_LOGW("Warning: modelview_matrix is invalid glsl variable name");
   }
 
   program->vertex_pos2d_location = glGetAttribLocation(uprog->program_id, "vertex_pos2d");
   if (program->vertex_pos2d_location == -1)
   {
-    SDL_Log("Warning: vertex_pos2d is invalid glsl variable name");
+    KRR_LOGW("Warning: vertex_pos2d is invalid glsl variable name");
   }
   program->texcoord_location = glGetAttribLocation(uprog->program_id, "texcoord");
   if (program->texcoord_location == -1)
   {
-    SDL_Log("Warning: texcoord_location is invalid glsl variable name");
+    KRR_LOGW("Warning: texcoord_location is invalid glsl variable name");
   }
   program->texture_color_location = glGetUniformLocation(uprog->program_id, "texture_color");
   if (program->texture_color_location == -1)
   {
-    SDL_Log("Warning: texture_color is invalid glsl variable name");
+    KRR_LOGW("Warning: texture_color is invalid glsl variable name");
   }
   program->texture_sampler_location = glGetUniformLocation(uprog->program_id, "texture_sampler");
   if (program->texture_sampler_location == -1)
   {
-    SDL_Log("Warning: texture_sampler is invalid glsl variable name");
+    KRR_LOGW("Warning: texture_sampler is invalid glsl variable name");
   }
 
   return true;

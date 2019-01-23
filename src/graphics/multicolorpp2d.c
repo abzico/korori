@@ -1,6 +1,6 @@
 #include "multicolorpp2d.h"
 #include <stdlib.h>
-#include "SDL_log.h"
+#include "foundation/common.h"
 
 static void init_defaults(KRR_MULTCSHADERPROG2D* program);
 
@@ -85,7 +85,7 @@ bool KRR_MULTCSHADERPROG2D_load_program(KRR_MULTCSHADERPROG2D* program)
   if (link_status != GL_TRUE)
   {
     // print log from this program
-    SDL_Log("Unable to link program %d.", uprog->program_id);
+    KRR_LOGE("Unable to link program %d.", uprog->program_id);
     KRR_SHADERPROG_print_program_log(uprog->program_id);
 
     // delete vertex shader
@@ -113,22 +113,22 @@ bool KRR_MULTCSHADERPROG2D_load_program(KRR_MULTCSHADERPROG2D* program)
   program->vertex_pos2d_location = glGetAttribLocation(uprog->program_id, "vertex_pos2d");
   if (program->vertex_pos2d_location == -1)
   {
-    SDL_Log("%s is not valid glsl program variable", "vertex_pos2d");
+    KRR_LOGW("Warning: %s is not valid glsl program variable", "vertex_pos2d");
   }
   program->multi_color_location = glGetAttribLocation(uprog->program_id, "multi_color");
   if (program->multi_color_location == -1)
   {
-    SDL_Log("%s is not valid glsl program variable", "multi_color");
+    KRR_LOGW("Warning: %s is not valid glsl program variable", "multi_color");
   }
   program->projection_matrix_location = glGetUniformLocation(uprog->program_id, "projection_matrix");
   if (program->projection_matrix_location == -1)
   {
-    SDL_Log("%s is not valid glsl program variable", "projection_matrix");
+    KRR_LOGW("Warning: %s is not valid glsl program variable", "projection_matrix");
   }
   program->modelview_matrix_location = glGetUniformLocation(uprog->program_id, "modelview_matrix");
   if (program->modelview_matrix_location == -1)
   {
-    SDL_Log("%s is not valid glsl program variable", "modelview_matrix");
+    KRR_LOGW("Warning: %s is not valid glsl program variable", "modelview_matrix");
   }
 
   return true;

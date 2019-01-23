@@ -1,7 +1,7 @@
-#include "graphics/plainpp2d.h"
-#include "graphics/shaderprog_internals.h"
+#include "plainpp2d.h"
 #include <stdlib.h>
-#include "SDL_log.h"
+#include "graphics/shaderprog_internals.h"
+#include "foundation/common.h"
 
 static void init_defaults(KRR_PLAINSHADERPROG2D* program);
 
@@ -85,7 +85,7 @@ bool KRR_PLAINSHADERPROG2D_load_program(KRR_PLAINSHADERPROG2D* program)
   glGetProgramiv(program->program->program_id, GL_LINK_STATUS, &link_status);
   if (link_status != GL_TRUE)
   {
-    SDL_Log("Error linking program %d", program->program->program_id);
+    KRR_LOGE("Error linking program %d", program->program->program_id);
     KRR_SHADERPROG_print_program_log(program->program->program_id);
 
     // delete vertex shader
@@ -118,19 +118,19 @@ bool KRR_PLAINSHADERPROG2D_load_program(KRR_PLAINSHADERPROG2D* program)
 	program->projection_matrix_location = glGetUniformLocation(program->program->program_id, "projection_matrix");
 	if (program->projection_matrix_location == -1)
 	{
-		SDL_Log("%s is not a valid glsl program variable", "projection_matrix");
+		KRR_LOGW("Warning: %s is not a valid glsl program variable", "projection_matrix");
 	}
 	program->modelview_matrix_location = glGetUniformLocation(program->program->program_id, "modelview_matrix");
 	if (program->modelview_matrix_location == -1)
 	{
-		SDL_Log("%s is not a valid glsl program variable", "modelview_matrix");
+		KRR_LOGW("Warning: %s is not a valid glsl program variable", "modelview_matrix");
 	}
 	
 	// fragment
   program->polygon_color_location = glGetUniformLocation(program->program->program_id, "polygon_color");
   if (program->polygon_color_location == -1)
   {
-    SDL_Log("%s is not a valid glsl program variable", "polygon_color");
+    KRR_LOGW("Warning: %s is not a valid glsl program variable", "polygon_color");
   }
 
   return true;

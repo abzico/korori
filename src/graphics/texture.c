@@ -1,10 +1,10 @@
 #include "texture.h"
+#include "foundation/common.h"
 #include "foundation/math.h"
 #include "foundation/util.h"
 #include "graphics/texture_internals.h"
 #include "graphics/util.h"
 #include "graphics/texturedpp2d.h"
-#include "SDL_log.h"
 #include "SDL_image.h"
 #include <stdio.h>
 #include <stddef.h>
@@ -117,26 +117,26 @@ struct DDS_Header {
 
 static void _print_dds_header_struct(struct DDS_Header* header)
 {
-  SDL_Log("DDS_Header");
-  SDL_Log("- size of struct (should be 124): %d", header->size);
-  SDL_Log("- flags: 0x%X", header->flags);
-  SDL_Log("- height: %d", header->height);
-  SDL_Log("- width: %d", header->width);
-  SDL_Log("- pitch or linear size: %d", header->pitch_or_linear_size);
-  SDL_Log("- depth (for volume texture): %d", header->depth);
-  SDL_Log("- mipmap count: %d", header->mipmap_count);
-  SDL_Log("- DDS_PixelFormat");
-  SDL_Log("\t- size of struct (should be 32): %d", header->dds_pixel_format.size);
-  SDL_Log("\t- flags: 0x%X", header->dds_pixel_format.flags);
+  fprintf(stdout, "DDS_Header\n");
+  fprintf(stdout, "- size of struct (should be 124): %d\n", header->size);
+  fprintf(stdout, "- flags: 0x%X\n", header->flags);
+  fprintf(stdout, "- height: %d\n", header->height);
+  fprintf(stdout, "- width: %d\n", header->width);
+  fprintf(stdout, "- pitch or linear size: %d\n", header->pitch_or_linear_size);
+  fprintf(stdout, "- depth (for volume texture): %d\n", header->depth);
+  fprintf(stdout, "- mipmap count: %d\n", header->mipmap_count);
+  fprintf(stdout, "- DDS_PixelFormat\n");
+  fprintf(stdout, "\t- size of struct (should be 32): %d\n", header->dds_pixel_format.size);
+  fprintf(stdout, "\t- flags: 0x%X\n", header->dds_pixel_format.flags);
   char fourcc_chrs[5];
   memset(fourcc_chrs, 0, sizeof(fourcc_chrs));
   strncpy(fourcc_chrs, (char*)&header->dds_pixel_format.fourcc, 4);
-  SDL_Log("\t- fourCC: %s [0x%X]", fourcc_chrs, header->dds_pixel_format.fourcc);
-  SDL_Log("\t- RGB bit count: %d", header->dds_pixel_format.rgb_bitcount);
-  SDL_Log("\t- R bitmask: %d", header->dds_pixel_format.r_bitmask);
-  SDL_Log("\t- G bitmask: %d", header->dds_pixel_format.g_bitmask);
-  SDL_Log("\t- B bitmask: %d", header->dds_pixel_format.b_bitmask);
-  SDL_Log("\t- A bitmask: %d", header->dds_pixel_format.a_bitmask);
+  fprintf(stdout, "\t- fourCC: %s [0x%X]\n", fourcc_chrs, header->dds_pixel_format.fourcc);
+  fprintf(stdout, "\t- RGB bit count: %d\n", header->dds_pixel_format.rgb_bitcount);
+  fprintf(stdout, "\t- R bitmask: %d\n", header->dds_pixel_format.r_bitmask);
+  fprintf(stdout, "\t- G bitmask: %d\n", header->dds_pixel_format.g_bitmask);
+  fprintf(stdout, "\t- B bitmask: %d\n", header->dds_pixel_format.b_bitmask);
+  fprintf(stdout, "\t- A bitmask: %d\n", header->dds_pixel_format.a_bitmask);
 }
 
 void KRR_TEXTURE_free(KRR_TEXTURE* texture)
@@ -158,28 +158,28 @@ bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char* path)
   SDL_Surface* loaded_surface = IMG_Load(path);
   if (loaded_surface == NULL)
   {
-    SDL_Log("Unable to load image %s! SDL_Image error: %s", path, IMG_GetError());
+    KRR_LOGE("Unable to load image %s! SDL_Image error: %s", path, IMG_GetError());
     return false;
   }
   
-  SDL_Log("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
+  KRR_LOGE("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
 
   // convert pixel format
   SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(loaded_surface, SDL_PIXELFORMAT_ABGR8888, 0);
 
   if (converted_surface == NULL)
   {
-    SDL_Log("Cannot convert to ABGR8888 format");
+    KRR_LOGE("Cannot convert to ABGR8888 format");
     return false;
   }
 
   if (!KRR_TEXTURE_load_texture_from_pixels32(texture, converted_surface->pixels, converted_surface->w, converted_surface->h))
   {
-    SDL_Log("Failed to set pixel data to texture");
+    KRR_LOGE("Failed to set pixel data to texture");
     return false;
   }
 
-  SDL_Log("format: %s", SDL_GetPixelFormatName(converted_surface->format->format));
+  KRR_LOG("format: %s", SDL_GetPixelFormatName(converted_surface->format->format));
 
   // free surface
   SDL_FreeSurface(loaded_surface);
@@ -195,7 +195,7 @@ bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const char* pat
   // get pixels from file
   if (!KRR_TEXTURE_load_pixels_from_file(texture, path))
   {
-    SDL_Log("Failed to load pixels from file");
+    KRR_LOGE("Failed to load pixels from file");
     return false;
   }
 
@@ -219,7 +219,7 @@ bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const char* pat
   // create a texture out of it
   if (!KRR_TEXTURE_load_texture_from_precreated_pixels32(texture))
   {
-    SDL_Log("Cannot create texture from pre-created pixels");
+    KRR_LOGE("Cannot create texture from pre-created pixels");
     return false;
   }
 
@@ -231,7 +231,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   // pre-check if user's system doesn't have required capability to load S3TC texture
   if (GLEW_EXT_texture_compression_s3tc == 0)
   {
-    SDL_Log("S3TC texture not support for this system. Quit now");
+    KRR_LOGE("S3TC texture not support for this system. Quit now");
     return false;
   }
 
@@ -239,7 +239,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   fp = fopen(path, "r");
   if (fp == NULL)
   {
-    SDL_Log("Unable to open file for read with errno: %d", errno);
+    KRR_LOGE("Unable to open file for read with errno: %d", errno);
     return false;
   }
 
@@ -255,7 +255,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   // its magic number, and header
   if (total_size < 128)
   {
-    SDL_Log("file might be corrupted or not recognized as DDS file format. It has less bytes that it should be.");
+    KRR_LOGE("file might be corrupted or not recognized as DDS file format. It has less bytes that it should be.");
     fclose(fp);
     return false;
   }
@@ -267,36 +267,36 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   f_nobj_read = fread(&magic_number, 4, 1, fp);
   if (f_nobj_read != 1)
   {
-    SDL_Log("Unable to read file (1st approach to read magic number)");
+    KRR_LOGE("Unable to read file (1st approach to read magic number)");
     fclose(fp);
     return false;
   }
   
   if (magic_number != 0x20534444)
   {
-    SDL_Log("not dds file, found %d", magic_number);
+    KRR_LOGE("not dds file, found %d", magic_number);
     fclose(fp);
     return false;
   }
 
-  SDL_Log("current file offset is at %ld", ftell(fp));
+  KRR_LOG("current file offset is at %ld", ftell(fp));
 
   // header section
   struct DDS_Header header;
   memset(&header, 0, sizeof(header));
 
-  SDL_Log("size of header section for dds file format: %lu", sizeof(header));
+  KRR_LOG("size of header section for dds file format: %lu", sizeof(header));
 
   // read header section
   f_nobj_read = fread(&header, sizeof(header), 1, fp);
   if (f_nobj_read != 1)
   {
-    SDL_Log("read head section error");
+    KRR_LOGE("read head section error");
     fclose(fp);
     return false;
   }
 
-  SDL_Log("---");
+  KRR_LOG("---");
 
   // print struct info
   _print_dds_header_struct(&header);
@@ -304,7 +304,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   // check if texture is not square then we quit and report error
   if (header.width != header.height)
   {
-    SDL_Log("Input texture %s is not square, stop reading further now.", path);
+    KRR_LOGE("Input texture %s is not square, stop reading further now.", path);
     fclose(fp);
     return false;
   }
@@ -313,14 +313,14 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   if (((header.width & (header.width - 1)) != 0) ||
       ((header.height & (header.height - 1)) != 0))
   {
-    SDL_Log("Texture %s sides are not in power of two", path);
+    KRR_LOGE("Texture %s sides are not in power of two", path);
     fclose(fp);
     return false;
   }
 
   // read base image's pixel data
   // 0x31545844 represents "DXT1" in hexadecimal, we could convert fourcc to char* then compare to string literal as well
-  SDL_Log("header.dds_pixel_format.fourcc: 0x%X", header.dds_pixel_format.fourcc);
+  KRR_LOG("header.dds_pixel_format.fourcc: 0x%X", header.dds_pixel_format.fourcc);
   int blocksize = header.dds_pixel_format.fourcc == 0x31545844 ? 8 : 16;
   
   // set opengl format
@@ -330,12 +330,12 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
     if ((header.dds_pixel_format.flags & 0x1) == 0)
     {
       gl_format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-      SDL_Log("RGB DXT1");
+      KRR_LOG("RGB DXT1");
     }
     else
     {
       gl_format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-      SDL_Log("RGBA DXT1");
+      KRR_LOG("RGBA DXT1");
     }
   }
   // if blocksize is 16, then it has alpha channel thus we properly set opengl format
@@ -347,21 +347,21 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
       // DXT3
       case 0x33545844:
         gl_format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-        SDL_Log("RGBA DXT3");
+        KRR_LOG("RGBA DXT3");
         break;
       // DXT5
       case 0x35545844:
         gl_format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-        SDL_Log("RGBA DXT5");
+        KRR_LOG("RGBA DXT5");
         break;
     }
   }
 
-  SDL_Log("blocksize: %d", blocksize);
+  KRR_LOG("blocksize: %d", blocksize);
 
   // get total size of base image + mipmaps (if any)
   int images_size = ceil(header.width / 4.0) * ceil(header.height / 4.0) * blocksize;
-  SDL_Log("level 0 width: %d, height: %d, size: %d", header.width, header.height, images_size);
+  KRR_LOG("level 0 width: %d, height: %d, size: %d", header.width, header.height, images_size);
   {
     int width = KRR_math_max(1, header.width);
     int height = KRR_math_max(1, header.height);
@@ -386,11 +386,11 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
       }
 
       int level_size = ceil(width / 4.0) * ceil(height / 4.0) * blocksize;
-      SDL_Log("level %d width: %d, height: %d, size: %d", level, width, height, level_size);
+      KRR_LOG("level %d width: %d, height: %d, size: %d", level, width, height, level_size);
 
       images_size += level_size;
     }
-    SDL_Log("images_size: %d", images_size);
+    KRR_LOG("images_size: %d", images_size);
   }
 
   // define images buffer space
@@ -400,7 +400,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   f_nobj_read = fread(images_buffer, images_size, 1, fp);
   if (f_nobj_read != 1)
   {
-    SDL_Log("read images data errno [EOF?:%d]", feof(fp));
+    KRR_LOGE("read images data errno [EOF?:%d]", feof(fp));
     fclose(fp);
     return false;
   }
@@ -408,7 +408,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   fclose(fp);
   fp = NULL;
 
-  SDL_Log("---");
+  KRR_LOG("---");
 
   // texture id
   GLuint texture_id;
@@ -424,7 +424,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, DEFAULT_TEXTURE_WRAP);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, DEFAULT_TEXTURE_WRAP);
 
-  SDL_Log("Format: 0x%X", gl_format);
+  KRR_LOG("Format: 0x%X", gl_format);
 
   int offset = 0;
   int width = header.width;
@@ -437,7 +437,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
     // create compressed texture
     glCompressedTexImage2D(GL_TEXTURE_2D, level, gl_format, width, height, 0, size, images_buffer + offset);
 
-    SDL_Log("level %d, width: %d, height: %d, size: %d", level, width, height, size);
+    KRR_LOG("level %d, width: %d, height: %d, size: %d", level, width, height, size);
 
     // proceed next
     offset += size;
@@ -459,7 +459,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   if (error != GL_NO_ERROR)
   {
     KRR_util_print_callstack();
-    SDL_Log("Error loading compressed texture %s", KRR_gputil_error_string(error));
+    KRR_LOGE("Error loading compressed texture %s", KRR_gputil_error_string(error));
     return false;
   }
 
@@ -485,7 +485,7 @@ bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels
   {
     // find next POT for width
     texture->physical_width_ = find_next_pot(width);
-    SDL_Log("physical_width: %u", texture->physical_width_);
+    KRR_LOG("physical_width: %u", texture->physical_width_);
     is_need_to_resize = true;
   }
   // otherwise width is the same as original input texture
@@ -499,7 +499,7 @@ bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels
   {
     // find next POT for height
     texture->physical_height_ = find_next_pot(height);
-    SDL_Log("physical_height: %u", texture->physical_height_);
+    KRR_LOG("physical_height: %u", texture->physical_height_);
     is_need_to_resize = true;
   }
   // otherwise height is the same as original input texture
@@ -513,8 +513,8 @@ bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels
   texture->width = width;
   texture->height = height;
 
-  SDL_Log("original width: %d", width);
-  SDL_Log("original height: %d", height);
+  KRR_LOG("original width: %d", width);
+  KRR_LOG("original height: %d", height);
 
   // if need to resize, then put original pixels data at the top left
   // and pad the less with fully transparent white color
@@ -594,7 +594,7 @@ bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels
   if (error != GL_NO_ERROR)
   {
     KRR_util_print_callstack();
-    SDL_Log("Error loading texture from %p pixels! %s", pixels, KRR_gputil_error_string(error));
+    KRR_LOGE("Error loading texture from %p pixels! %s", pixels, KRR_gputil_error_string(error));
     return false;
   }
 
@@ -787,18 +787,18 @@ bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
   SDL_Surface* loaded_surface = IMG_Load(path);
   if (loaded_surface == NULL)
   {
-    SDL_Log("Unable to load image %s! SDL_Image error: %s", path, IMG_GetError());
+    KRR_LOGE("Unable to load image %s! SDL_Image error: %s", path, IMG_GetError());
     return false;
   }
   
-  SDL_Log("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
+  KRR_LOG("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
 
   // convert pixel format
   SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(loaded_surface, SDL_PIXELFORMAT_ABGR8888, 0);
 
   if (converted_surface == NULL)
   {
-    SDL_Log("Cannot convert to ABGR8888 format");
+    KRR_LOGE("Cannot convert to ABGR8888 format");
     return false;
   }
 
@@ -806,7 +806,7 @@ bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
   SDL_FreeSurface(loaded_surface);
   loaded_surface = NULL;
 
-  SDL_Log("format: %s", SDL_GetPixelFormatName(converted_surface->format->format));
+  KRR_LOG("format: %s", SDL_GetPixelFormatName(converted_surface->format->format));
 
   // check whether we need to resize to POT texture
   bool is_need_to_resize = false;
@@ -819,7 +819,7 @@ bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
   {
     // find next POT for width
     texture->physical_width_ = find_next_pot(width);
-    SDL_Log("physical_width: %u", texture->physical_width_);
+    KRR_LOG("physical_width: %u", texture->physical_width_);
     is_need_to_resize = true;
   }
   // otherwise width is the same as original input texture
@@ -833,7 +833,7 @@ bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
   {
     // find next POT for height
     texture->physical_height_ = find_next_pot(height);
-    SDL_Log("physical_height: %u", texture->physical_height_);
+    KRR_LOG("physical_height: %u", texture->physical_height_);
     is_need_to_resize = true;
   }
   // otherwise height is the same as original input texture
@@ -847,8 +847,8 @@ bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
   texture->width = width;
   texture->height = height;
 
-  SDL_Log("original width: %d", width);
-  SDL_Log("original height: %d", height);
+  KRR_LOG("original width: %d", width);
+  KRR_LOG("original height: %d", height);
 
   // if need to resize, then put original pixels data at the top left
   // and pad the less with fully transparent white color
@@ -925,27 +925,27 @@ bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
   SDL_Surface* loaded_surface = IMG_Load(path);
   if (loaded_surface == NULL)
   {
-    SDL_Log("Unable to load image %s! SDL_image error: %s", path, IMG_GetError());
+    KRR_LOGE("Unable to load image %s! SDL_image error: %s", path, IMG_GetError());
     return false;
   }
   
-  SDL_Log("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
+  KRR_LOG("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
 
   // check if the pixel format is not already in our interested format of BGR888
   Uint32 image_pixel_format = loaded_surface->format->format;
   if (image_pixel_format != SDL_PIXELFORMAT_BGR888)
   {
-    SDL_Log("Need to convert to proper pixel format");
+    KRR_LOG("Need to convert to proper pixel format");
 
     // convert to more convenient format to work with
     SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(loaded_surface, SDL_PIXELFORMAT_BGR888, 0);
     if (converted_surface == NULL)
     {
-      SDL_Log("Cannot convert to BGR888 format");
+      KRR_LOGE("Cannot convert to BGR888 format");
       return false;
     }
 
-    SDL_Log("converted format surface: %s", SDL_GetPixelFormatName(converted_surface->format->format));
+    KRR_LOG("converted format surface: %s", SDL_GetPixelFormatName(converted_surface->format->format));
 
     // free firstly loaded surface
     SDL_FreeSurface(loaded_surface);
@@ -964,7 +964,7 @@ bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
   {
     // find next POT for width
     texture->physical_width_ = find_next_pot(width);
-    SDL_Log("physical_width: %u", texture->physical_width_);
+    KRR_LOG("physical_width: %u", texture->physical_width_);
     is_need_to_resize = true;
   }
   // otherwise width is the same as original input texture
@@ -978,7 +978,7 @@ bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
   {
     // find next POT for height
     texture->physical_height_ = find_next_pot(height);
-    SDL_Log("physical_height: %u", texture->physical_height_);
+    KRR_LOG("physical_height: %u", texture->physical_height_);
     is_need_to_resize = true;
   }
   // otherwise height is the same as original input texture
@@ -992,8 +992,8 @@ bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
   texture->width = width;
   texture->height = height;
 
-  SDL_Log("original width: %d", width);
-  SDL_Log("original height: %d", height);
+  KRR_LOG("original width: %d", width);
+  KRR_LOG("original height: %d", height);
 
   // if need to resize, then put original pixels data at the top left
   // and pad the less with fully transparent white color
@@ -1107,7 +1107,7 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels32(KRR_TEXTURE* texture)
     if (error != GL_NO_ERROR)
     {
       KRR_util_print_callstack();
-      SDL_Log("Error loading texture from pixels [%p]: %s", texture->pixels, KRR_gputil_error_string(error));
+      KRR_LOGE("Error loading texture from pixels [%p]: %s", texture->pixels, KRR_gputil_error_string(error));
       return false;
     }
     else
@@ -1129,12 +1129,12 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels32(KRR_TEXTURE* texture)
   {
     if (texture->pixels == NULL)
     {
-      SDL_Log("Cannot load texture from pre-created pixels, there is no pixels data");
+      KRR_LOGE("Cannot load texture from pre-created pixels, there is no pixels data");
     }
 
     if (texture->texture_id != 0)
     {
-      SDL_Log("Cannot load texture from pre-created pixels, there was already existing texture");
+      KRR_LOGE("Cannot load texture from pre-created pixels, there was already existing texture");
     }
   }
 
@@ -1173,7 +1173,7 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture)
     if (error != GL_NO_ERROR)
     {
       KRR_util_print_callstack();
-      SDL_Log("Error loading texture from pixels [%p]: %s", texture->pixels, KRR_gputil_error_string(error));
+      KRR_LOGE("Error loading texture from pixels [%p]: %s", texture->pixels, KRR_gputil_error_string(error));
       return false;
     }
     else
@@ -1195,12 +1195,12 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture)
   {
     if (texture->pixels == NULL)
     {
-      SDL_Log("Cannot load texture from pre-created pixels8, there is no pixels data");
+      KRR_LOGE("Cannot load texture from pre-created pixels8, there is no pixels data");
     }
 
     if (texture->texture_id != 0)
     {
-      SDL_Log("Cannot load texture from pre-created pixels, there was already existing texture");
+      KRR_LOGE("Cannot load texture from pre-created pixels, there was already existing texture");
     }
   }
 
@@ -1317,7 +1317,7 @@ void KRR_TEXTURE_pad_pixels32(KRR_TEXTURE* texture)
     {
       // find next POT for width
       texture->physical_width_ = find_next_pot(width);
-      SDL_Log("physical_width: %u", texture->physical_width_);
+      KRR_LOG("physical_width: %u", texture->physical_width_);
       is_need_to_resize = true;
     }
 
@@ -1326,7 +1326,7 @@ void KRR_TEXTURE_pad_pixels32(KRR_TEXTURE* texture)
     {
       // find next POT for height
       texture->physical_height_ = find_next_pot(height);
-      SDL_Log("physical_height: %u", texture->physical_height_);
+      KRR_LOG("physical_height: %u", texture->physical_height_);
       is_need_to_resize = true;
     }
 
@@ -1440,7 +1440,7 @@ void KRR_TEXTURE_pad_pixels8(KRR_TEXTURE* texture)
     {
       // find next POT for width
       texture->physical_width_ = find_next_pot(width);
-      SDL_Log("physical_width: %u", texture->physical_width_);
+      KRR_LOG("physical_width: %u", texture->physical_width_);
       is_need_to_resize = true;
     }
 
@@ -1449,7 +1449,7 @@ void KRR_TEXTURE_pad_pixels8(KRR_TEXTURE* texture)
     {
       // find next POT for height
       texture->physical_height_ = find_next_pot(height);
-      SDL_Log("physical_height: %u", texture->physical_height_);
+      KRR_LOG("physical_height: %u", texture->physical_height_);
       is_need_to_resize = true;
     }
 

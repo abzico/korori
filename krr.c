@@ -3,7 +3,6 @@
  */
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
 
 #include "SDL.h"
@@ -54,7 +53,7 @@ Uint32 prevTime = 0;
 bool init() {
   // initialize sdl
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    SDL_Log("SDL could not initialize! SDL_Error: %s", SDL_GetError());
+    KRR_LOGE("SDL could not initialize! SDL_Error: %s", SDL_GetError());
     return false;
   }
   
@@ -76,7 +75,7 @@ bool init() {
   // thus make sure you cannot use LTexture anymore as it heavilty use renderer as created in KRR_WINDOW
   gWindow = KRR_WINDOW_new("Korori - Test", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL, 0);
   if (gWindow == NULL) {
-    SDL_Log("Window could not be created! SDL_Error: %s", SDL_GetError());
+    KRR_LOGE("Window could not be created! SDL_Error: %s", SDL_GetError());
     return false;
   }
 	// listen to window's resize event
@@ -86,25 +85,25 @@ bool init() {
   opengl_context = SDL_GL_CreateContext(gWindow->window);
   if (opengl_context == NULL)
   {
-    SDL_Log("OpenGL context could not be created: %s", SDL_GetError());
+    KRR_LOGE("OpenGL context could not be created: %s", SDL_GetError());
     return false;
   }
 
   // check opengl version we got
-  SDL_Log("OpenGL version %s\nGLSL version: %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+  KRR_LOG("OpenGL version %s\nGLSL version: %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
   // use vsync
-  if (SDL_GL_SetSwapInterval(1) != 0)
-  {
-    SDL_Log("Warning: Unable to enable vsync! %s", SDL_GetError());
-  }
+  //if (SDL_GL_SetSwapInterval(1) != 0)
+  //{
+  //  KRR_LOGW("Warning: Unable to enable vsync! %s", SDL_GetError());
+  //}
 
   // init glew
   glewExperimental = GL_TRUE;
   GLenum glewError = glewInit();
   if (glewError != GLEW_OK)
   {
-    SDL_Log("Failed initialize glew! %s", glewGetErrorString(glewError));
+    KRR_LOGE("Failed initialize glew! %s", glewGetErrorString(glewError));
     return false;
   }
 
