@@ -19,7 +19,7 @@ void KRR_util_print_callstack()
   char** strs = backtrace_symbols(callstack, frames);
   for (i=0; i<frames; i++)
   {
-    printf("%s\n", strs[i]);
+    fprintf(stdout, "%s\n", strs[i]);
   }
   free(strs);
 #endif

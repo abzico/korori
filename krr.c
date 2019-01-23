@@ -91,7 +91,7 @@ bool init() {
   }
 
   // check opengl version we got
-  printf("OpenGL version %s\nGLSL version: %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+  SDL_Log("OpenGL version %s\nGLSL version: %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
   // use vsync
   if (SDL_GL_SetSwapInterval(1) != 0)
