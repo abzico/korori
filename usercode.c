@@ -46,25 +46,25 @@ static mat4 g_base_modelview_matrix;
 static void usercode_app_went_windowed_mode();
 static void usercode_app_went_fullscreen();
 
-enum usercode_matrixtype
+enum USERCODE_MATRIXTYPE
 {
-  usercode_matrixtype_projection_matrix,
-  usercode_matrixtype_modelview_matrix
+  USERCODE_MATRIXTYPE_PROJECTION_MATRIX,
+  USERCODE_MATRIXTYPE_MODELVIEW_MATRIX
 };
-enum usercode_shadertype
+enum USERCODE_SHADERTYPE
 {
-  usercode_shadertype_texture_shader,
-  usercode_shadertype_font_shader
+  USERCODE_SHADERTYPE_TEXTURE_SHADER,
+  USERCODE_SHADERTYPE_FONT_SHADER
 };
 ///
 /// set matrix then update to shader
 /// required user to bind the shader before calling this function.
 ///
-/// \param matrix_type type of matrix to copy to dst. Value is enum usercode_matrixtype.
-/// \param shader_type type of shader. Value is enum usercode_shadertype.
+/// \param matrix_type type of matrix to copy to dst. Value is enum USERCODE_MATRIXTYPE.
+/// \param shader_type type of shader. Value is enum USERCODE_SHADERTYPE.
 /// \param program pointer to shader program.
 ///
-static void usercode_set_matrix_then_update_to_shader(enum usercode_matrixtype matrix_type, enum usercode_shadertype shader_type, void* program);
+static void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_type, void* program);
 // -- end of section of function signatures -- //
 
 #ifndef DISABLE_FPS_CALC
@@ -86,13 +86,13 @@ static GLuint ibo = 0;
 static GLuint left_vao = 0;
 static GLuint right_vao = 0;
 
-void usercode_set_matrix_then_update_to_shader(enum usercode_matrixtype matrix_type, enum usercode_shadertype shader_program, void* program)
+void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_program, void* program)
 {
   // projection matrix
-  if (matrix_type == usercode_matrixtype_projection_matrix)
+  if (matrix_type == USERCODE_MATRIXTYPE_PROJECTION_MATRIX)
   {
     // texture shader
-    if (shader_program == usercode_shadertype_texture_shader)
+    if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
     {
       // convert to right type of program shader
       KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
@@ -103,7 +103,7 @@ void usercode_set_matrix_then_update_to_shader(enum usercode_matrixtype matrix_t
       KRR_TEXSHADERPROG2D_update_projection_matrix(shader_ptr);
     }
     // font shader
-    else if (shader_program == usercode_shadertype_font_shader)
+    else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
     {
       KRR_FONT_polygon_program2d* shader_ptr = (KRR_FONT_polygon_program2d*)program;
       glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
@@ -112,10 +112,10 @@ void usercode_set_matrix_then_update_to_shader(enum usercode_matrixtype matrix_t
     }
   }
   // modelview matrix
-  else if (matrix_type == usercode_matrixtype_modelview_matrix)
+  else if (matrix_type == USERCODE_MATRIXTYPE_MODELVIEW_MATRIX)
   {
     // texture shader
-    if (shader_program == usercode_shadertype_texture_shader)
+    if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
     {
       KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
       glm_mat4_copy(g_base_modelview_matrix, shader_ptr->modelview_matrix);
@@ -123,7 +123,7 @@ void usercode_set_matrix_then_update_to_shader(enum usercode_matrixtype matrix_t
       KRR_TEXSHADERPROG2D_update_modelview_matrix(shader_ptr);
     }
     // font shader
-    else if (shader_program == usercode_shadertype_font_shader)
+    else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
     {
       KRR_FONT_polygon_program2d* shader_ptr = (KRR_FONT_polygon_program2d*)program;
       glm_mat4_copy(g_base_modelview_matrix, shader_ptr->modelview_matrix);
@@ -143,13 +143,13 @@ void usercode_app_went_windowed_mode()
   KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
 
   KRR_SHADERPROG_bind(texture_shader->program);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_texture_shader, texture_shader);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_texture_shader, texture_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   // no need to unbind as we will bind a new one soon
 
   KRR_SHADERPROG_bind(font_shader->program);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_font_shader, font_shader);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_font_shader, font_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   KRR_SHADERPROG_unbind(font_shader->program);
 }
 
@@ -163,12 +163,12 @@ void usercode_app_went_fullscreen()
   KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
 
   KRR_SHADERPROG_bind(texture_shader->program);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_texture_shader, texture_shader);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_texture_shader, texture_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
 
   KRR_SHADERPROG_bind(font_shader->program);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_font_shader, font_shader);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_font_shader, font_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   KRR_SHADERPROG_unbind(font_shader->program);
 }
 
@@ -278,15 +278,15 @@ bool usercode_loadmedia()
 
   // initially update all related matrices and related graphics stuf for both shaders
   KRR_SHADERPROG_bind(texture_shader->program);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_texture_shader, texture_shader);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_texture_shader, texture_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   KRR_TEXSHADERPROG2D_set_texture_sampler(texture_shader, 0);
   // set texture shader to all KRR_TEXTURE as active
   shared_textured_shaderprogram = texture_shader;
 
   KRR_SHADERPROG_bind(font_shader->program);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_font_shader, font_shader);
-  usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_font_shader, font_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   KRR_FONT_polygon_program2d_set_texture_sampler(font_shader, 0);
   // set font shader to all KRR_FONT as active
   shared_font_shaderprogram = font_shader;
@@ -541,7 +541,7 @@ void usercode_render_fps(int avg_fps)
     KRR_FONT_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
 
     // render text on top right
-    KRR_FONT_render_textex(fps_font, fps_text, 0.f, 4.f, &(SIZE){g_logical_width, g_logical_height}, KRR_FONT_TEXT_ALIGNMENT_RIGHT | KRR_FONT_TEXT_ALIGNMENT_TOP);
+    KRR_FONT_render_textex(fps_font, fps_text, 0.f, 4.f, &(SIZE){g_logical_width, g_logical_height}, KRR_FONT_TEXTALIGNMENT_RIGHT | KRR_FONT_TEXTALIGNMENT_TOP);
   KRR_SHADERPROG_unbind(shared_font_shaderprogram->program);
 
   // unbind fps-vao

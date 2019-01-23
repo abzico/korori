@@ -15,7 +15,7 @@
 #include "SDL.h"
 
 /// state of button
-enum KRR_BUTTON_state
+enum KRR_BUTTON_STATE
 {
 	KRR_BUTTON_MOUSE_OUT = 0,
 	KRR_BUTTON_MOUSE_OVER_MOTION = 1,
@@ -26,7 +26,7 @@ enum KRR_BUTTON_state
 
 typedef struct
 {
-	enum KRR_BUTTON_state state;
+	enum KRR_BUTTON_STATE state;
 } KRR_BUTTON;
 
 /*

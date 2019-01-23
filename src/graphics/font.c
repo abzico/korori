@@ -568,25 +568,25 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
     // correct empty alignment
     if (align == 0)
     {
-      align = KRR_FONT_TEXT_ALIGNMENT_LEFT | KRR_FONT_TEXT_ALIGNMENT_TOP;
+      align = KRR_FONT_TEXTALIGNMENT_LEFT | KRR_FONT_TEXTALIGNMENT_TOP;
     }
 
     // handle horizontal alignment
-    if (align & KRR_FONT_TEXT_ALIGNMENT_CENTERED_H)
+    if (align & KRR_FONT_TEXTALIGNMENT_CENTERED_H)
     {
       render_x = x + (area_size->w - KRR_FONT_string_width(font, text)) / 2.f;
     }
-    else if (align & KRR_FONT_TEXT_ALIGNMENT_RIGHT)
+    else if (align & KRR_FONT_TEXTALIGNMENT_RIGHT)
     {
       render_x = x + area_size->w - KRR_FONT_string_width(font, text);
     }
 
     // handle vertical alignment
-    if (align & KRR_FONT_TEXT_ALIGNMENT_CENTERED_V)
+    if (align & KRR_FONT_TEXTALIGNMENT_CENTERED_V)
     {
       render_y = y + (area_size->h - KRR_FONT_string_height(font, text)) / 2.f;
     }
-    else if (align & KRR_FONT_TEXT_ALIGNMENT_BOTTOM)
+    else if (align & KRR_FONT_TEXTALIGNMENT_BOTTOM)
     {
       render_y = y + area_size->h - KRR_FONT_string_height(font, text);
     }
@@ -638,11 +638,11 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
       if (area_size != NULL)
       {
         // handle horizontal alignment
-        if (align & KRR_FONT_TEXT_ALIGNMENT_CENTERED_H)
+        if (align & KRR_FONT_TEXTALIGNMENT_CENTERED_H)
         {
           target_x += (area_size->w - KRR_FONT_string_width(font, text + i + 1)) / 2.f;
         }
-        else if (align & KRR_FONT_TEXT_ALIGNMENT_RIGHT)
+        else if (align & KRR_FONT_TEXTALIGNMENT_RIGHT)
         {
           target_x += area_size->w - KRR_FONT_string_width(font, text + i + 1);
         }

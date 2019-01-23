@@ -6,16 +6,16 @@
 #include "ft2build.h"
 #include FT_FREETYPE_H
 
-enum KRR_FONT_TextAlignment
+enum KRR_FONT_TEXTALIGNMENT
 {
   // horizontal set
-  KRR_FONT_TEXT_ALIGNMENT_LEFT            = 0x1,
-  KRR_FONT_TEXT_ALIGNMENT_CENTERED_H      = 0x2,
-  KRR_FONT_TEXT_ALIGNMENT_RIGHT           = 0x4,
+  KRR_FONT_TEXTALIGNMENT_LEFT            = 0x1,
+  KRR_FONT_TEXTALIGNMENT_CENTERED_H      = 0x2,
+  KRR_FONT_TEXTALIGNMENT_RIGHT           = 0x4,
   // vertical set
-  KRR_FONT_TEXT_ALIGNMENT_TOP             = 0x8,
-  KRR_FONT_TEXT_ALIGNMENT_CENTERED_V      = 0x10,
-  KRR_FONT_TEXT_ALIGNMENT_BOTTOM          = 0x20
+  KRR_FONT_TEXTALIGNMENT_TOP             = 0x8,
+  KRR_FONT_TEXTALIGNMENT_CENTERED_V      = 0x10,
+  KRR_FONT_TEXTALIGNMENT_BOTTOM          = 0x20
 };
 
 // global shader program that is used by all of KRR_FONT instances
@@ -103,7 +103,7 @@ extern void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GL
 /// \param x Position x to render.
 /// \param y Position y to render.
 /// \param area_size Area size to align text within it if given. It can be NULL.
-/// \param align Alignment to align text within the given area. See KRR_FONT_TextAlignment.
+/// \param align Alignment to align text within the given area. See KRR_FONT_TEXTALIGNMENT.
 ///
 extern void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat y, const SIZE* area_size, int align);
 
