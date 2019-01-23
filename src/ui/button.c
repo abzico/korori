@@ -1,15 +1,15 @@
 #include "button.h"
 #include <stdbool.h>
 
-krr_BUTTON* krr_BUTTON_Create()
+KRR_BUTTON* KRR_BUTTON_Create()
 {
-  krr_BUTTON* ptr = malloc(sizeof(krr_BUTTON));
-  ptr->state = BUTTON_MOUSE_OUT;
+  KRR_BUTTON* ptr = malloc(sizeof(KRR_BUTTON));
+  ptr->state = KRR_BUTTON_MOUSE_OUT;
 
   return ptr;
 }
 
-void krr_BUTTON_HandleEvent(krr_BUTTON* button, SDL_Event* e, SDL_Rect buttonRect)
+void KRR_BUTTON_HandleEvent(KRR_BUTTON* button, SDL_Event* e, SDL_Rect buttonRect)
 {
   // check for mouse event
   if (e->type == SDL_MOUSEMOTION ||
@@ -34,7 +34,7 @@ void krr_BUTTON_HandleEvent(krr_BUTTON* button, SDL_Event* e, SDL_Rect buttonRec
     // mouse is outside button
     if (!inside)
     {
-      button->state = BUTTON_MOUSE_OUT;	
+      button->state = KRR_BUTTON_MOUSE_OUT;	
     }
     // mouse is inside button
     else {
@@ -42,20 +42,20 @@ void krr_BUTTON_HandleEvent(krr_BUTTON* button, SDL_Event* e, SDL_Rect buttonRec
       switch (e->type)
       {
         case SDL_MOUSEMOTION:
-          button->state = BUTTON_MOUSE_OVER_MOTION;
+          button->state = KRR_BUTTON_MOUSE_OVER_MOTION;
           break;	
         case SDL_MOUSEBUTTONDOWN:
-          button->state = BUTTON_MOUSE_DOWN;
+          button->state = KRR_BUTTON_MOUSE_DOWN;
           break;
         case SDL_MOUSEBUTTONUP:
-          button->state = BUTTON_MOUSE_UP;
+          button->state = KRR_BUTTON_MOUSE_UP;
           break;
       }
     }
   }
 }
 
-void krr_BUTTON_Free(krr_BUTTON* ptr)
+void KRR_BUTTON_Free(KRR_BUTTON* ptr)
 {
   free(ptr);
   ptr = NULL;

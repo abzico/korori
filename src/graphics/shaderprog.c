@@ -1,36 +1,36 @@
-#include "gl_LShaderProgram.h"
-#include "gl_LShaderProgram_internals.h"
-#include "gl/gl_util.h"
-#include "foundation/util.h"
+#include "shaderprog.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "foundation/util.h"
+#include "graphics/shaderprog_internals.h"
+#include "graphics/util.h"
 #include "SDL_log.h"
 
-void gl_LShaderProgram_init_defaults(gl_LShaderProgram* shader_program)
+void KRR_SHADERPROG_init_defaults(KRR_SHADERPROG* shader_program)
 {
   shader_program->program_id = 0;
 }
 
-gl_LShaderProgram* gl_LShaderProgram_new()
+KRR_SHADERPROG* KRR_SHADERPROG_new()
 {
-  gl_LShaderProgram* out = malloc(sizeof(gl_LShaderProgram));
-  gl_LShaderProgram_init_defaults(out);
+  KRR_SHADERPROG* out = malloc(sizeof(KRR_SHADERPROG));
+  KRR_SHADERPROG_init_defaults(out);
 
   return out;
 }
 
-void gl_LShaderProgram_free(gl_LShaderProgram* shader_program)
+void KRR_SHADERPROG_free(KRR_SHADERPROG* shader_program)
 {
   // free program
-  gl_LShaderProgram_free_program(shader_program);
+  KRR_SHADERPROG_free_program(shader_program);
 
   // free the source
   free(shader_program);
   shader_program = NULL;
 }
 
-GLuint gl_LShaderProgram_load_shader_from_file(const char* path, GLenum shader_type)
+GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type)
 {
   // open file for read
   FILE* file = fopen(path, "r");
@@ -113,7 +113,7 @@ GLuint gl_LShaderProgram_load_shader_from_file(const char* path, GLenum shader_t
   if (shader_compiled != GL_TRUE)
   {
     SDL_Log("Unable to compile shader %d. Source: %s", shader_id, shader_source);
-    gl_LShaderProgram_print_shader_log(shader_id);
+    KRR_SHADERPROG_print_shader_log(shader_id);
     
     // delete shader
     glDeleteShader(shader_id);
@@ -123,14 +123,14 @@ GLuint gl_LShaderProgram_load_shader_from_file(const char* path, GLenum shader_t
   return shader_id;
 }
 
-void gl_LShaderProgram_free_program(gl_LShaderProgram* shader_program)
+void KRR_SHADERPROG_free_program(KRR_SHADERPROG* shader_program)
 {
   // delete program
   glDeleteProgram(shader_program->program_id);
   shader_program->program_id = 0;
 }
 
-bool gl_LShaderProgram_bind(gl_LShaderProgram* shader_program)
+bool KRR_SHADERPROG_bind(KRR_SHADERPROG* shader_program)
 {
 	// check whether we need to bind again
 	GLint current_bound;
@@ -150,21 +150,21 @@ bool gl_LShaderProgram_bind(gl_LShaderProgram* shader_program)
   GLenum error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    krr_util_print_callstack();
-    SDL_Log("Error use program %u: %s", shader_program->program_id, gl_util_error_string(error));
+    KRR_util_print_callstack();
+    SDL_Log("Error use program %u: %s", shader_program->program_id, KRR_gputil_error_string(error));
     return false;
   }
 
   return true;
 }
 
-void gl_LShaderProgram_unbind(gl_LShaderProgram* shader_program)
+void KRR_SHADERPROG_unbind(KRR_SHADERPROG* shader_program)
 {
   // use default program
   glUseProgram(0);
 }
 
-void gl_LShaderProgram_print_program_log(GLuint program_id)
+void KRR_SHADERPROG_print_program_log(GLuint program_id)
 {
   // make sure name is shader
   if (glIsProgram(program_id))
@@ -193,7 +193,7 @@ void gl_LShaderProgram_print_program_log(GLuint program_id)
   }
 }
 
-void gl_LShaderProgram_print_shader_log(GLuint shader_id)
+void KRR_SHADERPROG_print_shader_log(GLuint shader_id)
 {
   // make sure name is shader
   if (glIsShader(shader_id))

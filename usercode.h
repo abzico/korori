@@ -4,7 +4,7 @@
 ///
 
 #include "SDL.h"
-#include "gl/gl_common.h"
+#include "graphics/common.h"
 #include <stdbool.h>
 
 ///

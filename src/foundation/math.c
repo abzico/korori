@@ -2,46 +2,46 @@
 #include <stdlib.h>
 #include <time.h>
 
-float krr_math_lerp(float a, float b, float t)
+float KRR_math_lerp(float a, float b, float t)
 {
   return a + (b-a)*t;
 }
 
-void krr_math_rand_seed_time()
+void KRR_math_rand_seed_time()
 {
   // set seed from current time
   srand(time(NULL));
 }
 
-void krr_math_rand_seed(unsigned int seed)
+void KRR_math_rand_seed(unsigned int seed)
 {
   // set seed from specified seed number
   srand(seed);
 }
 
-int krr_math_rand_int(int max)
+int KRR_math_rand_int(int max)
 {
   // FIXME: this is POOR approach, see http://c-faq.com/lib/randrange.html
   return rand() % (max+1);
 }
 
-int krr_math_rand_int2(int min, int max)
+int KRR_math_rand_int2(int min, int max)
 {
   // FIXME: this is POOR approach, see http://c-faq.com/lib/randrange.html
   return rand() % (max+1-min) + min;
 }
 
-float krr_math_rand_float(float max)
+float KRR_math_rand_float(float max)
 {
   return (float)((double)rand() / ((double)RAND_MAX + 1) * (max+1));
 }
 
-float krr_math_rand_float2(float min, float max)
+float KRR_math_rand_float2(float min, float max)
 {
   return (float)((double)rand() / ((double)RAND_MAX + 1) * (max+1-min) + min);
 }
 
-bool krr_math_checkCollision(SDL_Rect a, SDL_Rect b, int* deltaCollisionX, int* deltaCollisionY)
+bool KRR_math_checkCollision(SDL_Rect a, SDL_Rect b, int* deltaCollisionX, int* deltaCollisionY)
 {
   if (a.x + a.w > b.x &&
       a.y + a.h > b.y &&
@@ -78,7 +78,7 @@ bool krr_math_checkCollision(SDL_Rect a, SDL_Rect b, int* deltaCollisionX, int* 
   }
 }
 
-bool krr_math_checkCollisions(SDL_Rect* collidersA, int numCollidersA, SDL_Rect* collidersB, int numCollidersB, int* deltaCollisionX, int* deltaCollisionY)
+bool KRR_math_checkCollisions(SDL_Rect* collidersA, int numCollidersA, SDL_Rect* collidersB, int numCollidersB, int* deltaCollisionX, int* deltaCollisionY)
 {
   SDL_Rect rectA;
   SDL_Rect rectB;
@@ -127,7 +127,7 @@ bool krr_math_checkCollisions(SDL_Rect* collidersA, int numCollidersA, SDL_Rect*
   return false;
 }
 
-bool krr_math_checkCollision_cc(CIRCLE a, CIRCLE b, int* deltaCollisionX, int* deltaCollisionY)
+bool KRR_math_checkCollision_cc(CIRCLE a, CIRCLE b, int* deltaCollisionX, int* deltaCollisionY)
 {
   if (a.x + a.r > b.x - b.r &&
       a.y + a.r > b.y - b.r &&
@@ -165,7 +165,7 @@ bool krr_math_checkCollision_cc(CIRCLE a, CIRCLE b, int* deltaCollisionX, int* d
   }
 }
 
-bool krr_math_checkCollision_cr(CIRCLE colliderA, SDL_Rect colliderB, int* deltaCollisionX, int* deltaCollisionY)
+bool KRR_math_checkCollision_cr(CIRCLE colliderA, SDL_Rect colliderB, int* deltaCollisionX, int* deltaCollisionY)
 {
   // not call checkCollision() for better performance
   if (colliderA.x + colliderA.r > colliderB.x &&
@@ -202,7 +202,7 @@ bool krr_math_checkCollision_cr(CIRCLE colliderA, SDL_Rect colliderB, int* delta
   }
 }
 
-bool krr_math_checkCollision_cr_arr(CIRCLE colliderA, SDL_Rect* collidersB, int numCollidersB, int* deltaCollisionX, int* deltaCollisionY)
+bool KRR_math_checkCollision_cr_arr(CIRCLE colliderA, SDL_Rect* collidersB, int numCollidersB, int* deltaCollisionX, int* deltaCollisionY)
 {
   SDL_Rect rectB;
 
@@ -244,7 +244,7 @@ bool krr_math_checkCollision_cr_arr(CIRCLE colliderA, SDL_Rect* collidersB, int 
   return false;
 }
 
-int krr_math_max(int a, int b)
+int KRR_math_max(int a, int b)
 {
   if (a > b)
     return a;
@@ -252,7 +252,7 @@ int krr_math_max(int a, int b)
     return b;
 }
 
-int krr_math_min(int a, int b)
+int KRR_math_min(int a, int b)
 {
   if (a < b)
     return a;
@@ -260,7 +260,7 @@ int krr_math_min(int a, int b)
     return b;
 }
 
-int krr_math_bitcount(int value)
+int KRR_math_bitcount(int value)
 {
   int bitcount = 0;
 

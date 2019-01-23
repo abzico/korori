@@ -1,5 +1,5 @@
-#ifndef krr_types_h_
-#define krr_types_h_
+#ifndef KRR_types_h_
+#define KRR_types_h_
 
 typedef struct 
 {

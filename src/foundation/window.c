@@ -3,7 +3,7 @@
 
 #define WINDOW_TITLE_BUFFER 60
 static char temp_chrs[WINDOW_TITLE_BUFFER];
-static void initialize_values(krr_WINDOW* window)
+static void initialize_values(KRR_WINDOW* window)
 {
   window->window = NULL;
   window->renderer = NULL;
@@ -20,19 +20,19 @@ static void initialize_values(krr_WINDOW* window)
   window->render = NULL;
 }
 
-krr_WINDOW* krr_WINDOW_new(const char* title, int screen_width, int screen_height, int window_flags, int renderer_flags)
+KRR_WINDOW* KRR_WINDOW_new(const char* title, int screen_width, int screen_height, int window_flags, int renderer_flags)
 {
   // allocate memory
-  krr_WINDOW* out = malloc(sizeof(krr_WINDOW));
+  KRR_WINDOW* out = malloc(sizeof(KRR_WINDOW));
   
   // initially set values
   initialize_values(out);
 
   // initialize
-  if(!krr_WINDOW_init(out, title, screen_width, screen_height, window_flags, renderer_flags))
+  if(!KRR_WINDOW_init(out, title, screen_width, screen_height, window_flags, renderer_flags))
   {
     // if failed to init, then free allocated memory
-    krr_WINDOW_free(out);
+    KRR_WINDOW_free(out);
     return NULL;
   }
   else
@@ -41,7 +41,7 @@ krr_WINDOW* krr_WINDOW_new(const char* title, int screen_width, int screen_heigh
   }
 }
 
-bool krr_WINDOW_init(krr_WINDOW *window, const char* title, int screen_width, int screen_height, int window_flags, int renderer_flags)
+bool KRR_WINDOW_init(KRR_WINDOW *window, const char* title, int screen_width, int screen_height, int window_flags, int renderer_flags)
 {
   // always use SDL_WINDOW_SHOWN to logical or with input flags
   window->window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, SDL_WINDOW_SHOWN | window_flags);
@@ -63,7 +63,7 @@ bool krr_WINDOW_init(krr_WINDOW *window, const char* title, int screen_width, in
       if (window->renderer == NULL)
       {
         // free internals
-        krr_WINDOW_free_internals(window);
+        KRR_WINDOW_free_internals(window);
         return false;
       }
     }
@@ -87,7 +87,7 @@ bool krr_WINDOW_init(krr_WINDOW *window, const char* title, int screen_width, in
   return true;
 }
 
-void krr_WINDOW_handle_event(krr_WINDOW* window, SDL_Event *e, float delta_time)
+void KRR_WINDOW_handle_event(KRR_WINDOW* window, SDL_Event *e, float delta_time)
 {
   // window event occurred
   if (e->type == SDL_WINDOWEVENT && e->window.windowID == window->id)
@@ -192,7 +192,7 @@ void krr_WINDOW_handle_event(krr_WINDOW* window, SDL_Event *e, float delta_time)
   }
 }
 
-void krr_WINDOW_set_fullscreen(krr_WINDOW *window, bool fullscreen)
+void KRR_WINDOW_set_fullscreen(KRR_WINDOW *window, bool fullscreen)
 {
 	if (window->fullscreen)
 	{
@@ -226,7 +226,7 @@ void krr_WINDOW_set_fullscreen(krr_WINDOW *window, bool fullscreen)
 	}
 }
 
-void krr_WINDOW_focus(krr_WINDOW* window)
+void KRR_WINDOW_focus(KRR_WINDOW* window)
 {
   // restore window if needed
   if (window->is_shown)
@@ -238,7 +238,7 @@ void krr_WINDOW_focus(krr_WINDOW* window)
   SDL_RaiseWindow(window->window);
 }
 
-void krr_WINDOW_free_internals(krr_WINDOW* window)
+void KRR_WINDOW_free_internals(KRR_WINDOW* window)
 {
   // free associated renderer first
   if (window->renderer != NULL)
@@ -255,10 +255,10 @@ void krr_WINDOW_free_internals(krr_WINDOW* window)
   }
 }
 
-void krr_WINDOW_free(krr_WINDOW* window)
+void KRR_WINDOW_free(KRR_WINDOW* window)
 {
   // firstly free its internals
-  krr_WINDOW_free_internals(window);
+  KRR_WINDOW_free_internals(window);
   // free its allocated space
   free(window);
   window = NULL;

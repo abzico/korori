@@ -4,7 +4,7 @@ OUTPUT := krr
 CC := gcc
 EXE := 
 FDIR := src/foundation
-GLDIR := src/gl
+GPDIR := src/graphics
 UI_DIR := src/ui
 EXTERDIR := src/externals
 
@@ -27,16 +27,16 @@ TARGETS := \
 	  $(FDIR)/timer.o \
 	  $(UI_DIR)/button.o \
 	  $(EXTERDIR)/vector.o \
-	  $(GLDIR)/gl_util.o \
-	  $(GLDIR)/gl_LTexture.o \
-	  $(GLDIR)/gl_LSpritesheet.o \
-	  $(GLDIR)/gl_LFont.o \
-	  $(GLDIR)/gl_LShaderProgram.o \
-	  $(GLDIR)/gl_LPlainPolygonProgram2D.o \
-	  $(GLDIR)/gl_LMultiColorPolygonProgram2D.o \
-	  $(GLDIR)/gl_ltextured_polygon_program2d.o \
-	  $(GLDIR)/gl_lfont_polygon_program2d.o \
-	  $(GLDIR)/gl_ldouble_multicolor_polygon_program2d.o \
+	  $(GPDIR)/util.o \
+	  $(GPDIR)/texture.o \
+	  $(GPDIR)/spritesheet.o \
+	  $(GPDIR)/font.o \
+	  $(GPDIR)/shaderprog.o \
+	  $(GPDIR)/plainpp2d.o \
+	  $(GPDIR)/multicolorpp2d.o \
+	  $(GPDIR)/texturedpp2d.o \
+	  $(GPDIR)/fontpp2d.o \
+	  $(GPDIR)/doublemulticolorpp2d.o \
 	  usercode.o \
 	  $(PROGRAM).o \
 	  $(OUTPUT)
@@ -72,34 +72,34 @@ $(UI_DIR)/button.o: $(UI_DIR)/button.c $(UI_DIR)/button.h
 $(VDRDIR)/vector.o: $(VDRDIR)/vector.c $(VDRDIR)/vector.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GLDIR)/gl_util.o: $(GLDIR)/gl_util.c $(GLDIR)/gl_util.h
+$(GPDIR)/util.o: $(GPDIR)/util.c $(GPDIR)/util.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GLDIR)/gl_LTexture.o: $(GLDIR)/gl_LTexture.c $(GLDIR)/gl_LTexture.h $(GLDIR)/gl_LTexture_internals.h
+$(GPDIR)/texture.o: $(GPDIR)/texture.c $(GPDIR)/texture.h $(GPDIR)/texture_internals.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GLDIR)/gl_LSpritesheet.o: $(GLDIR)/gl_LTexture_spritesheet.c $(GLDIR)/gl_LTexture_spritesheet.h
+$(GPDIR)/spritesheet.o: $(GPDIR)/spritesheet.c $(GPDIR)/spritesheet.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GLDIR)/gl_LFont.o: $(GLDIR)/gl_LFont.c $(GLDIR)/gl_LFont.h $(GLDIR)/gl_LFont_internals.h
+$(GPDIR)/font.o: $(GPDIR)/font.c $(GPDIR)/font.h $(GPDIR)/font_internals.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GLDIR)/gl_LShaderProgram.o: $(GLDIR)/gl_LShaderProgram.c $(GLDIR)/gl_LShaderProgram.h $(GLDIR)/gl_LShaderProgram_internals.h
+$(GPDIR)/shaderprog.o: $(GPDIR)/shaderprog.c $(GPDIR)/shaderprog.h $(GPDIR)/shaderprog_internals.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GLDIR)/gl_LPlainPolygonProgram2D.o: $(GLDIR)/gl_LPlainPolygonProgram2D.c $(GLDIR)/gl_LPlainPolygonProgram2D.h
+$(GPDIR)/plainpp2d.o: $(GPDIR)/plainpp2d.c $(GPDIR)/plainpp2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GLDIR)/gl_LMultiColorPolygonProgram2D.o: $(GLDIR)/gl_LMultiColorPolygonProgram2D.c $(GLDIR)/gl_LMultiColorPolygonProgram2D.h
+$(GPDIR)/multicolorpp2d.o: $(GPDIR)/multicolorpp2d.c $(GPDIR)/multicolorpp2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GLDIR)/gl_ltextured_polygon_program2d.o: $(GLDIR)/gl_ltextured_polygon_program2d.c $(GLDIR)/gl_ltextured_polygon_program2d.h
+$(GPDIR)/texturedpp2d.o: $(GPDIR)/texturedpp2d.c $(GPDIR)/texturedpp2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GLDIR)/gl_lfont_polygon_program2d.o: $(GLDIR)/gl_lfont_polygon_program2d.c $(GLDIR)/gl_lfont_polygon_program2d.h
+$(GPDIR)/fontpp2d.o: $(GPDIR)/fontpp2d.c $(GPDIR)/fontpp2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GLDIR)/gl_ldouble_multicolor_polygon_program2d.o: $(GLDIR)/gl_ldouble_multicolor_polygon_program2d.c $(GLDIR)/gl_ldouble_multicolor_polygon_program2d.h
+$(GPDIR)/gl_ldouble_multicolor_polygon_program2d.o: $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.c $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 usercode.o: usercode.c usercode.h
@@ -110,6 +110,8 @@ $(PROGRAM).o: $(PROGRAM).c
 
 clean:
 	rm -rf src/foundation/*.o
-	rm -rf src/gl/*.o
+	rm -rf src/graphics/*.o
+	rm -rf src/externals/*.o
+	rm -rf src/ui/*.o
 	rm -rf $(OUTPUT)
 	rm -rf *.o *.dSYM

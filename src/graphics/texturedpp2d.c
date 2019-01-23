@@ -1,10 +1,10 @@
-#include "gl_ltextured_polygon_program2d.h"
+#include "texturedpp2d.h"
 #include <stdlib.h>
 #include "SDL_log.h"
 
-gl_ltextured_polygon_program2d* gl_ltextured_polygon_program2d_new()
+KRR_TEXSHADERPROG2D* KRR_TEXSHADERPROG2D_new()
 {
-  gl_ltextured_polygon_program2d* out = malloc(sizeof(gl_ltextured_polygon_program2d));
+  KRR_TEXSHADERPROG2D* out = malloc(sizeof(KRR_TEXSHADERPROG2D));
 
   // init defaults first
   out->program = NULL;
@@ -18,31 +18,31 @@ gl_ltextured_polygon_program2d* gl_ltextured_polygon_program2d_new()
   out->modelview_matrix_location = -1;
 
   // create underlying shader program
-  out->program = gl_LShaderProgram_new();
+  out->program = KRR_SHADERPROG_new();
   
   return out;
 }
 
-void gl_ltextured_polygon_program2d_free(gl_ltextured_polygon_program2d* program)
+void KRR_TEXSHADERPROG2D_free(KRR_TEXSHADERPROG2D* program)
 {
   // free underlying shader program
-  gl_LShaderProgram_free(program->program);
+  KRR_SHADERPROG_free(program->program);
 
   // free source
   free(program);
   program = NULL;
 }
 
-bool gl_ltextured_polygon_program2d_load_program(gl_ltextured_polygon_program2d* program)
+bool KRR_TEXSHADERPROG2D_load_program(KRR_TEXSHADERPROG2D* program)
 {
   // get underlying shader program
-  gl_LShaderProgram* uprog = program->program;
+  KRR_SHADERPROG* uprog = program->program;
 
   // generate program
   uprog->program_id = glCreateProgram();
 
   // load vertex shader
-  GLuint vertex_shader = gl_LShaderProgram_load_shader_from_file("res/shaders/l_textured_polygon_program2d.vert", GL_VERTEX_SHADER);
+  GLuint vertex_shader = KRR_SHADERPROG_load_shader_from_file("res/shaders/texturedpp2d.vert", GL_VERTEX_SHADER);
   // check errors
   if (vertex_shader == -1)
   {
@@ -55,7 +55,7 @@ bool gl_ltextured_polygon_program2d_load_program(gl_ltextured_polygon_program2d*
   glAttachShader(uprog->program_id, vertex_shader);
 
   // create fragment shader
-  GLuint fragment_shader = gl_LShaderProgram_load_shader_from_file("res/shaders/l_textured_polygon_program2d.frag", GL_FRAGMENT_SHADER);
+  GLuint fragment_shader = KRR_SHADERPROG_load_shader_from_file("res/shaders/texturedpp2d.frag", GL_FRAGMENT_SHADER);
   // check errors
   if (fragment_shader == -1)
   {
@@ -80,7 +80,7 @@ bool gl_ltextured_polygon_program2d_load_program(gl_ltextured_polygon_program2d*
   if (link_status != GL_TRUE)
   {
     SDL_Log("Link program error %d", uprog->program_id);
-    gl_LShaderProgram_print_program_log(uprog->program_id);
+    KRR_SHADERPROG_print_program_log(uprog->program_id);
 
     // delete shaders
     glDeleteShader(vertex_shader);
@@ -136,43 +136,43 @@ bool gl_ltextured_polygon_program2d_load_program(gl_ltextured_polygon_program2d*
   return true;
 }
 
-void gl_ltextured_polygon_program2d_update_projection_matrix(gl_ltextured_polygon_program2d* program)
+void KRR_TEXSHADERPROG2D_update_projection_matrix(KRR_TEXSHADERPROG2D* program)
 {
   glUniformMatrix4fv(program->projection_matrix_location, 1, GL_FALSE, program->projection_matrix[0]);
 }
 
-void gl_ltextured_polygon_program2d_update_modelview_matrix(gl_ltextured_polygon_program2d* program)
+void KRR_TEXSHADERPROG2D_update_modelview_matrix(KRR_TEXSHADERPROG2D* program)
 {
   glUniformMatrix4fv(program->modelview_matrix_location, 1, GL_FALSE, program->modelview_matrix[0]);
 }
 
-void gl_ltextured_polygon_program2d_set_vertex_pointer(gl_ltextured_polygon_program2d* program, GLsizei stride, const GLvoid* data)
+void KRR_TEXSHADERPROG2D_set_vertex_pointer(KRR_TEXSHADERPROG2D* program, GLsizei stride, const GLvoid* data)
 {
   glVertexAttribPointer(program->vertex_pos2d_location, 2, GL_FLOAT, GL_FALSE, stride, data); 
 }
 
-void gl_ltextured_polygon_program2d_set_texcoord_pointer(gl_ltextured_polygon_program2d* program, GLsizei stride, const GLvoid* data)
+void KRR_TEXSHADERPROG2D_set_texcoord_pointer(KRR_TEXSHADERPROG2D* program, GLsizei stride, const GLvoid* data)
 {
   glVertexAttribPointer(program->texcoord_location, 2, GL_FLOAT, GL_FALSE, stride, data);
 }
 
-void gl_ltextured_polygon_program2d_set_texture_color(gl_ltextured_polygon_program2d* program, LColorRGBA color)
+void KRR_TEXSHADERPROG2D_set_texture_color(KRR_TEXSHADERPROG2D* program, COLOR32 color)
 {
   glUniform4fv(program->texture_color_location, 1, (const GLfloat*)&color);
 }
 
-void gl_ltextured_polygon_program2d_set_texture_sampler(gl_ltextured_polygon_program2d* program, GLuint sampler)
+void KRR_TEXSHADERPROG2D_set_texture_sampler(KRR_TEXSHADERPROG2D* program, GLuint sampler)
 {
   glUniform1i(program->texture_sampler_location, sampler);
 }
 
-void gl_ltextured_polygon_program2d_enable_attrib_pointers(gl_ltextured_polygon_program2d* program)
+void KRR_TEXSHADERPROG2D_enable_attrib_pointers(KRR_TEXSHADERPROG2D* program)
 {
   glEnableVertexAttribArray(program->vertex_pos2d_location);
   glEnableVertexAttribArray(program->texcoord_location);
 }
 
-void gl_ltextured_polygon_program2d_disable_attrib_pointers(gl_ltextured_polygon_program2d* program)
+void KRR_TEXSHADERPROG2D_disable_attrib_pointers(KRR_TEXSHADERPROG2D* program)
 {
   glDisableVertexAttribArray(program->vertex_pos2d_location);
   glDisableVertexAttribArray(program->texcoord_location);

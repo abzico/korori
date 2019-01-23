@@ -1,9 +1,9 @@
 #include "timer.h"
 #include <stdlib.h>
 
-krr_TIMER* krr_TIMER_createNew()
+KRR_TIMER* KRR_TIMER_createNew()
 {
-  krr_TIMER *timer = malloc(sizeof(krr_TIMER));
+  KRR_TIMER *timer = malloc(sizeof(KRR_TIMER));
 
   timer->started_ticks = 0;
   timer->paused_ticks = 0;
@@ -13,7 +13,7 @@ krr_TIMER* krr_TIMER_createNew()
   return timer;
 }
 
-void krr_TIMER_start(krr_TIMER* timer)
+void KRR_TIMER_start(KRR_TIMER* timer)
 {
   timer->started = true;
   timer->paused = false;
@@ -22,7 +22,7 @@ void krr_TIMER_start(krr_TIMER* timer)
   timer->paused_ticks = 0;  
 }
 
-void krr_TIMER_stop(krr_TIMER* timer)
+void KRR_TIMER_stop(KRR_TIMER* timer)
 {
   // stop the timer
   timer->started = false;
@@ -35,7 +35,7 @@ void krr_TIMER_stop(krr_TIMER* timer)
   timer->paused_ticks = 0;
 }
 
-void krr_TIMER_pause(krr_TIMER* timer)
+void KRR_TIMER_pause(KRR_TIMER* timer)
 {
   // if the timer is running and isn't already paused
   if (timer->started && !timer->paused)
@@ -49,7 +49,7 @@ void krr_TIMER_pause(krr_TIMER* timer)
   }
 }
 
-void krr_TIMER_resume(krr_TIMER* timer)
+void KRR_TIMER_resume(KRR_TIMER* timer)
 {
   // the the timer is paused and running
   if (timer->started && timer->paused)
@@ -65,7 +65,7 @@ void krr_TIMER_resume(krr_TIMER* timer)
   }
 }
 
-Uint32 krr_TIMER_getTicks(krr_TIMER* timer)
+Uint32 KRR_TIMER_getTicks(KRR_TIMER* timer)
 {
   if (timer->started)
   {
@@ -83,7 +83,7 @@ Uint32 krr_TIMER_getTicks(krr_TIMER* timer)
   return 0;
 }
 
-void krr_TIMER_free(krr_TIMER* timer)
+void KRR_TIMER_free(KRR_TIMER* timer)
 {
   free(timer);
   timer = NULL;

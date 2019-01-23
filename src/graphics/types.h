@@ -1,5 +1,5 @@
-#ifndef gl_types_h_
-#define gl_types_h_
+#ifndef KRR_graphics_types_h_
+#define KRR_graphics_types_h_
 
 #include "gl.h"
 
@@ -9,37 +9,31 @@ typedef struct
   GLfloat y;
   GLfloat w;
   GLfloat h;
-} LRect;
+} RECT;
 
 typedef struct
 {
   GLfloat w;
   GLfloat h;
-} LSize;
-
-typedef struct
-{
-  GLfloat x;
-  GLfloat y;
-} LVector2D;
+} SIZE;
 
 typedef struct
 {
   GLfloat s;
   GLfloat t;
-} LTexCoord2D;
+} TEXCOORD2D;
 
 typedef struct
 {
   GLfloat x;
   GLfloat y;
-} LVertexPos2D;
+} VERTEXPOS2D;
 
 typedef struct
 {
-  LVector2D position;
-  LTexCoord2D texcoord;
-} LVertexData2D;
+  VERTEXPOS2D position;
+  TEXCOORD2D texcoord;
+} VERTEXTEX2D;
 
 typedef struct
 {
@@ -47,12 +41,12 @@ typedef struct
   GLfloat g;
   GLfloat b;
   GLfloat a;
-} LColorRGBA;
+} COLOR32;
 
 typedef struct
 {
-  LVertexPos2D pos;
-  LColorRGBA color;
-} LMultiColorVertex2D;
+  VERTEXPOS2D pos;
+  COLOR32 color;
+} MULTCOLOR2D;
 
 #endif

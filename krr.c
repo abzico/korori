@@ -2,7 +2,6 @@
  * Korori Main Source File
  */
 
-
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -11,10 +10,10 @@
 #include "SDL_image.h"
 #include "foundation/common.h"
 #include "foundation/window.h"
-#include "gl/gl_common.h"
-#include "gl/gl_LTexture.h"
-#include "gl/gl_LTexture_spritesheet.h"
-#include "gl/gl_LFont.h"
+#include "graphics/common.h"
+#include "graphics/texture.h"
+#include "graphics/spritesheet.h"
+#include "graphics/font.h"
 
 #include "usercode.h"
 
@@ -74,8 +73,8 @@ bool init() {
 
   // create window
   // if we set SDL_WINDOW_OPENGL flag then renderer won't be created for this window
-  // thus make sure you cannot use LTexture anymore as it heavilty use renderer as created in krr_WINDOW
-  gWindow = krr_WINDOW_new("Korori - Test", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL, 0);
+  // thus make sure you cannot use LTexture anymore as it heavilty use renderer as created in KRR_WINDOW
+  gWindow = KRR_WINDOW_new("Korori - Test", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL, 0);
   if (gWindow == NULL) {
     SDL_Log("Window could not be created! SDL_Error: %s", SDL_GetError());
     return false;
@@ -194,7 +193,7 @@ void close()
   usercode_close();
 
   // destroy window
-  krr_WINDOW_free(gWindow);
+  KRR_WINDOW_free(gWindow);
 
   IMG_Quit();
   SDL_Quit();

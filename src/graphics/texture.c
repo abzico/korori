@@ -1,9 +1,9 @@
-#include "gl_LTexture.h"
-#include "gl_LTexture_internals.h"
+#include "texture.h"
 #include "foundation/math.h"
 #include "foundation/util.h"
-#include "gl/gl_util.h"
-#include "gl/gl_ltextured_polygon_program2d.h"
+#include "graphics/texture_internals.h"
+#include "graphics/util.h"
+#include "graphics/texturedpp2d.h"
 #include "SDL_log.h"
 #include "SDL_image.h"
 #include <stdio.h>
@@ -12,19 +12,19 @@
 #include <errno.h>
 #include <string.h>
 
-struct gl_ltextured_polygon_program2d_* shared_textured_shaderprogram = NULL;
+struct KRR_TEXSHADERPROG2D_* shared_textured_shaderprogram = NULL;
 static GLenum DEFAULT_TEXTURE_WRAP = GL_REPEAT;
 
 // initialize defaults for texture
-static void init_defaults(gl_LTexture* texture);
+static void init_defaults(KRR_TEXTURE* texture);
 // find next POT value from input value
 static int find_next_pot(int value);
 
 // initialize VBO and IBO
-static void init_VBO_IBO(gl_LTexture* texture);
-static void free_VBO_IBO(gl_LTexture* texture);
+static void init_VBO_IBO(KRR_TEXTURE* texture);
+static void free_VBO_IBO(KRR_TEXTURE* texture);
 
-void init_defaults(gl_LTexture* texture)
+void init_defaults(KRR_TEXTURE* texture)
 {
   texture->texture_id = 0;
   texture->width = 0;
@@ -38,7 +38,7 @@ void init_defaults(gl_LTexture* texture)
   texture->IBO_id = 0;
 }
 
-void gl_LTexture_free_internal_texture(gl_LTexture* texture)
+void KRR_TEXTURE_free_internal_texture(KRR_TEXTURE* texture)
 {
   if (texture != NULL && texture->texture_id != 0)
   {
@@ -67,9 +67,9 @@ void gl_LTexture_free_internal_texture(gl_LTexture* texture)
   free_VBO_IBO(texture);
 }
 
-gl_LTexture* gl_LTexture_new()
+KRR_TEXTURE* KRR_TEXTURE_new()
 {
-  gl_LTexture* out = malloc(sizeof(gl_LTexture));
+  KRR_TEXTURE* out = malloc(sizeof(KRR_TEXTURE));
   init_defaults(out);
   return out;
 }
@@ -78,7 +78,7 @@ int find_next_pot(int value)
 {
   // shift 1 bit to the left for input value, then 
   // logical AND with 1-most-siginicant-bit-mask to zero out all the less bits
-  return (value << 1) & (1 << krr_math_bitcount(value));
+  return (value << 1) & (1 << KRR_math_bitcount(value));
 }
 
 struct DDS_PixelFormat;
@@ -139,21 +139,21 @@ static void _print_dds_header_struct(struct DDS_Header* header)
   SDL_Log("\t- A bitmask: %d", header->dds_pixel_format.a_bitmask);
 }
 
-void gl_LTexture_free(gl_LTexture* texture)
+void KRR_TEXTURE_free(KRR_TEXTURE* texture)
 {
   if (texture != NULL)
   {
     // free internal texture
-    gl_LTexture_free_internal_texture(texture);
+    KRR_TEXTURE_free_internal_texture(texture);
     // free allocated memory
     free(texture);
     texture = NULL;
   }
 }
 
-bool gl_LTexture_load_texture_from_file(gl_LTexture* texture, const char* path)
+bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char* path)
 {
-  // free internal stuff will be done inside gl_LTexture_load_texture_from_pixels32() function
+  // free internal stuff will be done inside KRR_TEXTURE_load_texture_from_pixels32() function
 
   SDL_Surface* loaded_surface = IMG_Load(path);
   if (loaded_surface == NULL)
@@ -173,7 +173,7 @@ bool gl_LTexture_load_texture_from_file(gl_LTexture* texture, const char* path)
     return false;
   }
 
-  if (!gl_LTexture_load_texture_from_pixels32(texture, converted_surface->pixels, converted_surface->w, converted_surface->h))
+  if (!KRR_TEXTURE_load_texture_from_pixels32(texture, converted_surface->pixels, converted_surface->w, converted_surface->h))
   {
     SDL_Log("Failed to set pixel data to texture");
     return false;
@@ -190,10 +190,10 @@ bool gl_LTexture_load_texture_from_file(gl_LTexture* texture, const char* path)
   return true;
 }
 
-bool gl_LTexture_load_texture_from_file_ex(gl_LTexture* texture, const char* path, GLuint color_key)
+bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const char* path, GLuint color_key)
 {
   // get pixels from file
-  if (!gl_LTexture_load_pixels_from_file(texture, path))
+  if (!KRR_TEXTURE_load_pixels_from_file(texture, path))
   {
     SDL_Log("Failed to load pixels from file");
     return false;
@@ -217,7 +217,7 @@ bool gl_LTexture_load_texture_from_file_ex(gl_LTexture* texture, const char* pat
   }
 
   // create a texture out of it
-  if (!gl_LTexture_load_texture_from_precreated_pixels32(texture))
+  if (!KRR_TEXTURE_load_texture_from_precreated_pixels32(texture))
   {
     SDL_Log("Cannot create texture from pre-created pixels");
     return false;
@@ -226,7 +226,7 @@ bool gl_LTexture_load_texture_from_file_ex(gl_LTexture* texture, const char* pat
   return true;
 }
 
-bool gl_LTexture_load_dds_texture_from_file(gl_LTexture* texture, const char* path)
+bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* path)
 {
   // pre-check if user's system doesn't have required capability to load S3TC texture
   if (GLEW_EXT_texture_compression_s3tc == 0)
@@ -363,15 +363,15 @@ bool gl_LTexture_load_dds_texture_from_file(gl_LTexture* texture, const char* pa
   int images_size = ceil(header.width / 4.0) * ceil(header.height / 4.0) * blocksize;
   SDL_Log("level 0 width: %d, height: %d, size: %d", header.width, header.height, images_size);
   {
-    int width = krr_math_max(1, header.width);
-    int height = krr_math_max(1, header.height);
+    int width = KRR_math_max(1, header.width);
+    int height = KRR_math_max(1, header.height);
     int pre_width = width;
     int pre_height = height;
 
     for (int level=1; level<=header.mipmap_count; level++)
     {
-      width = krr_math_max(1, width/2);
-      height = krr_math_max(1, height/2);
+      width = KRR_math_max(1, width/2);
+      height = KRR_math_max(1, height/2);
 
       if (width == pre_width && height == pre_height)
       {
@@ -442,8 +442,8 @@ bool gl_LTexture_load_dds_texture_from_file(gl_LTexture* texture, const char* pa
     // proceed next
     offset += size;
     // re-calculate size for mipmap
-    width = krr_math_max(1, width/2);
-    height = krr_math_max(1, height/2);
+    width = KRR_math_max(1, width/2);
+    height = KRR_math_max(1, height/2);
   }
 
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -458,8 +458,8 @@ bool gl_LTexture_load_dds_texture_from_file(gl_LTexture* texture, const char* pa
   GLenum error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    krr_util_print_callstack();
-    SDL_Log("Error loading compressed texture %s", gl_util_error_string(error));
+    KRR_util_print_callstack();
+    SDL_Log("Error loading compressed texture %s", KRR_gputil_error_string(error));
     return false;
   }
 
@@ -472,11 +472,11 @@ bool gl_LTexture_load_dds_texture_from_file(gl_LTexture* texture, const char* pa
   return true;
 }
 
-bool gl_LTexture_load_texture_from_pixels32(gl_LTexture* texture, GLuint* pixels, GLuint width, GLuint height)
+bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels, GLuint width, GLuint height)
 {
   // free existing texture first if it exists
   // because user can load texture from pixels data multiple times
-  gl_LTexture_free_internal_texture(texture);
+  KRR_TEXTURE_free_internal_texture(texture);
 
   bool is_need_to_resize = false;
 
@@ -593,8 +593,8 @@ bool gl_LTexture_load_texture_from_pixels32(gl_LTexture* texture, GLuint* pixels
   GLenum error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    krr_util_print_callstack();
-    SDL_Log("Error loading texture from %p pixels! %s", pixels, gl_util_error_string(error));
+    KRR_util_print_callstack();
+    SDL_Log("Error loading texture from %p pixels! %s", pixels, KRR_gputil_error_string(error));
     return false;
   }
 
@@ -607,7 +607,7 @@ bool gl_LTexture_load_texture_from_pixels32(gl_LTexture* texture, GLuint* pixels
   return true;
 }
 
-void gl_LTexture_render(gl_LTexture* texture, GLfloat x, GLfloat y, const LRect* clip)
+void KRR_TEXTURE_render(KRR_TEXTURE* texture, GLfloat x, GLfloat y, const RECT* clip)
 {
   // texture coordinates
   // fixed pixel bleeding when we render sub-region of texture
@@ -642,10 +642,10 @@ void gl_LTexture_render(gl_LTexture* texture, GLfloat x, GLfloat y, const LRect*
   // move to rendering position
   glm_translate(shared_textured_shaderprogram->modelview_matrix, (vec3){x, y, 0.f});
   // issue update to gpu
-  gl_ltextured_polygon_program2d_update_modelview_matrix(shared_textured_shaderprogram);
+  KRR_TEXSHADERPROG2D_update_modelview_matrix(shared_textured_shaderprogram);
 
   // set vertex data
-  LVertexData2D vertex_data[4];
+  VERTEXTEX2D vertex_data[4];
 
   // texture coordinates
   vertex_data[0].texcoord.s = tex_left;     vertex_data[0].texcoord.t = tex_top;
@@ -663,17 +663,17 @@ void gl_LTexture_render(gl_LTexture* texture, GLfloat x, GLfloat y, const LRect*
   glBindTexture(GL_TEXTURE_2D, texture->texture_id);
   
   // enable vertex and texture coordinate vertex attribute arrays
-  gl_ltextured_polygon_program2d_enable_attrib_pointers(shared_textured_shaderprogram);
+  KRR_TEXSHADERPROG2D_enable_attrib_pointers(shared_textured_shaderprogram);
   
     // bind vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, texture->VBO_id);
     // update vertex buffer data to GPU
-    glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(LVertexData2D), vertex_data);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(VERTEXTEX2D), vertex_data);
 
     // set texture coordinate data
-    gl_ltextured_polygon_program2d_set_texcoord_pointer(shared_textured_shaderprogram, sizeof(LVertexData2D), (const GLvoid*)offsetof(LVertexData2D, texcoord));
+    KRR_TEXSHADERPROG2D_set_texcoord_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (const GLvoid*)offsetof(VERTEXTEX2D, texcoord));
     // set vertex data
-    gl_ltextured_polygon_program2d_set_vertex_pointer(shared_textured_shaderprogram, sizeof(LVertexData2D), (const GLvoid*)offsetof(LVertexData2D, position));
+    KRR_TEXSHADERPROG2D_set_vertex_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (const GLvoid*)offsetof(VERTEXTEX2D, position));
 
     // draw quad using vertex and index data
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, texture->IBO_id);
@@ -684,10 +684,10 @@ void gl_LTexture_render(gl_LTexture* texture, GLfloat x, GLfloat y, const LRect*
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   // disable vertex and texture coord attribute pointer
-  gl_ltextured_polygon_program2d_disable_attrib_pointers(shared_textured_shaderprogram);
+  KRR_TEXSHADERPROG2D_disable_attrib_pointers(shared_textured_shaderprogram);
 }
 
-bool gl_LTexture_lock(gl_LTexture* texture)
+bool KRR_TEXTURE_lock(KRR_TEXTURE* texture)
 {
   // if texture is not locked yet, and it exists
   if (texture->pixels == NULL && texture->pixels8 == NULL && texture->texture_id != 0)
@@ -723,7 +723,7 @@ bool gl_LTexture_lock(gl_LTexture* texture)
   return false;
 }
 
-bool gl_LTexture_unlock(gl_LTexture* texture)
+bool KRR_TEXTURE_unlock(KRR_TEXTURE* texture)
 {
   // if texture is locked, and texture exists
   // as we have 2 underlying pixel formats to work with, if either one is not null, then it's fine to proceed
@@ -758,30 +758,30 @@ bool gl_LTexture_unlock(gl_LTexture* texture)
   return false;
 }
 
-void gl_LTexture_set_pixel32(gl_LTexture* texture, GLuint x, GLuint y, GLuint pixel)
+void KRR_TEXTURE_set_pixel32(KRR_TEXTURE* texture, GLuint x, GLuint y, GLuint pixel)
 {
   texture->pixels[y * texture->physical_width_ + x] = pixel;
 }
 
-GLuint gl_LTexture_get_pixel32(gl_LTexture* texture, GLuint x, GLuint y)
+GLuint KRR_TEXTURE_get_pixel32(KRR_TEXTURE* texture, GLuint x, GLuint y)
 {
   return texture->pixels[y * texture->physical_width_ + x];
 }
 
-void gl_LTexture_set_pixel8(gl_LTexture* texture, GLuint x, GLuint y, GLubyte pixel)
+void KRR_TEXTURE_set_pixel8(KRR_TEXTURE* texture, GLuint x, GLuint y, GLubyte pixel)
 {
   texture->pixels8[y * texture->physical_width_ + x] = pixel;
 }
 
-GLubyte gl_LTexture_get_pixel8(gl_LTexture* texture, GLuint x, GLuint y)
+GLubyte KRR_TEXTURE_get_pixel8(KRR_TEXTURE* texture, GLuint x, GLuint y)
 {
   return texture->pixels8[y * texture->physical_width_ + x];
 }
 
-bool gl_LTexture_load_pixels_from_file(gl_LTexture* texture, const char* path)
+bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
 {
   // free existing texture first if it exists
-  gl_LTexture_free_internal_texture(texture);
+  KRR_TEXTURE_free_internal_texture(texture);
 
   // load surface, then convert to our proper format first
   SDL_Surface* loaded_surface = IMG_Load(path);
@@ -917,10 +917,10 @@ bool gl_LTexture_load_pixels_from_file(gl_LTexture* texture, const char* path)
   return true; 
 }
 
-bool gl_LTexture_load_pixels_from_file8(gl_LTexture* texture, const char* path)
+bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
 {
   // free existing texture first if it exists
-  gl_LTexture_free_internal_texture(texture);
+  KRR_TEXTURE_free_internal_texture(texture);
 
   SDL_Surface* loaded_surface = IMG_Load(path);
   if (loaded_surface == NULL)
@@ -1075,7 +1075,7 @@ bool gl_LTexture_load_pixels_from_file8(gl_LTexture* texture, const char* path)
   return true;
 }
 
-bool gl_LTexture_load_texture_from_precreated_pixels32(gl_LTexture* texture)
+bool KRR_TEXTURE_load_texture_from_precreated_pixels32(KRR_TEXTURE* texture)
 {
   // if there's loaded pixels already set to texture
   // but texture is not created yet
@@ -1106,8 +1106,8 @@ bool gl_LTexture_load_texture_from_precreated_pixels32(gl_LTexture* texture)
     GLenum error = glGetError();
     if (error != GL_NO_ERROR)
     {
-      krr_util_print_callstack();
-      SDL_Log("Error loading texture from pixels [%p]: %s", texture->pixels, gl_util_error_string(error));
+      KRR_util_print_callstack();
+      SDL_Log("Error loading texture from pixels [%p]: %s", texture->pixels, KRR_gputil_error_string(error));
       return false;
     }
     else
@@ -1141,7 +1141,7 @@ bool gl_LTexture_load_texture_from_precreated_pixels32(gl_LTexture* texture)
   return false;
 }
 
-bool gl_LTexture_load_texture_from_precreated_pixels8(gl_LTexture* texture)
+bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture)
 {
   // if there's loaded pixels already set to texture
   // but texture is not created yet
@@ -1172,8 +1172,8 @@ bool gl_LTexture_load_texture_from_precreated_pixels8(gl_LTexture* texture)
     GLenum error = glGetError();
     if (error != GL_NO_ERROR)
     {
-      krr_util_print_callstack();
-      SDL_Log("Error loading texture from pixels [%p]: %s", texture->pixels, gl_util_error_string(error));
+      KRR_util_print_callstack();
+      SDL_Log("Error loading texture from pixels [%p]: %s", texture->pixels, KRR_gputil_error_string(error));
       return false;
     }
     else
@@ -1207,13 +1207,13 @@ bool gl_LTexture_load_texture_from_precreated_pixels8(gl_LTexture* texture)
   return false;
 }
 
-void init_VBO_IBO(gl_LTexture* texture)
+void init_VBO_IBO(KRR_TEXTURE* texture)
 {
   // if texture is loaded and VBO doesn't already exist
   if (texture->texture_id != 0 && texture->VBO_id == 0)
   {
     // vertex data
-    LVertexData2D vertex_data[4];
+    VERTEXTEX2D vertex_data[4];
     GLuint index_data[4];
 
     // set rendering indices
@@ -1225,7 +1225,7 @@ void init_VBO_IBO(gl_LTexture* texture)
     // create VBO
     glGenBuffers(1, &texture->VBO_id);
     glBindBuffer(GL_ARRAY_BUFFER, texture->VBO_id);
-    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(LVertexData2D), vertex_data, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(VERTEXTEX2D), vertex_data, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // create IBO
@@ -1236,7 +1236,7 @@ void init_VBO_IBO(gl_LTexture* texture)
   }
 }
 
-void free_VBO_IBO(gl_LTexture* texture)
+void free_VBO_IBO(KRR_TEXTURE* texture)
 {
   if (texture->VBO_id != 0 && texture->IBO_id != 0)
   {
@@ -1248,13 +1248,13 @@ void free_VBO_IBO(gl_LTexture* texture)
   }
 }
 
-void gl_LTexture_create_pixels32(gl_LTexture* texture, GLuint image_width, GLuint image_height)
+void KRR_TEXTURE_create_pixels32(KRR_TEXTURE* texture, GLuint image_width, GLuint image_height)
 {
   // valid dimension
   if (image_width > 0 && image_height > 0)
   {
     // get rid of any current texture data
-    gl_LTexture_free_internal_texture(texture);
+    KRR_TEXTURE_free_internal_texture(texture);
 
     // create pixels
     GLuint pixel_count = image_width * image_height;
@@ -1274,13 +1274,13 @@ void gl_LTexture_create_pixels32(gl_LTexture* texture, GLuint image_width, GLuin
   }
 }
 
-void gl_LTexture_copy_pixels32(gl_LTexture* texture, GLuint* pixels, GLuint image_width, GLuint image_height)
+void KRR_TEXTURE_copy_pixels32(KRR_TEXTURE* texture, GLuint* pixels, GLuint image_width, GLuint image_height)
 {
   // pixels has valid dimensions
   if (image_width > 0 && image_height > 0)
   {
     // get rid of any current texture data
-    gl_LTexture_free_internal_texture(texture);
+    KRR_TEXTURE_free_internal_texture(texture);
 
     // copy pixels
     GLuint size = image_width * image_height * sizeof(GLuint);
@@ -1299,7 +1299,7 @@ void gl_LTexture_copy_pixels32(gl_LTexture* texture, GLuint* pixels, GLuint imag
   }
 }
 
-void gl_LTexture_pad_pixels32(gl_LTexture* texture)
+void KRR_TEXTURE_pad_pixels32(KRR_TEXTURE* texture)
 {
   // if there are pixels to pad
   if (texture->pixels != NULL)
@@ -1354,7 +1354,7 @@ void gl_LTexture_pad_pixels32(gl_LTexture* texture)
   }
 }
 
-void gl_LTexture_blit_pixels32(gl_LTexture* texture, GLuint dst_x, GLuint dst_y, const gl_LTexture* dst_texture)
+void KRR_TEXTURE_blit_pixels32(KRR_TEXTURE* texture, GLuint dst_x, GLuint dst_y, const KRR_TEXTURE* dst_texture)
 {
   // there are pixels to blit
   if (texture->pixels != NULL && dst_texture->pixels != NULL)
@@ -1371,13 +1371,13 @@ void gl_LTexture_blit_pixels32(gl_LTexture* texture, GLuint dst_x, GLuint dst_y,
   }
 }
 
-void gl_LTexture_create_pixels8(gl_LTexture* texture, GLuint image_width, GLuint image_height)
+void KRR_TEXTURE_create_pixels8(KRR_TEXTURE* texture, GLuint image_width, GLuint image_height)
 {
   // valid dimensions
   if (image_width > 0 && image_height > 0)
   {
     // get rid of any current texture data
-    gl_LTexture_free_internal_texture(texture);
+    KRR_TEXTURE_free_internal_texture(texture);
 
     // create pixels
     GLuint pixel_count = image_width * image_height;
@@ -1397,13 +1397,13 @@ void gl_LTexture_create_pixels8(gl_LTexture* texture, GLuint image_width, GLuint
   }
 }
 
-void gl_LTexture_copy_pixels8(gl_LTexture* texture, GLubyte* pixels, GLuint image_width, GLuint image_height)
+void KRR_TEXTURE_copy_pixels8(KRR_TEXTURE* texture, GLubyte* pixels, GLuint image_width, GLuint image_height)
 {
   // pixels has valid dimensions
   if (image_width > 0 && image_height > 0)
   {
     // get rid of any current texture data
-    gl_LTexture_free_internal_texture(texture);
+    KRR_TEXTURE_free_internal_texture(texture);
 
     // copy pixels
     GLuint size = image_width * image_height * sizeof(GLubyte);
@@ -1422,7 +1422,7 @@ void gl_LTexture_copy_pixels8(gl_LTexture* texture, GLubyte* pixels, GLuint imag
   }
 }
 
-void gl_LTexture_pad_pixels8(gl_LTexture* texture)
+void KRR_TEXTURE_pad_pixels8(KRR_TEXTURE* texture)
 {
   // if there are pixels to pad
   if (texture->pixels8 != NULL)
@@ -1477,7 +1477,7 @@ void gl_LTexture_pad_pixels8(gl_LTexture* texture)
   }
 }
 
-void gl_LTexture_blit_pixels8(gl_LTexture* texture, GLuint dst_x, GLuint dst_y, const gl_LTexture* dst_texture)
+void KRR_TEXTURE_blit_pixels8(KRR_TEXTURE* texture, GLuint dst_x, GLuint dst_y, const KRR_TEXTURE* dst_texture)
 {
   // there are pixels to blit
   if (texture->pixels8 != NULL && dst_texture->pixels8 != NULL)

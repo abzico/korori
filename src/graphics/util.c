@@ -1,15 +1,15 @@
-#include "gl_util.h"
+#include "util.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include "SDL_log.h"
 
-void gl_util_adapt_to_normal(int screen_width, int screen_height)
+void KRR_gputil_adapt_to_normal(int screen_width, int screen_height)
 {
 	// set viewport
 	glViewport(0.0, 0.0, screen_width, screen_height);
 }
 
-void gl_util_adapt_to_letterbox(int screen_width, int screen_height, int logical_width, int logical_height, int* result_view_width, int* result_view_height, int* offset_x, int* offset_y)
+void KRR_gputil_adapt_to_letterbox(int screen_width, int screen_height, int logical_width, int logical_height, int* result_view_width, int* result_view_height, int* offset_x, int* offset_y)
 {
   // coordinate is different from OpenGL, Y+ is up, and Y- is down; opposite of opengl
 	float aspect = logical_width * 1.0f / logical_height;
@@ -55,7 +55,7 @@ void gl_util_adapt_to_letterbox(int screen_width, int screen_height, int logical
 
 // implementation note: decided to return string literal instead of using global string variable
 // as to reduce management effort in code to clear error message when execute next related command
-const char* gl_util_error_string(GLenum error)
+const char* KRR_gputil_error_string(GLenum error)
 {
   if (error == GL_NO_ERROR)
     return "No error";
@@ -77,7 +77,7 @@ const char* gl_util_error_string(GLenum error)
     return "Unknown error"; // should not happen anyway if you get error from glGetError()
 }
 
-GLuint gl_util_map_color_RGBA_to_ABGR(GLuint color)
+GLuint KRR_gputil_map_color_RGBA_to_ABGR(GLuint color)
 {
   // map color key to ABGR format
   GLubyte* color_key_bytes = (GLubyte*)&color;
@@ -85,31 +85,31 @@ GLuint gl_util_map_color_RGBA_to_ABGR(GLuint color)
   return (color_key_bytes[0] << 24) | (color_key_bytes[1] << 16) | (color_key_bytes[2] << 8) | (color_key_bytes[3]); 
 }
 
-GLenum gl_util_anyerror(const char* prefix)
+GLenum KRR_gputil_anyerror(const char* prefix)
 {
   GLenum error = glGetError();
   if (error != GL_NO_ERROR)
   {
     if (prefix == NULL)
-      SDL_Log("[] Opengl error code %d: %s", error, gl_util_error_string(error));
+      SDL_Log("[] Opengl error code %d: %s", error, KRR_gputil_error_string(error));
     else
-      SDL_Log("[%s] Opengl error code %d: %s", prefix, error, gl_util_error_string(error));
+      SDL_Log("[%s] Opengl error code %d: %s", prefix, error, KRR_gputil_error_string(error));
   }
 
   return error;
 }
 
-void gl_util_update_projection_matrix(GLint location, mat4 matrix)
+void KRR_gputil_update_projection_matrix(GLint location, mat4 matrix)
 {
   glUniformMatrix4fv(location, 1, GL_FALSE, matrix[0]);
 }
 
-void gl_util_update_modelview_matrix(GLint location, mat4 matrix)
+void KRR_gputil_update_modelview_matrix(GLint location, mat4 matrix)
 {
   glUniformMatrix4fv(location, 1, GL_FALSE, matrix[0]);
 }
 
-void gl_util_enable_vertex_attrib_pointers(GLint location, ...)
+void KRR_gputil_enable_vertex_attrib_pointers(GLint location, ...)
 {
   va_list va;
   va_start(va, location);
@@ -125,7 +125,7 @@ void gl_util_enable_vertex_attrib_pointers(GLint location, ...)
   va_end(va);
 }
 
-void gl_util_disable_vertex_attrib_pointers(GLint location, ...)
+void KRR_gputil_disable_vertex_attrib_pointers(GLint location, ...)
 {
   va_list va;
   va_start(va, location);

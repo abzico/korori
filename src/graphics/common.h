@@ -1,5 +1,5 @@
-#ifndef krr_gl_common_h_
-#define krr_gl_common_h_
+#ifndef KRR_graphics_common_h_
+#define KRR_graphics_common_h_
 
 #include "glew.h"
 #include "gl.h"
@@ -10,6 +10,6 @@
 // for function call
 //#include <cglm/call.h>
 
-#include "gl/gl_types.h"
+#include "graphics/types.h"
 
 #endif

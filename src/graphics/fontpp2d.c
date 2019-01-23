@@ -1,11 +1,10 @@
-#include "gl_lfont_polygon_program2d.h"
-#include "gl/gl_LShaderProgram.h"
+#include "fontpp2d.h"
 #include "SDL_log.h"
 #include <stdlib.h>
 
-static void free_internals_(gl_lfont_polygon_program2d* program);
+static void free_internals_(KRR_FONT_polygon_program2d* program);
 
-void free_internals_(gl_lfont_polygon_program2d* program)
+void free_internals_(KRR_FONT_polygon_program2d* program)
 {
   // reset all locations
   program->vertex_pos2d_location = -1;
@@ -20,13 +19,13 @@ void free_internals_(gl_lfont_polygon_program2d* program)
   glm_mat4_identity(program->modelview_matrix);
   
   // free underlying shader program
-  gl_LShaderProgram_free(program->program);
+  KRR_SHADERPROG_free(program->program);
   program->program = NULL;
 }
 
-gl_lfont_polygon_program2d* gl_lfont_polygon_program2d_new()
+KRR_FONT_polygon_program2d* KRR_FONT_polygon_program2d_new()
 {
-  gl_lfont_polygon_program2d* out = malloc(sizeof(gl_lfont_polygon_program2d));
+  KRR_FONT_polygon_program2d* out = malloc(sizeof(KRR_FONT_polygon_program2d));
 
   // init defaults first
   out->program = NULL;
@@ -41,13 +40,13 @@ gl_lfont_polygon_program2d* gl_lfont_polygon_program2d_new()
 
   // create underlying shader program
   // we will take care of this automatically when freeing
-  gl_LShaderProgram* shader_program = gl_LShaderProgram_new();
+  KRR_SHADERPROG* shader_program = KRR_SHADERPROG_new();
   out->program = shader_program; 
 
   return out;
 }
 
-void gl_lfont_polygon_program2d_free(gl_lfont_polygon_program2d* program)
+void KRR_FONT_polygon_program2d_free(KRR_FONT_polygon_program2d* program)
 {
   // free internals
   free_internals_(program);
@@ -57,13 +56,13 @@ void gl_lfont_polygon_program2d_free(gl_lfont_polygon_program2d* program)
   program = NULL;
 }
 
-bool gl_lfont_polygon_program2d_load_program(gl_lfont_polygon_program2d* program)
+bool KRR_FONT_polygon_program2d_load_program(KRR_FONT_polygon_program2d* program)
 {
   // create a new program
   GLuint program_id = glCreateProgram();
 
   // load vertex shader
-  GLuint vertex_shader_id = gl_LShaderProgram_load_shader_from_file("res/shaders/l_font_program2d.vert", GL_VERTEX_SHADER);
+  GLuint vertex_shader_id = KRR_SHADERPROG_load_shader_from_file("res/shaders/fontpp2d.vert", GL_VERTEX_SHADER);
   if (vertex_shader_id == 0)
   {
     SDL_Log("Unable to load vertex shader from file");
@@ -82,7 +81,7 @@ bool gl_lfont_polygon_program2d_load_program(gl_lfont_polygon_program2d* program
   if (error != GL_NO_ERROR)
   {
     SDL_Log("Error attaching vertex shader");
-    gl_LShaderProgram_print_shader_log(vertex_shader_id);
+    KRR_SHADERPROG_print_shader_log(vertex_shader_id);
 
     // delete program
     glDeleteProgram(program_id);
@@ -92,7 +91,7 @@ bool gl_lfont_polygon_program2d_load_program(gl_lfont_polygon_program2d* program
   }
 
   // load fragment shader
-  GLuint fragment_shader_id = gl_LShaderProgram_load_shader_from_file("res/shaders/l_font_program2d.frag", GL_FRAGMENT_SHADER);
+  GLuint fragment_shader_id = KRR_SHADERPROG_load_shader_from_file("res/shaders/fontpp2d.frag", GL_FRAGMENT_SHADER);
   if (fragment_shader_id == 0)
   {
     SDL_Log("Unable to load fragment shader from file");
@@ -115,7 +114,7 @@ bool gl_lfont_polygon_program2d_load_program(gl_lfont_polygon_program2d* program
   if (error != GL_NO_ERROR)
   {
     SDL_Log("Error attaching fragment shader");
-    gl_LShaderProgram_print_shader_log(fragment_shader_id);
+    KRR_SHADERPROG_print_shader_log(fragment_shader_id);
 
     // delete vertex shader
     glDeleteShader(vertex_shader_id);
@@ -134,7 +133,7 @@ bool gl_lfont_polygon_program2d_load_program(gl_lfont_polygon_program2d* program
   if (error != GL_NO_ERROR)
   {
     SDL_Log("Error linking program");
-    gl_LShaderProgram_print_program_log(program_id);
+    KRR_SHADERPROG_print_program_log(program_id);
 
     // delete vertex shader
     glDeleteShader(vertex_shader_id);
@@ -195,43 +194,43 @@ bool gl_lfont_polygon_program2d_load_program(gl_lfont_polygon_program2d* program
   return true;
 }
 
-void gl_lfont_polygon_program2d_update_projection_matrix(gl_lfont_polygon_program2d* program)
+void KRR_FONT_polygon_program2d_update_projection_matrix(KRR_FONT_polygon_program2d* program)
 {
   glUniformMatrix4fv(program->projection_matrix_location, 1, GL_FALSE, program->projection_matrix[0]);
 }
 
-void gl_lfont_polygon_program2d_update_modelview_matrix(gl_lfont_polygon_program2d* program)
+void KRR_FONT_polygon_program2d_update_modelview_matrix(KRR_FONT_polygon_program2d* program)
 {
   glUniformMatrix4fv(program->modelview_matrix_location, 1, GL_FALSE, program->modelview_matrix[0]);
 }
 
-void gl_lfont_polygon_program2d_set_vertex_pointer(gl_lfont_polygon_program2d* program, GLsizei stride, const GLvoid* data)
+void KRR_FONT_polygon_program2d_set_vertex_pointer(KRR_FONT_polygon_program2d* program, GLsizei stride, const GLvoid* data)
 {
   glVertexAttribPointer(program->vertex_pos2d_location, 2, GL_FLOAT, GL_FALSE, stride, data);
 }
 
-void gl_lfont_polygon_program2d_set_texcoord_pointer(gl_lfont_polygon_program2d* program, GLsizei stride, const GLvoid* data)
+void KRR_FONT_polygon_program2d_set_texcoord_pointer(KRR_FONT_polygon_program2d* program, GLsizei stride, const GLvoid* data)
 {
   glVertexAttribPointer(program->texture_coord_location, 2, GL_FLOAT, GL_FALSE, stride, data);
 }
 
-void gl_lfont_polygon_program2d_set_texture_sampler(gl_lfont_polygon_program2d* program, GLuint sampler)
+void KRR_FONT_polygon_program2d_set_texture_sampler(KRR_FONT_polygon_program2d* program, GLuint sampler)
 {
   glUniform1i(program->texture_sampler_location, sampler);
 }
 
-void gl_lfont_polygon_program2d_set_text_color(gl_lfont_polygon_program2d* program, LColorRGBA color)
+void KRR_FONT_polygon_program2d_set_text_color(KRR_FONT_polygon_program2d* program, COLOR32 color)
 {
   glUniform4f(program->text_color_location, color.r, color.g, color.b, color.a);
 }
 
-void gl_lfont_polygon_program2d_enable_attrib_pointers(gl_lfont_polygon_program2d* program)
+void KRR_FONT_polygon_program2d_enable_attrib_pointers(KRR_FONT_polygon_program2d* program)
 {
   glEnableVertexAttribArray(program->vertex_pos2d_location);
   glEnableVertexAttribArray(program->texture_coord_location); 
 }
 
-void gl_lfont_polygon_program2d_disable_attrib_pointers(gl_lfont_polygon_program2d* program)
+void KRR_FONT_polygon_program2d_disable_attrib_pointers(KRR_FONT_polygon_program2d* program)
 {
   glDisableVertexAttribArray(program->vertex_pos2d_location);
   glDisableVertexAttribArray(program->texture_coord_location);

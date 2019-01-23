@@ -1,10 +1,10 @@
-#include "gl_ldouble_multicolor_polygon_program2d.h"
+#include "doublemulticolorpp2d.h"
 #include <stdlib.h>
 #include "SDL_log.h"
 
-gl_ldouble_multicolor_polygon_program2d* gl_ldouble_multicolor_polygon_program2d_new()
+KRR_DMULTICSHADERPROG2D* KRR_DMULTICSHADERPROG2D_new()
 {
-  gl_ldouble_multicolor_polygon_program2d* out = malloc(sizeof(gl_ldouble_multicolor_polygon_program2d));
+  KRR_DMULTICSHADERPROG2D* out = malloc(sizeof(KRR_DMULTICSHADERPROG2D));
 
   // init zeros first
   out->program = NULL;
@@ -17,15 +17,15 @@ gl_ldouble_multicolor_polygon_program2d* gl_ldouble_multicolor_polygon_program2d
   glm_mat4_identity(out->modelview_matrix);
 
   // init
-  out->program = gl_LShaderProgram_new();
+  out->program = KRR_SHADERPROG_new();
 
   return out;
 }
 
-void gl_ldouble_multicolor_polygon_program2d_free_internals(gl_ldouble_multicolor_polygon_program2d* program)
+void KRR_DMULTICSHADERPROG2D_free_internals(KRR_DMULTICSHADERPROG2D* program)
 {
   // free underlying shader program
-  gl_LShaderProgram_free(program->program);
+  KRR_SHADERPROG_free(program->program);
 
   program->vertex_pos2d_location = -1;
   program->multicolor1_location = -1;
@@ -37,23 +37,23 @@ void gl_ldouble_multicolor_polygon_program2d_free_internals(gl_ldouble_multicolo
   glm_mat4_identity(program->modelview_matrix);
 }
 
-void gl_ldouble_multicolor_polygon_program2d_free(gl_ldouble_multicolor_polygon_program2d* program)
+void KRR_DMULTICSHADERPROG2D_free(KRR_DMULTICSHADERPROG2D* program)
 {
   // free internals
-  gl_ldouble_multicolor_polygon_program2d_free_internals(program);
+  KRR_DMULTICSHADERPROG2D_free_internals(program);
 
   // free source
   free(program);
   program = NULL;
 }
 
-bool gl_ldouble_multicolor_polygon_program2d_load_program(gl_ldouble_multicolor_polygon_program2d* program)
+bool KRR_DMULTICSHADERPROG2D_load_program(KRR_DMULTICSHADERPROG2D* program)
 {
   // create a new program
   GLuint program_id = glCreateProgram();
 
   // load vertex shader
-  GLuint vertex_shader_id = gl_LShaderProgram_load_shader_from_file("res/shaders/l_double_multicolor_polygon_program2d.vert", GL_VERTEX_SHADER);
+  GLuint vertex_shader_id = KRR_SHADERPROG_load_shader_from_file("res/shaders/doublemulticolorpp2d.vert", GL_VERTEX_SHADER);
   if (vertex_shader_id == 0)
   {
     SDL_Log("Unable to load vertex shader from file");
@@ -72,7 +72,7 @@ bool gl_ldouble_multicolor_polygon_program2d_load_program(gl_ldouble_multicolor_
   if (error != GL_NO_ERROR)
   {
     SDL_Log("Error attaching vertex shader");
-    gl_LShaderProgram_print_shader_log(vertex_shader_id);
+    KRR_SHADERPROG_print_shader_log(vertex_shader_id);
 
     // delete program
     glDeleteProgram(program_id);
@@ -82,7 +82,7 @@ bool gl_ldouble_multicolor_polygon_program2d_load_program(gl_ldouble_multicolor_
   }
 
   // load fragment shader
-  GLuint fragment_shader_id = gl_LShaderProgram_load_shader_from_file("res/shaders/l_double_multicolor_polygon_program2d.frag", GL_FRAGMENT_SHADER);
+  GLuint fragment_shader_id = KRR_SHADERPROG_load_shader_from_file("res/shaders/doublemulticolorpp2d.frag", GL_FRAGMENT_SHADER);
   if (fragment_shader_id == 0)
   {
     SDL_Log("Unable to load fragment shader from file");
@@ -105,7 +105,7 @@ bool gl_ldouble_multicolor_polygon_program2d_load_program(gl_ldouble_multicolor_
   if (error != GL_NO_ERROR)
   {
     SDL_Log("Error attaching fragment shader");
-    gl_LShaderProgram_print_shader_log(fragment_shader_id);
+    KRR_SHADERPROG_print_shader_log(fragment_shader_id);
 
     // delete vertex shader
     glDeleteShader(vertex_shader_id);
@@ -124,7 +124,7 @@ bool gl_ldouble_multicolor_polygon_program2d_load_program(gl_ldouble_multicolor_
   if (error != GL_NO_ERROR)
   {
     SDL_Log("Error linking program");
-    gl_LShaderProgram_print_program_log(program_id);
+    KRR_SHADERPROG_print_program_log(program_id);
 
     // delete vertex shader
     glDeleteShader(vertex_shader_id);

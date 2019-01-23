@@ -1,6 +1,6 @@
 #include "common.h"
 
-krr_WINDOW* gWindow = NULL;
+KRR_WINDOW* gWindow = NULL;
 
 float common_frameTime = 0.0f;
 #ifndef DISABLE_FPS_CALC

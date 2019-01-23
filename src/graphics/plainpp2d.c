@@ -1,11 +1,11 @@
-#include "gl/gl_LPlainPolygonProgram2D.h"
-#include "gl/gl_LShaderProgram_internals.h"
+#include "graphics/plainpp2d.h"
+#include "graphics/shaderprog_internals.h"
 #include <stdlib.h>
 #include "SDL_log.h"
 
-static void init_defaults(gl_LPlainPolygonProgram2D* program);
+static void init_defaults(KRR_PLAINSHADERPROG2D* program);
 
-void init_defaults(gl_LPlainPolygonProgram2D* program)
+void init_defaults(KRR_PLAINSHADERPROG2D* program)
 {
 	program->program = NULL;
   program->polygon_color_location = -1;
@@ -15,37 +15,37 @@ void init_defaults(gl_LPlainPolygonProgram2D* program)
 	program->modelview_matrix_location = -1;
 }
 
-gl_LPlainPolygonProgram2D* gl_LPlainPolygonProgram2D_new(gl_LShaderProgram* program)
+KRR_PLAINSHADERPROG2D* KRR_PLAINSHADERPROG2D_new(KRR_SHADERPROG* program)
 {
-  gl_LPlainPolygonProgram2D* out = malloc(sizeof(gl_LPlainPolygonProgram2D));
+  KRR_PLAINSHADERPROG2D* out = malloc(sizeof(KRR_PLAINSHADERPROG2D));
 
   // first init defaults value
   init_defaults(out);
 
 	// init from input params
   out->program = program;
-  gl_LShaderProgram_init_defaults(out->program);
+  KRR_SHADERPROG_init_defaults(out->program);
 
   return out;
 }
 
-void gl_LPlainPolygonProgram2D_free(gl_LPlainPolygonProgram2D* program)
+void KRR_PLAINSHADERPROG2D_free(KRR_PLAINSHADERPROG2D* program)
 {
   // free underlying program
-  gl_LShaderProgram_free(program->program);
+  KRR_SHADERPROG_free(program->program);
 
   // free the source
   free(program);
   program = NULL;
 }
 
-bool gl_LPlainPolygonProgram2D_load_program(gl_LPlainPolygonProgram2D* program)
+bool KRR_PLAINSHADERPROG2D_load_program(KRR_PLAINSHADERPROG2D* program)
 {
   // generate program
   program->program->program_id = glCreateProgram();
 
   // load vertex shader
-  GLuint vertex_shader = gl_LShaderProgram_load_shader_from_file("res/shaders/LPlainPolygonProgram2D.vert", GL_VERTEX_SHADER);
+  GLuint vertex_shader = KRR_SHADERPROG_load_shader_from_file("res/shaders/plainpp2d.vert", GL_VERTEX_SHADER);
 
   // check for errors
   if (vertex_shader == 0)
@@ -59,7 +59,7 @@ bool gl_LPlainPolygonProgram2D_load_program(gl_LPlainPolygonProgram2D* program)
   glAttachShader(program->program->program_id, vertex_shader);
 
   // create fragment shader
-  GLuint fragment_shader = gl_LShaderProgram_load_shader_from_file("res/shaders/LPlainPolygonProgram2D.frag", GL_FRAGMENT_SHADER);
+  GLuint fragment_shader = KRR_SHADERPROG_load_shader_from_file("res/shaders/plainpp2d.frag", GL_FRAGMENT_SHADER);
 
   // check for errors
   if (fragment_shader == 0)
@@ -86,7 +86,7 @@ bool gl_LPlainPolygonProgram2D_load_program(gl_LPlainPolygonProgram2D* program)
   if (link_status != GL_TRUE)
   {
     SDL_Log("Error linking program %d", program->program->program_id);
-    gl_LShaderProgram_print_program_log(program->program->program_id);
+    KRR_SHADERPROG_print_program_log(program->program->program_id);
 
     // delete vertex shader
     glDeleteShader(vertex_shader);
@@ -136,20 +136,20 @@ bool gl_LPlainPolygonProgram2D_load_program(gl_LPlainPolygonProgram2D* program)
   return true;
 }
 
-void gl_LPlainPolygonProgram2D_set_color(gl_LPlainPolygonProgram2D* program, GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+void KRR_PLAINSHADERPROG2D_set_color(KRR_PLAINSHADERPROG2D* program, GLfloat r, GLfloat g, GLfloat b, GLfloat a)
 {
   // update color in shader
   glUniform4f(program->polygon_color_location, r, g, b, a);
 }
 
-void gl_LPlainPolygonProgram2D_update_projection_matrix(gl_LPlainPolygonProgram2D* program)
+void KRR_PLAINSHADERPROG2D_update_projection_matrix(KRR_PLAINSHADERPROG2D* program)
 {
 	// can consult README.md of cglm on how to pass matrix to opengl function
 	// note: it's column major
 	glUniformMatrix4fv(program->projection_matrix_location, 1, GL_FALSE, program->projection_matrix[0]);
 }
 
-void gl_LPlainPolygonProgram2D_update_modelview_matrix(gl_LPlainPolygonProgram2D* program)
+void KRR_PLAINSHADERPROG2D_update_modelview_matrix(KRR_PLAINSHADERPROG2D* program)
 {
 	glUniformMatrix4fv(program->modelview_matrix_location, 1, GL_FALSE, program->modelview_matrix[0]);
 }

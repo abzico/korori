@@ -1,5 +1,5 @@
 /*
- * krr_BUTTON
+ * KRR_BUTTON
  * Represents a *logical* button with 4 possible states of visual which are
  * 	- mouse out
  * 	- mouse over
@@ -9,54 +9,54 @@
  * 	It works with LTexture which will represent its visual.
  */
 
-#ifndef krr_BUTTON_h_
-#define krr_BUTTON_h_
+#ifndef KRR_BUTTON_h_
+#define KRR_BUTTON_h_
 
 #include "SDL.h"
 
 /// state of button
-enum krr_BUTTON_state
+enum KRR_BUTTON_state
 {
-	BUTTON_MOUSE_OUT = 0,
-	BUTTON_MOUSE_OVER_MOTION = 1,
-	BUTTON_MOUSE_DOWN = 2,
-	BUTTON_MOUSE_UP = 3,
-	BUTTON_TOTAL = 4
+	KRR_BUTTON_MOUSE_OUT = 0,
+	KRR_BUTTON_MOUSE_OVER_MOTION = 1,
+	KRR_BUTTON_MOUSE_DOWN = 2,
+	KRR_BUTTON_MOUSE_UP = 3,
+	KRR_BUTTON_TOTAL = 4
 };
 
 typedef struct
 {
-	enum krr_BUTTON_state state;
-} krr_BUTTON;
+	enum KRR_BUTTON_state state;
+} KRR_BUTTON;
 
 /*
- * Create a new krr_BUTTON then return its pointer via out pointer.
+ * Create a new KRR_BUTTON then return its pointer via out pointer.
  * 
- * Return newly created krr_BUTTON in which caller needs to free it with krr_BUTTON_Free().
+ * Return newly created KRR_BUTTON in which caller needs to free it with KRR_BUTTON_Free().
  */
-extern krr_BUTTON* krr_BUTTON_create();
+extern KRR_BUTTON* KRR_BUTTON_create();
 
 /*
- * Call this function to update krr_BUTTON's state, and execute user's custon handler function as set via its structure.
+ * Call this function to update KRR_BUTTON's state, and execute user's custon handler function as set via its structure.
  *
  * User calls this in application's event loop.
  * Parameter
- * 	- button, krr_BUTTON* : pointer to krr_BUTTON
+ * 	- button, KRR_BUTTON* : pointer to KRR_BUTTON
  * 	- e, SDL_Event* : pointer to SDL_Event as received in user's event loop code
  * 	- pos, SDL_Point : position that this button will be drawed
- * 	- buttonRect, SDL_Rect : rectangle defined the coordinate to render such krr_BUTTON
+ * 	- buttonRect, SDL_Rect : rectangle defined the coordinate to render such KRR_BUTTON
  */
-extern void krr_BUTTON_handleEvent(krr_BUTTON* button, SDL_Event* e, SDL_Rect buttonRect);
+extern void KRR_BUTTON_handleEvent(KRR_BUTTON* button, SDL_Event* e, SDL_Rect buttonRect);
 
 /*
- * Free krr_BUTTON.
+ * Free KRR_BUTTON.
  * After calling this function, button will be nil.
  * button cannot be nil.
  *
  * Paramter
- * 	- button krr_BUTTON* : pointer to krr_BUTTON to free
+ * 	- button KRR_BUTTON* : pointer to KRR_BUTTON to free
  */
-extern void krr_BUTTON_free(krr_BUTTON* button);
+extern void KRR_BUTTON_free(KRR_BUTTON* button);
 
-#endif 	/* krr_BUTTON_h_ */
+#endif 	/* KRR_BUTTON_h_ */
 

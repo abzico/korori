@@ -1,15 +1,15 @@
-#include "gl_LTexture_spritesheet.h"
-#include "gl_ltextured_polygon_program2d.h"
-#include "gl/gl_util.h"
+#include "spritesheet.h"
 #include <stdlib.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include "graphics/texturedpp2d.h"
+#include "graphics/util.h"
 #include "SDL_log.h"
 
-static void init_defaults(gl_LSpritesheet* spritesheet);
-static void free_internals(gl_LSpritesheet* spritesheet);
+static void init_defaults(KRR_SPRITESHEET* spritesheet);
+static void free_internals(KRR_SPRITESHEET* spritesheet);
 
-void init_defaults(gl_LSpritesheet* spritesheet)
+void init_defaults(KRR_SPRITESHEET* spritesheet)
 {
   spritesheet->ltexture = NULL;
   spritesheet->clips = NULL;
@@ -17,12 +17,12 @@ void init_defaults(gl_LSpritesheet* spritesheet)
   spritesheet->index_buffers = NULL;
 }
 
-void free_internals(gl_LSpritesheet* spritesheet)
+void free_internals(KRR_SPRITESHEET* spritesheet)
 {
   if (spritesheet->ltexture != NULL)
   {
-    // use gl_LTexture's free function to help on freeing this
-    gl_LTexture_free(spritesheet->ltexture);
+    // use KRR_TEXTURE's free function to help on freeing this
+    KRR_TEXTURE_free(spritesheet->ltexture);
     spritesheet->ltexture = NULL;
   }
 
@@ -34,45 +34,45 @@ void free_internals(gl_LSpritesheet* spritesheet)
   }
 }
 
-gl_LSpritesheet* gl_LSpritesheet_new(gl_LTexture* ltexture)
+KRR_SPRITESHEET* KRR_SPRITESHEET_new(KRR_TEXTURE* ltexture)
 {
-  gl_LSpritesheet* out = malloc(sizeof(gl_LSpritesheet));
+  KRR_SPRITESHEET* out = malloc(sizeof(KRR_SPRITESHEET));
   init_defaults(out);
 
   // init
   out->ltexture = ltexture;
-  out->clips = vector_new(1, sizeof(LRect));
-  // no need to set free_element for vector this time as LRect is pure value type struct
+  out->clips = vector_new(1, sizeof(RECT));
+  // no need to set free_element for vector this time as RECT is pure value type struct
 
   return out;
 }
 
-void gl_LSpritesheet_free(gl_LSpritesheet* spritesheet)
+void KRR_SPRITESHEET_free(KRR_SPRITESHEET* spritesheet)
 {
   // free sheet first
-  gl_LSpritesheet_free_sheet(spritesheet);
+  KRR_SPRITESHEET_free_sheet(spritesheet);
   
   // free internals
-  // the underlying managed gl_LTexture and vector will be freed inside this call
+  // the underlying managed KRR_TEXTURE and vector will be freed inside this call
   free_internals(spritesheet);
 
   free(spritesheet);
   spritesheet = NULL;
 }
 
-int gl_LSpritesheet_add_clipsprite(gl_LSpritesheet* spritesheet, const LRect* new_clip)
+int KRR_SPRITESHEET_add_clipsprite(KRR_SPRITESHEET* spritesheet, const RECT* new_clip)
 {
   // add a new clip then return its index
   vector_add(spritesheet->clips, (void*)new_clip);
   return spritesheet->clips->len - 1;
 }
 
-LRect gl_LSpritesheet_get_clip(gl_LSpritesheet* spritesheet, int index)
+RECT KRR_SPRITESHEET_get_clip(KRR_SPRITESHEET* spritesheet, int index)
 {
-  return *(LRect*)vector_get(spritesheet->clips, index);
+  return *(RECT*)vector_get(spritesheet->clips, index);
 }
 
-bool gl_LSpritesheet_generate_databuffer(gl_LSpritesheet* spritesheet)
+bool KRR_SPRITESHEET_generate_databuffer(KRR_SPRITESHEET* spritesheet)
 {
   // if there is a texture loaded, and clips to make vertex data from
   if (spritesheet->ltexture->texture_id != 0 && spritesheet->clips->len > 0)
@@ -81,7 +81,7 @@ bool gl_LSpritesheet_generate_databuffer(gl_LSpritesheet* spritesheet)
     const int total_sprites = spritesheet->clips->len;
 
     // yep we can use variable length array declaration in C99
-    LVertexData2D vertex_data[total_sprites * 4];
+    VERTEXTEX2D vertex_data[total_sprites * 4];
     // allocate buffer for index buffer
     spritesheet->index_buffers = malloc(total_sprites * 4 * sizeof(GLuint));
 
@@ -106,7 +106,7 @@ bool gl_LSpritesheet_generate_databuffer(gl_LSpritesheet* spritesheet)
 
       // initialize vertex
       // get clip for current sprite
-      LRect clip = *(LRect*)vector_get(spritesheet->clips, i);
+      RECT clip = *(RECT*)vector_get(spritesheet->clips, i);
 
       // calculate texture coordinate
       GLfloat tex_left = clip.x/texture_pwidth + 0.5/texture_pwidth;
@@ -149,19 +149,19 @@ bool gl_LSpritesheet_generate_databuffer(gl_LSpritesheet* spritesheet)
 			GLenum error = glGetError();
 			if (error != GL_NO_ERROR)
 			{
-				SDL_Log("Error opengl: %s", gl_util_error_string(error));
+				SDL_Log("Error opengl: %s", KRR_gputil_error_string(error));
 				return false;
 			}
     }
 
     // bind vertex data
     glBindBuffer(GL_ARRAY_BUFFER, spritesheet->vertex_data_buffer);
-    glBufferData(GL_ARRAY_BUFFER, total_sprites * 4 * sizeof(LVertexData2D), vertex_data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, total_sprites * 4 * sizeof(VERTEXTEX2D), vertex_data, GL_STATIC_DRAW);
 
 		GLenum error = glGetError();
 		if (error != GL_NO_ERROR)
 		{
-			SDL_Log("Error opengl: %s", gl_util_error_string(error));
+			SDL_Log("Error opengl: %s", KRR_gputil_error_string(error));
 			return false;
 		}
   }
@@ -183,7 +183,7 @@ bool gl_LSpritesheet_generate_databuffer(gl_LSpritesheet* spritesheet)
   return true;
 }
 
-void gl_LSpritesheet_free_sheet(gl_LSpritesheet* spritesheet)
+void KRR_SPRITESHEET_free_sheet(KRR_SPRITESHEET* spritesheet)
 {
   // clear vertex buffer
   if (spritesheet->vertex_data_buffer != 0)
@@ -205,7 +205,7 @@ void gl_LSpritesheet_free_sheet(gl_LSpritesheet* spritesheet)
   vector_clear(spritesheet->clips);
 }
 
-void gl_LSpritesheet_render_sprite(gl_LSpritesheet* spritesheet, int index, GLfloat x, GLfloat y)
+void KRR_SPRITESHEET_render_sprite(KRR_SPRITESHEET* spritesheet, int index, GLfloat x, GLfloat y)
 {
   // save the current modelview matrix
   mat4 original_modelview_matrix;
@@ -215,22 +215,22 @@ void gl_LSpritesheet_render_sprite(gl_LSpritesheet* spritesheet, int index, GLfl
 	// move to rendering position
   glm_translate(shared_textured_shaderprogram->modelview_matrix, (vec3){x, y, 0.f});
   // issue update to gpu
-  gl_ltextured_polygon_program2d_update_modelview_matrix(shared_textured_shaderprogram);
+  KRR_TEXSHADERPROG2D_update_modelview_matrix(shared_textured_shaderprogram);
 
   // set texture
   glBindTexture(GL_TEXTURE_2D, spritesheet->ltexture->texture_id);
 
   // enable all attribute pointers
-  // use shared global variable of shader for gl_LTexture here
-  gl_ltextured_polygon_program2d_enable_attrib_pointers(shared_textured_shaderprogram);
+  // use shared global variable of shader for KRR_TEXTURE here
+  KRR_TEXSHADERPROG2D_enable_attrib_pointers(shared_textured_shaderprogram);
 
   // bind vertex data
   glBindBuffer(GL_ARRAY_BUFFER, spritesheet->vertex_data_buffer);
 
   // set texture coordinate attrib pointer
-  gl_ltextured_polygon_program2d_set_vertex_pointer(shared_textured_shaderprogram, sizeof(LVertexData2D), (GLvoid*)offsetof(LVertexData2D, texcoord));
+  KRR_TEXSHADERPROG2D_set_vertex_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
   // set vertex data attrib pointer
-  gl_ltextured_polygon_program2d_set_texcoord_pointer(shared_textured_shaderprogram, sizeof(LVertexData2D), (GLvoid*)offsetof(LVertexData2D, position));
+  KRR_TEXSHADERPROG2D_set_texcoord_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
 
   // bind index buffer
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, spritesheet->index_buffers[index]);
@@ -238,7 +238,7 @@ void gl_LSpritesheet_render_sprite(gl_LSpritesheet* spritesheet, int index, GLfl
   glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
 
   // disable all attribute pointers
-  gl_ltextured_polygon_program2d_disable_attrib_pointers(shared_textured_shaderprogram);
+  KRR_TEXSHADERPROG2D_disable_attrib_pointers(shared_textured_shaderprogram);
 
   // set modelview matrix back to original one
   glm_mat4_copy(original_modelview_matrix, shared_textured_shaderprogram->modelview_matrix);

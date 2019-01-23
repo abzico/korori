@@ -2,8 +2,8 @@
  * Contains common variables used across multiple source files.
  */
 
-#ifndef krr_common_h_
-#define krr_common_h_
+#ifndef KRR_common_h_
+#define KRR_common_h_
 
 #include <stdbool.h>
 #include "window.h"
@@ -13,7 +13,7 @@
 /*
  * The window we'll be rendering to.
  */
-extern krr_WINDOW* gWindow;
+extern KRR_WINDOW* gWindow;
 
 extern float common_frameTime;
 #ifndef DISABLE_FPS_CALC
@@ -25,4 +25,4 @@ extern float common_frameAccumTime;
 extern float common_avgFPS;
 #endif
 
-#endif /* common_h_ */
+#endif

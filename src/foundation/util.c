@@ -11,7 +11,7 @@
 static void* callstack[32];
 #endif
 
-void krr_util_print_callstack()
+void KRR_util_print_callstack()
 {
 #ifdef HAS_BACKTRACE
   int frames = backtrace(callstack, 32);

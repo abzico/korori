@@ -2,12 +2,12 @@
 #include "foundation/common.h"
 #include "foundation/window.h"
 #include "foundation/util.h"
-#include "gl/gl_util.h"
-#include "gl/gl_LTexture.h"
-#include "gl/gl_ltextured_polygon_program2d.h"
-#include "gl/gl_LFont.h"
-#include "gl/gl_lfont_polygon_program2d.h"
-#include "gl/gl_ldouble_multicolor_polygon_program2d.h"
+#include "graphics/util.h"
+#include "graphics/texture.h"
+#include "graphics/texturedpp2d.h"
+#include "graphics/font.h"
+#include "graphics/fontpp2d.h"
+#include "graphics/doublemulticolorpp2d.h"
 
 // don't use this elsewhere
 #define CONTENT_BG_COLOR 0.f, 0.f, 0.f, 1.f
@@ -15,7 +15,7 @@
 #ifndef DISABLE_FPS_CALC
 #define FPS_BUFFER 7+1
 char fps_text[FPS_BUFFER];
-static gl_LFont* fps_font = NULL;
+static KRR_FONT* fps_font = NULL;
 #endif
 
 // -- section of variables for maintaining aspect ratio -- //
@@ -72,12 +72,12 @@ static GLuint fps_vao = 0;
 #endif
 
 // basic shaders and font
-static gl_ltextured_polygon_program2d* texture_shader = NULL;
-static gl_lfont_polygon_program2d* font_shader = NULL;
-static gl_LFont* font = NULL;
+static KRR_TEXSHADERPROG2D* texture_shader = NULL;
+static KRR_FONT_polygon_program2d* font_shader = NULL;
+static KRR_FONT* font = NULL;
 
 // double multicolor
-static gl_ldouble_multicolor_polygon_program2d* multicolor_shader = NULL;
+static KRR_DMULTICSHADERPROG2D* multicolor_shader = NULL;
 static GLuint vertex_vbo = 0;
 static GLuint rgby_vbo = 0;
 static GLuint cymw_vbo = 0;
@@ -95,20 +95,20 @@ void usercode_set_matrix_then_update_to_shader(enum usercode_matrixtype matrix_t
     if (shader_program == usercode_shadertype_texture_shader)
     {
       // convert to right type of program shader
-      gl_ltextured_polygon_program2d* shader_ptr = (gl_ltextured_polygon_program2d*)program;
+      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
 
       // copy calculated projection matrix to shader's then update to shader
       glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
 
-      gl_ltextured_polygon_program2d_update_projection_matrix(shader_ptr);
+      KRR_TEXSHADERPROG2D_update_projection_matrix(shader_ptr);
     }
     // font shader
     else if (shader_program == usercode_shadertype_font_shader)
     {
-      gl_lfont_polygon_program2d* shader_ptr = (gl_lfont_polygon_program2d*)program;
+      KRR_FONT_polygon_program2d* shader_ptr = (KRR_FONT_polygon_program2d*)program;
       glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
 
-      gl_lfont_polygon_program2d_update_projection_matrix(shader_ptr);
+      KRR_FONT_polygon_program2d_update_projection_matrix(shader_ptr);
     }
   }
   // modelview matrix
@@ -117,59 +117,59 @@ void usercode_set_matrix_then_update_to_shader(enum usercode_matrixtype matrix_t
     // texture shader
     if (shader_program == usercode_shadertype_texture_shader)
     {
-      gl_ltextured_polygon_program2d* shader_ptr = (gl_ltextured_polygon_program2d*)program;
+      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
       glm_mat4_copy(g_base_modelview_matrix, shader_ptr->modelview_matrix);
 
-      gl_ltextured_polygon_program2d_update_modelview_matrix(shader_ptr);
+      KRR_TEXSHADERPROG2D_update_modelview_matrix(shader_ptr);
     }
     // font shader
     else if (shader_program == usercode_shadertype_font_shader)
     {
-      gl_lfont_polygon_program2d* shader_ptr = (gl_lfont_polygon_program2d*)program;
+      KRR_FONT_polygon_program2d* shader_ptr = (KRR_FONT_polygon_program2d*)program;
       glm_mat4_copy(g_base_modelview_matrix, shader_ptr->modelview_matrix);
 
-      gl_lfont_polygon_program2d_update_modelview_matrix(shader_ptr);
+      KRR_FONT_polygon_program2d_update_modelview_matrix(shader_ptr);
     }
   }
 }
 
 void usercode_app_went_windowed_mode()
 {
-  gl_LShaderProgram_bind(multicolor_shader->program);
+  KRR_SHADERPROG_bind(multicolor_shader->program);
   glm_mat4_copy(g_projection_matrix, multicolor_shader->projection_matrix);
-  gl_util_update_projection_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
+  KRR_gputil_update_projection_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
 
   glm_mat4_copy(g_base_modelview_matrix, multicolor_shader->modelview_matrix);
-  gl_util_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
+  KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
 
-  gl_LShaderProgram_bind(texture_shader->program);
+  KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_texture_shader, texture_shader);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_texture_shader, texture_shader);
   // no need to unbind as we will bind a new one soon
 
-  gl_LShaderProgram_bind(font_shader->program);
+  KRR_SHADERPROG_bind(font_shader->program);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_font_shader, font_shader);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_font_shader, font_shader);
-  gl_LShaderProgram_unbind(font_shader->program);
+  KRR_SHADERPROG_unbind(font_shader->program);
 }
 
 void usercode_app_went_fullscreen()
 {
-  gl_LShaderProgram_bind(multicolor_shader->program);
+  KRR_SHADERPROG_bind(multicolor_shader->program);
   glm_mat4_copy(g_projection_matrix, multicolor_shader->projection_matrix);
-  gl_util_update_projection_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
+  KRR_gputil_update_projection_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
 
   glm_mat4_copy(g_base_modelview_matrix, multicolor_shader->modelview_matrix);
-  gl_util_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
+  KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
 
-  gl_LShaderProgram_bind(texture_shader->program);
+  KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_texture_shader, texture_shader);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_texture_shader, texture_shader);
 
-  gl_LShaderProgram_bind(font_shader->program);
+  KRR_SHADERPROG_bind(font_shader->program);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_font_shader, font_shader);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_font_shader, font_shader);
-  gl_LShaderProgram_unbind(font_shader->program);
+  KRR_SHADERPROG_unbind(font_shader->program);
 }
 
 bool usercode_init(int screen_width, int screen_height, int logical_width, int logical_height)
@@ -208,8 +208,8 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   GLenum error = glGetError();
   if (error != GL_NO_ERROR)
   {
-    krr_util_print_callstack();
-    SDL_Log("Error initializing OpenGL! %s", gl_util_error_string(error));
+    KRR_util_print_callstack();
+    SDL_Log("Error initializing OpenGL! %s", KRR_gputil_error_string(error));
     return false;
   }
 
@@ -223,11 +223,11 @@ bool usercode_loadmedia()
   {
     glGenVertexArrays(1, &fps_vao);
 
-    gl_LTexture* raw_texture = gl_LTexture_new();
-    gl_LSpritesheet* spritesheet = gl_LSpritesheet_new(raw_texture);
+    KRR_TEXTURE* raw_texture = KRR_TEXTURE_new();
+    KRR_SPRITESHEET* spritesheet = KRR_SPRITESHEET_new(raw_texture);
 
-    fps_font = gl_LFont_new(spritesheet);
-    if (!gl_LFont_load_freetype(fps_font, "res/fonts/Minecraft.ttf", 14))
+    fps_font = KRR_FONT_new(spritesheet);
+    if (!KRR_FONT_load_freetype(fps_font, "res/fonts/Minecraft.ttf", 14))
     {
       SDL_Log("Unable to load font for rendering framerate");
       return false;
@@ -236,85 +236,85 @@ bool usercode_loadmedia()
 #endif
   
   // create font
-  gl_LTexture* raw_texture = gl_LTexture_new();
-  gl_LSpritesheet* ss = gl_LSpritesheet_new(raw_texture);
-  font = gl_LFont_new(ss);
-  if (!gl_LFont_load_freetype(font, "res/fonts/Minecraft.ttf", 40))
+  KRR_TEXTURE* raw_texture = KRR_TEXTURE_new();
+  KRR_SPRITESHEET* ss = KRR_SPRITESHEET_new(raw_texture);
+  font = KRR_FONT_new(ss);
+  if (!KRR_FONT_load_freetype(font, "res/fonts/Minecraft.ttf", 40))
   {
     SDL_Log("Error to load font");
     return false;
   }
   // load texture shader
-  texture_shader = gl_ltextured_polygon_program2d_new();
-  if (!gl_ltextured_polygon_program2d_load_program(texture_shader))
+  texture_shader = KRR_TEXSHADERPROG2D_new();
+  if (!KRR_TEXSHADERPROG2D_load_program(texture_shader))
   {
     SDL_Log("Error loading texture shader");
     return false;
   }
   
   // load font shader
-  font_shader = gl_lfont_polygon_program2d_new();
-  if (!gl_lfont_polygon_program2d_load_program(font_shader))
+  font_shader = KRR_FONT_polygon_program2d_new();
+  if (!KRR_FONT_polygon_program2d_load_program(font_shader))
   {
     SDL_Log("Error loading font shader");
     return false;
   }
 
   // TODO: Load media here...
-  multicolor_shader = gl_ldouble_multicolor_polygon_program2d_new();
-  if (!gl_ldouble_multicolor_polygon_program2d_load_program(multicolor_shader))
+  multicolor_shader = KRR_DMULTICSHADERPROG2D_new();
+  if (!KRR_DMULTICSHADERPROG2D_load_program(multicolor_shader))
   {
     return false;
   }
 
   // initially update matrices for multicolor shader
-  gl_LShaderProgram_bind(multicolor_shader->program);
+  KRR_SHADERPROG_bind(multicolor_shader->program);
   // set matrices
   glm_mat4_copy(g_projection_matrix, multicolor_shader->projection_matrix);
   glm_mat4_copy(g_base_modelview_matrix, multicolor_shader->modelview_matrix);
   // issue update matrices to gpu
-  gl_util_update_projection_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
-  gl_util_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
+  KRR_gputil_update_projection_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
+  KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
 
   // initially update all related matrices and related graphics stuf for both shaders
-  gl_LShaderProgram_bind(texture_shader->program);
+  KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_texture_shader, texture_shader);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_texture_shader, texture_shader);
-  gl_ltextured_polygon_program2d_set_texture_sampler(texture_shader, 0);
-  // set texture shader to all gl_LTexture as active
+  KRR_TEXSHADERPROG2D_set_texture_sampler(texture_shader, 0);
+  // set texture shader to all KRR_TEXTURE as active
   shared_textured_shaderprogram = texture_shader;
 
-  gl_LShaderProgram_bind(font_shader->program);
+  KRR_SHADERPROG_bind(font_shader->program);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_projection_matrix, usercode_shadertype_font_shader, font_shader);
   usercode_set_matrix_then_update_to_shader(usercode_matrixtype_modelview_matrix, usercode_shadertype_font_shader, font_shader);
-  gl_lfont_polygon_program2d_set_texture_sampler(font_shader, 0);
-  // set font shader to all gl_LFont as active
+  KRR_FONT_polygon_program2d_set_texture_sampler(font_shader, 0);
+  // set font shader to all KRR_FONT as active
   shared_font_shaderprogram = font_shader;
-  gl_LShaderProgram_unbind(font_shader->program);
+  KRR_SHADERPROG_unbind(font_shader->program);
 
   // set up VBO data
-  LVertexPos2D quad_pos[4] = {
+  VERTEXPOS2D quad_pos[4] = {
     { -50.0f, -50.f },
     { 50.0f, -50.f },
     { 50.0f, 50.0f },
     { -50.0f, 50.0f }
   };
 
-  LColorRGBA quad_color_rgby[4] = {
+  COLOR32 quad_color_rgby[4] = {
     { 1.0f, 0.0f, 0.0f, 1.0f },
     { 1.0f, 1.0f, 0.0f, 1.0f },
     { 0.0f, 1.0f, 0.0f, 1.0f },
     { 0.0f, 0.0f, 1.0f, 1.0f }
   };
 
-  LColorRGBA quad_color_cymw[4] = {
+  COLOR32 quad_color_cymw[4] = {
     { 0.0f, 1.0f, 1.0f, 1.0f },
     { 1.0f, 1.0f, 0.0f, 1.0f },
     { 1.0f, 0.0f, 1.0f, 1.0f },
     { 1.0f, 1.0f, 1.0f, 1.0f }
   };
 
-  LColorRGBA quad_color_gray[4] = {
+  COLOR32 quad_color_gray[4] = {
     { 0.75f, 0.75f, 0.75f, 1.0f },
     { 0.50f, 0.50f, 0.50f, 0.50f },
     { 0.75f, 0.75f, 0.75f, 1.0f },
@@ -326,19 +326,19 @@ bool usercode_loadmedia()
   // create VBOs
   glGenBuffers(1, &vertex_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
-  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(LVertexPos2D), quad_pos, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(VERTEXPOS2D), quad_pos, GL_STATIC_DRAW);
 
   glGenBuffers(1, &rgby_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, rgby_vbo);
-  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(LColorRGBA), quad_color_rgby, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(COLOR32), quad_color_rgby, GL_STATIC_DRAW);
 
   glGenBuffers(1, &cymw_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, cymw_vbo);
-  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(LColorRGBA), quad_color_cymw, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(COLOR32), quad_color_cymw, GL_STATIC_DRAW);
 
   glGenBuffers(1, &gray_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, gray_vbo);
-  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(LColorRGBA), quad_color_gray, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(COLOR32), quad_color_gray, GL_STATIC_DRAW);
 
   glGenBuffers(1, &ibo);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -350,17 +350,17 @@ bool usercode_loadmedia()
   // bind vertex array
   glBindVertexArray(left_vao);
   // enable vertex attributes
-  gl_ldouble_multicolor_polygon_program2d_enable_all_vertex_attrib_pointers(multicolor_shader);
+  KRR_DMULTICSHADERPROG2D_enable_all_vertex_attrib_pointers(multicolor_shader);
 
   // set vertex data
   glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
-  gl_ldouble_multicolor_polygon_program2d_set_attrib_vertex_pos2d_pointer_packed(multicolor_shader, NULL);
+  KRR_DMULTICSHADERPROG2D_set_attrib_vertex_pos2d_pointer_packed(multicolor_shader, NULL);
 
   glBindBuffer(GL_ARRAY_BUFFER, rgby_vbo);
-  gl_ldouble_multicolor_polygon_program2d_set_attrib_multicolor_pointer_packed(multicolor_shader, 1, NULL);
+  KRR_DMULTICSHADERPROG2D_set_attrib_multicolor_pointer_packed(multicolor_shader, 1, NULL);
 
   glBindBuffer(GL_ARRAY_BUFFER, gray_vbo);
-  gl_ldouble_multicolor_polygon_program2d_set_attrib_multicolor_pointer_packed(multicolor_shader, 2, NULL);
+  KRR_DMULTICSHADERPROG2D_set_attrib_multicolor_pointer_packed(multicolor_shader, 2, NULL);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 
@@ -371,17 +371,17 @@ bool usercode_loadmedia()
   // bind vertex array
   glBindVertexArray(right_vao);
   // enable vertex attributes
-  gl_ldouble_multicolor_polygon_program2d_enable_all_vertex_attrib_pointers(multicolor_shader);
+  KRR_DMULTICSHADERPROG2D_enable_all_vertex_attrib_pointers(multicolor_shader);
 
   // set vertex data
   glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
-  gl_ldouble_multicolor_polygon_program2d_set_attrib_vertex_pos2d_pointer_packed(multicolor_shader, NULL);
+  KRR_DMULTICSHADERPROG2D_set_attrib_vertex_pos2d_pointer_packed(multicolor_shader, NULL);
 
   glBindBuffer(GL_ARRAY_BUFFER, cymw_vbo);
-  gl_ldouble_multicolor_polygon_program2d_set_attrib_multicolor_pointer_packed(multicolor_shader, 1, NULL);
+  KRR_DMULTICSHADERPROG2D_set_attrib_multicolor_pointer_packed(multicolor_shader, 1, NULL);
 
   glBindBuffer(GL_ARRAY_BUFFER, gray_vbo);
-  gl_ldouble_multicolor_polygon_program2d_set_attrib_multicolor_pointer_packed(multicolor_shader, 2, NULL);
+  KRR_DMULTICSHADERPROG2D_set_attrib_multicolor_pointer_packed(multicolor_shader, 2, NULL);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 
@@ -409,9 +409,9 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       // go windowed mode, currently in fullscreen mode
       if (gWindow->fullscreen)
       {
-        krr_WINDOW_set_fullscreen(gWindow, false);
+        KRR_WINDOW_set_fullscreen(gWindow, false);
         // set projection matrix back to normal
-        gl_util_adapt_to_normal(g_screen_width, g_screen_height);
+        KRR_gputil_adapt_to_normal(g_screen_width, g_screen_height);
         // reset relavant values back to normal
         g_offset_x = 0.0f;
         g_offset_y = 0.0f;
@@ -433,12 +433,12 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       }
       else
       {
-        krr_WINDOW_set_fullscreen(gWindow, true);
+        KRR_WINDOW_set_fullscreen(gWindow, true);
         // get new window's size
         int w, h;
         SDL_GetWindowSize(gWindow->window, &w, &h);
         // also adapt to letterbox
-        gl_util_adapt_to_letterbox(w, h, g_logical_width, g_logical_height, &g_ri_view_width, &g_ri_view_height, &g_offset_x, &g_offset_y);
+        KRR_gputil_adapt_to_letterbox(w, h, g_logical_width, g_logical_height, &g_ri_view_width, &g_ri_view_height, &g_offset_x, &g_offset_y);
         // calculate scale 
         g_ri_scale_x = g_ri_view_width * 1.0f / g_logical_width;
         g_ri_scale_y = g_ri_view_height * 1.0f / g_logical_height;
@@ -491,14 +491,14 @@ void usercode_render()
   glBindVertexArray(left_vao);
 
   // bind shader
-  gl_LShaderProgram_bind(multicolor_shader->program);
+  KRR_SHADERPROG_bind(multicolor_shader->program);
 
   // start fresh with modelview matrix
   glm_mat4_copy(g_base_modelview_matrix, multicolor_shader->modelview_matrix);
 
   // transform matrix for left quad
   glm_translate(multicolor_shader->modelview_matrix, (vec3){g_logical_width * 1.f / 4.f, g_logical_height / 2.f, 0.f});
-  gl_util_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
+  KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
 
   // render left quad
   glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
@@ -510,13 +510,13 @@ void usercode_render()
   glm_mat4_copy(g_base_modelview_matrix, multicolor_shader->modelview_matrix);
   // transform matrix for right quad
   glm_translate(multicolor_shader->modelview_matrix, (vec3){g_logical_width * 3.f / 4.f, g_logical_height / 2.f, 0.f });
-  gl_util_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
+  KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
 
   // render right quad
   glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
 
   // unbind shader
-  gl_LShaderProgram_unbind(multicolor_shader->program);
+  KRR_SHADERPROG_unbind(multicolor_shader->program);
 
   // disable scissor (if needed)
   if (g_need_clipping)
@@ -535,14 +535,14 @@ void usercode_render_fps(int avg_fps)
   glBindVertexArray(fps_vao);
 
   // use shared font shader
-  gl_LShaderProgram_bind(shared_font_shaderprogram->program);
+  KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
     // start with clean state of modelview matrix
     glm_mat4_copy(g_base_modelview_matrix, shared_font_shaderprogram->modelview_matrix);
-    gl_lfont_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
+    KRR_FONT_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
 
     // render text on top right
-    gl_LFont_render_textex(fps_font, fps_text, 0.f, 4.f, &(LSize){g_logical_width, g_logical_height}, gl_LFont_TEXT_ALIGN_RIGHT | gl_LFont_TEXT_ALIGN_TOP);
-  gl_LShaderProgram_unbind(shared_font_shaderprogram->program);
+    KRR_FONT_render_textex(fps_font, fps_text, 0.f, 4.f, &(SIZE){g_logical_width, g_logical_height}, KRR_FONT_TEXT_ALIGNMENT_RIGHT | KRR_FONT_TEXT_ALIGNMENT_TOP);
+  KRR_SHADERPROG_unbind(shared_font_shaderprogram->program);
 
   // unbind fps-vao
   glBindVertexArray(0);
@@ -558,17 +558,17 @@ void usercode_close()
     fps_vao = 0;
   }
   if (fps_font != NULL)
-    gl_LFont_free(fps_font);
+    KRR_FONT_free(fps_font);
 #endif
   if (font != NULL)
-    gl_LFont_free(font);
+    KRR_FONT_free(font);
   if (font_shader != NULL)
-    gl_lfont_polygon_program2d_free(font_shader);
+    KRR_FONT_polygon_program2d_free(font_shader);
   if (texture_shader != NULL)
-    gl_ltextured_polygon_program2d_free(texture_shader);
+    KRR_TEXSHADERPROG2D_free(texture_shader);
 
   if (multicolor_shader != NULL)
-    gl_ldouble_multicolor_polygon_program2d_free(multicolor_shader);
+    KRR_DMULTICSHADERPROG2D_free(multicolor_shader);
 
   if (vertex_vbo != 0)
     glDeleteBuffers(1, &vertex_vbo);
