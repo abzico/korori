@@ -3,3 +3,4 @@
 *.o
 *.dSYM
 krr
+libkrr.a

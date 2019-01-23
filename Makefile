@@ -1,6 +1,3 @@
-PROGRAM := krr
-OUTPUT := krr
-
 CC := gcc
 EXE := 
 FDIR := src/foundation
@@ -36,17 +33,13 @@ TARGETS := \
 	  $(GPDIR)/multicolorpp2d.o \
 	  $(GPDIR)/texturedpp2d.o \
 	  $(GPDIR)/fontpp2d.o \
-	  $(GPDIR)/doublemulticolorpp2d.o \
-	  usercode.o \
-	  $(PROGRAM).o \
-	  $(OUTPUT)
-
-# targets for linking (just not include $(OUTPUT)
-TARGETS_LINK := $(filter-out $(OUTPUT),$(TARGETS))
+	  $(GPDIR)/doublemulticolorpp2d.o
 
 .PHONY: all clean
 
 all: $(TARGETS) 
+	# create static library
+	ar rcs libkrr.a $^
 	
 $(OUTPUT): $(TARGETS_LINK)
 	$(CC) $^ -o $(OUTPUT)$(EXE) $(LFLAGS)
@@ -102,16 +95,14 @@ $(GPDIR)/fontpp2d.o: $(GPDIR)/fontpp2d.c $(GPDIR)/fontpp2d.h
 $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.o: $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.c $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-usercode.o: usercode.c usercode.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
 $(PROGRAM).o: $(PROGRAM).c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf src/foundation/*.o
-	rm -rf src/graphics/*.o
-	rm -rf src/externals/*.o
-	rm -rf src/ui/*.o
-	rm -rf $(OUTPUT)
-	rm -rf *.o *.dSYM
+	rm -f src/foundation/*.o
+	rm -f src/graphics/*.o
+	rm -f src/externals/*.o
+	rm -f src/ui/*.o
+	rm -f $(OUTPUT)
+	rm -f libkrr.a
+	rm -f *.o *.dSYM
