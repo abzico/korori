@@ -1,0 +1,39 @@
+# Makefile to build the test samples for KRR
+
+srcdir = .
+
+CC = gcc
+CFLAGS = -std=c99 -Wall -I. -I../src/ -I/usr/local/include/SDL2 -I/Volumes/Slave/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/usr/local/include/GL -I/usr/local/include/freetype2
+LIBKRR_FLAGS = -L../ -lkrr
+
+# add platform specific
+UNAME_S := $(shell uname -s)
+# (only for macOS) use -DGL_SILENCE_DEPRECATION to silence deprecation warnings as if running on macOS will generate ton of it because the platform deprecated opengl
+ifeq ($(UNAME_S),Darwin)
+        CFLAGS += -DGL_SILENCE_DEPRECATION
+endif
+
+LFLAGS += -lSDL2 -lSDL2_image -lSDL2_mixer -framework OpenGL -lGLEW -lfreetype -lcglm
+
+TARGETS = \
+	  doublemulticolorshader
+
+all: libkrr.a main.o $(TARGETS) copyresfiles
+
+main.o: $(srcdir)/main.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+libkrr.a:
+	# change directory then make static library in which output is at $(libkrrpath)
+	cd .. && make
+
+doublemulticolorshader: $(srcdir)/doublemulticolorshader.c usercode.h libkrr.a main.o copyresfiles
+	$(CC) -c $< $(CFLAGS) -o $@.o
+	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+
+copyresfiles:
+	cp -pR ../res ./
+
+clean:
+	rm -f $(TARGETS)
+	rm -f *.o
