@@ -75,6 +75,8 @@ static KRR_TEXSHADERPROG2D* texture_shader = NULL;
 static KRR_FONTSHADERPROG2D* font_shader = NULL;
 static KRR_FONT* font = NULL;
 
+// TODO: define variables here
+
 void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_program, void* program)
 {
   // projection matrix
