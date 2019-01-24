@@ -121,12 +121,12 @@ bool KRR_SPRITESHEET_generate_databuffer(KRR_SPRITESHEET* spritesheet)
       vertex_data[sprite_indices[0]].texcoord.s = tex_left;
       vertex_data[sprite_indices[0]].texcoord.t = tex_top;
 
-      // top right
-      vertex_data[sprite_indices[1]].position.x = clip.w;
-      vertex_data[sprite_indices[1]].position.y = 0.f;
+      // bottom left
+      vertex_data[sprite_indices[1]].position.x = 0.f;
+      vertex_data[sprite_indices[1]].position.y = clip.h;
 
-      vertex_data[sprite_indices[1]].texcoord.s = tex_right;
-      vertex_data[sprite_indices[1]].texcoord.t = tex_top;
+      vertex_data[sprite_indices[1]].texcoord.s = tex_left;
+      vertex_data[sprite_indices[1]].texcoord.t = tex_bottom;
 
       // bottom right
       vertex_data[sprite_indices[2]].position.x = clip.w;
@@ -135,12 +135,12 @@ bool KRR_SPRITESHEET_generate_databuffer(KRR_SPRITESHEET* spritesheet)
       vertex_data[sprite_indices[2]].texcoord.s = tex_right;
       vertex_data[sprite_indices[2]].texcoord.t = tex_bottom;
 
-      // bottom left
-      vertex_data[sprite_indices[3]].position.x = 0.f;
-      vertex_data[sprite_indices[3]].position.y = clip.h;
+      // top right
+      vertex_data[sprite_indices[3]].position.x = clip.w;
+      vertex_data[sprite_indices[3]].position.y = 0.f;
 
-      vertex_data[sprite_indices[3]].texcoord.s = tex_left;
-      vertex_data[sprite_indices[3]].texcoord.t = tex_bottom;
+      vertex_data[sprite_indices[3]].texcoord.s = tex_right;
+      vertex_data[sprite_indices[3]].texcoord.t = tex_top;
 
       // bind sprite index buffer data
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, spritesheet->index_buffers[i]);

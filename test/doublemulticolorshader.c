@@ -187,7 +187,7 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   g_ri_view_height = g_screen_height;
 
   // calculate orthographic projection matrix
-	glm_ortho(0.0, g_screen_width, g_screen_height, 0.0, -1.0, 1.0, g_projection_matrix);
+	glm_ortho(0.0f, (float)g_screen_width, (float)g_screen_height, 0.0f, -1.0f, 1.0f, g_projection_matrix);
 	// calculate base modelview matrix (to reduce some of operations cost)
 	glm_mat4_identity(g_base_modelview_matrix);
 	glm_scale(g_base_modelview_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
@@ -202,6 +202,9 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // enable blending with default blend function
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  // enable face culling
+  glEnable(GL_CULL_FACE);
 
   // check for errors
   GLenum error = glGetError();
@@ -288,10 +291,10 @@ bool usercode_loadmedia()
 
   // set up VBO data
   VERTEXPOS2D quad_pos[4] = {
-    { -50.0f, -50.f },
-    { 50.0f, -50.f },
-    { 50.0f, 50.0f },
-    { -50.0f, 50.0f }
+    {-50.0f, -50.0f },
+    {-50.0f, 50.0f },
+    {50.0f, 50.0f },
+    {50.0f, -50.0f }
   };
 
   COLOR32 quad_color_rgby[4] = {
@@ -416,7 +419,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         g_need_clipping = false;
 				
 				// re-calculate orthographic projection matrix
-				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -1.0, 1.0, g_projection_matrix);
+				glm_ortho(0.0f, (float)g_ri_view_width, (float)g_ri_view_height, 0.0f, -1.0f, 1.0f, g_projection_matrix);
 
 				// re-calculate base modelview matrix
 				// no need to scale as it's uniform 1.0 now
@@ -439,7 +442,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         g_need_clipping = true;
 
 				// re-calculate orthographic projection matrix
-				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -1.0, 1.0, g_projection_matrix);
+				glm_ortho(0.0f, (float)g_ri_view_width, (float)g_ri_view_height, 0.0f, -1.0f, 1.0f, g_projection_matrix);
 
 				// re-calculate base modelview matrix
 				glm_mat4_identity(g_base_modelview_matrix);

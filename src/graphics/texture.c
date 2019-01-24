@@ -649,15 +649,15 @@ void KRR_TEXTURE_render(KRR_TEXTURE* texture, GLfloat x, GLfloat y, const RECT* 
 
   // texture coordinates
   vertex_data[0].texcoord.s = tex_left;     vertex_data[0].texcoord.t = tex_top;
-  vertex_data[1].texcoord.s = tex_right;    vertex_data[1].texcoord.t = tex_top;
+  vertex_data[1].texcoord.s = tex_left;     vertex_data[1].texcoord.t = tex_bottom;
   vertex_data[2].texcoord.s = tex_right;    vertex_data[2].texcoord.t = tex_bottom;
-  vertex_data[3].texcoord.s = tex_left;     vertex_data[3].texcoord.t = tex_bottom;
+  vertex_data[3].texcoord.s = tex_right;    vertex_data[3].texcoord.t = tex_top;
 
   // vertex position
   vertex_data[0].position.x = 0.f;          vertex_data[0].position.y = 0.f;
-  vertex_data[1].position.x = quad_width;   vertex_data[1].position.y = 0.f;
+  vertex_data[1].position.x = 0.f;          vertex_data[1].position.y = quad_height;
   vertex_data[2].position.x = quad_width;   vertex_data[2].position.y = quad_height;
-  vertex_data[3].position.x = 0.f;          vertex_data[3].position.y = quad_height;
+  vertex_data[3].position.x = quad_width;   vertex_data[3].position.y = 0.f;
 
   // set texture id
   glBindTexture(GL_TEXTURE_2D, texture->texture_id);
