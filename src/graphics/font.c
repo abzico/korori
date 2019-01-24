@@ -44,13 +44,13 @@ void free_internals_(KRR_FONT* font)
   font->newline = 0.f;
 }
 
-KRR_FONT* KRR_FONT_new(KRR_SPRITESHEET* spritesheet)
+KRR_FONT* KRR_FONT_new(void)
 {
   KRR_FONT *out = malloc(sizeof(KRR_FONT));
   init_defaults_(out);
 
   // set spritesheet
-  out->spritesheet = spritesheet;
+  out->spritesheet = KRR_SPRITESHEET_new();
 
   return out;
 }

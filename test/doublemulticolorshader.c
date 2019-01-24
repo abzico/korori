@@ -3,7 +3,6 @@
 #include "foundation/window.h"
 #include "foundation/util.h"
 #include "graphics/util.h"
-#include "graphics/texture.h"
 #include "graphics/texturedpp2d.h"
 #include "graphics/font.h"
 #include "graphics/fontpp2d.h"
@@ -223,10 +222,7 @@ bool usercode_loadmedia()
   {
     glGenVertexArrays(1, &fps_vao);
 
-    KRR_TEXTURE* raw_texture = KRR_TEXTURE_new();
-    KRR_SPRITESHEET* spritesheet = KRR_SPRITESHEET_new(raw_texture);
-
-    fps_font = KRR_FONT_new(spritesheet);
+    fps_font = KRR_FONT_new();
     if (!KRR_FONT_load_freetype(fps_font, "res/fonts/Minecraft.ttf", 14))
     {
       SDL_Log("Unable to load font for rendering framerate");
@@ -236,9 +232,7 @@ bool usercode_loadmedia()
 #endif
   
   // create font
-  KRR_TEXTURE* raw_texture = KRR_TEXTURE_new();
-  KRR_SPRITESHEET* ss = KRR_SPRITESHEET_new(raw_texture);
-  font = KRR_FONT_new(ss);
+  font = KRR_FONT_new();
   if (!KRR_FONT_load_freetype(font, "res/fonts/Minecraft.ttf", 40))
   {
     SDL_Log("Error to load font");

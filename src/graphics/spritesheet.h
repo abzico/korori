@@ -19,12 +19,11 @@ typedef struct
 
 ///
 /// Create a new KRR_SPRITESHEET.
-/// Input ltexture will be taken care of when it needs to be freed later in the process.
+/// Underlying KRR_TEXTURE will be taken care of then done using this via call KRR_SPRITESHEET_free()
 ///
-/// \param ltexture Pointer to already created KRR_TEXTURE. This KRR_TEXTURE will be taken care off later on when it needs to be freed.
 /// \return Newly created KRR_SPRITESHEET
 ///
-extern KRR_SPRITESHEET* KRR_SPRITESHEET_new(KRR_TEXTURE* ltexture);
+extern KRR_SPRITESHEET* KRR_SPRITESHEET_new(void);
 
 ///
 /// Free spritesheeet.

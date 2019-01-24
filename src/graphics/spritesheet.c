@@ -34,13 +34,13 @@ void free_internals(KRR_SPRITESHEET* spritesheet)
   }
 }
 
-KRR_SPRITESHEET* KRR_SPRITESHEET_new(KRR_TEXTURE* ltexture)
+KRR_SPRITESHEET* KRR_SPRITESHEET_new(void)
 {
   KRR_SPRITESHEET* out = malloc(sizeof(KRR_SPRITESHEET));
   init_defaults(out);
 
   // init
-  out->ltexture = ltexture;
+  out->ltexture = KRR_TEXTURE_new();
   out->clips = vector_new(1, sizeof(RECT));
   // no need to set free_element for vector this time as RECT is pure value type struct
 

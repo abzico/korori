@@ -41,13 +41,12 @@ typedef struct
 
 ///
 /// Create a new bitmap font.
-/// KRR_SPRITESHEET will be managed and automatically freed memory when done.
-/// KRR_SPRITESHEET as input needs not to be generated data buffer just yet.
+/// Underlying KRR_SPRITESHEET will be automatically creaed and managed when done using this.
 ///
 /// \param spritesheet Pointer to KRR_SPRITESHEET
 /// \return Newly created KRR_FONT allocated on heap. It can be NULL if underlying system initialization failed to do so.
 ///
-extern KRR_FONT* KRR_FONT_new(KRR_SPRITESHEET* spritesheet);
+extern KRR_FONT* KRR_FONT_new(void);
 
 ///
 /// Free font.
