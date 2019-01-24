@@ -29,8 +29,7 @@
   } while(0)
 
 // cap thus using fixed deltaTime step
-#define TARGET_FPS 60
-#define FIXED_DELTATIME 1.0f / TARGET_FPS
+#define FIXED_UPDATERATE .01666666666666666666
 
 // -- functions
 bool init();
@@ -224,7 +223,7 @@ int main(int argc, char* args[])
         prevTime = currTime;
         currTime = SDL_GetTicks();
         // calculate per second
-        float deltaTime = (currTime - prevTime) / 1000.0f;
+        double deltaTime = (currTime - prevTime) / 1000.0;
 
         // fixed step
         common_frameTime += deltaTime;
@@ -233,7 +232,7 @@ int main(int argc, char* args[])
 				// update accumulated time for calculating framerate
         common_frameAccumTime += deltaTime;
 #endif
-        if (common_frameTime >= FIXED_DELTATIME)
+        if (common_frameTime >= FIXED_UPDATERATE)
         {
 #ifndef DISABLE_FPS_CALC
           common_frameCount++;
@@ -254,11 +253,11 @@ int main(int argc, char* args[])
           while (SDL_PollEvent(&e) != 0)
           {
             // update user's handleEvent()
-            handleEvent(&e, FIXED_DELTATIME);
+            handleEvent(&e, FIXED_UPDATERATE);
           }
 
-          update(FIXED_DELTATIME);
-          render(FIXED_DELTATIME);
+          update(FIXED_UPDATERATE);
+          render(FIXED_UPDATERATE);
         }
         else {
           render(0); 

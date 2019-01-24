@@ -22,14 +22,14 @@
  */
 extern KRR_WINDOW* gWindow;
 
-extern float common_frameTime;
+extern double common_frameTime;
 #ifndef DISABLE_FPS_CALC
 /*
  * Variables used in calculate frame rate per second.
  */
 extern int common_frameCount;
-extern float common_frameAccumTime;
-extern float common_avgFPS;
+extern double common_frameAccumTime;
+extern double common_avgFPS;
 #endif
 
 #endif
