@@ -1,16 +1,9 @@
 # korori
 
-## LTexture
+SDL2 + Opengl 3.3 target based PC game library.
 
-Workflow can be in 2 ways
+# How to build
 
-* load surface -> convert surface to ABGR pixel format -> load texture from pixels
-* _load pixels from file_ -> modify pixel data -> create texture from pixel data
+Go to root directory then `make` to build krr into static library `libkrr.a`.
 
-wheres _load pixels from file_ is the process that does
-- load surface
-- convert surface to ABGR
-
-# LFont
-
-* loading ttf file's process is using FreeType to load all glyphs to get to know information about maximum/minimum width/height and 8-bit texture buffer from each glyph -> then we use all them to place into final bitmap font texture.
+There are test samples in `test` directory. `cd test` then build it with `make` or individual one like `make <name of source file>`.
