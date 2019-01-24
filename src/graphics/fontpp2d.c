@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include "foundation/common.h"
 
-static void free_internals_(KRR_FONT_polygon_program2d* program);
+static void free_internals_(KRR_FONTSHADERPROG2D* program);
 
-void free_internals_(KRR_FONT_polygon_program2d* program)
+void free_internals_(KRR_FONTSHADERPROG2D* program)
 {
   // reset all locations
   program->vertex_pos2d_location = -1;
@@ -23,9 +23,9 @@ void free_internals_(KRR_FONT_polygon_program2d* program)
   program->program = NULL;
 }
 
-KRR_FONT_polygon_program2d* KRR_FONT_polygon_program2d_new()
+KRR_FONTSHADERPROG2D* KRR_FONTSHADERPROG2D_new()
 {
-  KRR_FONT_polygon_program2d* out = malloc(sizeof(KRR_FONT_polygon_program2d));
+  KRR_FONTSHADERPROG2D* out = malloc(sizeof(KRR_FONTSHADERPROG2D));
 
   // init defaults first
   out->program = NULL;
@@ -46,7 +46,7 @@ KRR_FONT_polygon_program2d* KRR_FONT_polygon_program2d_new()
   return out;
 }
 
-void KRR_FONT_polygon_program2d_free(KRR_FONT_polygon_program2d* program)
+void KRR_FONTSHADERPROG2D_free(KRR_FONTSHADERPROG2D* program)
 {
   // free internals
   free_internals_(program);
@@ -56,7 +56,7 @@ void KRR_FONT_polygon_program2d_free(KRR_FONT_polygon_program2d* program)
   program = NULL;
 }
 
-bool KRR_FONT_polygon_program2d_load_program(KRR_FONT_polygon_program2d* program)
+bool KRR_FONTSHADERPROG2D_load_program(KRR_FONTSHADERPROG2D* program)
 {
   // create a new program
   GLuint program_id = glCreateProgram();
@@ -194,43 +194,43 @@ bool KRR_FONT_polygon_program2d_load_program(KRR_FONT_polygon_program2d* program
   return true;
 }
 
-void KRR_FONT_polygon_program2d_update_projection_matrix(KRR_FONT_polygon_program2d* program)
+void KRR_FONTSHADERPROG2D_update_projection_matrix(KRR_FONTSHADERPROG2D* program)
 {
   glUniformMatrix4fv(program->projection_matrix_location, 1, GL_FALSE, program->projection_matrix[0]);
 }
 
-void KRR_FONT_polygon_program2d_update_modelview_matrix(KRR_FONT_polygon_program2d* program)
+void KRR_FONTSHADERPROG2D_update_modelview_matrix(KRR_FONTSHADERPROG2D* program)
 {
   glUniformMatrix4fv(program->modelview_matrix_location, 1, GL_FALSE, program->modelview_matrix[0]);
 }
 
-void KRR_FONT_polygon_program2d_set_vertex_pointer(KRR_FONT_polygon_program2d* program, GLsizei stride, const GLvoid* data)
+void KRR_FONTSHADERPROG2D_set_vertex_pointer(KRR_FONTSHADERPROG2D* program, GLsizei stride, const GLvoid* data)
 {
   glVertexAttribPointer(program->vertex_pos2d_location, 2, GL_FLOAT, GL_FALSE, stride, data);
 }
 
-void KRR_FONT_polygon_program2d_set_texcoord_pointer(KRR_FONT_polygon_program2d* program, GLsizei stride, const GLvoid* data)
+void KRR_FONTSHADERPROG2D_set_texcoord_pointer(KRR_FONTSHADERPROG2D* program, GLsizei stride, const GLvoid* data)
 {
   glVertexAttribPointer(program->texture_coord_location, 2, GL_FLOAT, GL_FALSE, stride, data);
 }
 
-void KRR_FONT_polygon_program2d_set_texture_sampler(KRR_FONT_polygon_program2d* program, GLuint sampler)
+void KRR_FONTSHADERPROG2D_set_texture_sampler(KRR_FONTSHADERPROG2D* program, GLuint sampler)
 {
   glUniform1i(program->texture_sampler_location, sampler);
 }
 
-void KRR_FONT_polygon_program2d_set_text_color(KRR_FONT_polygon_program2d* program, COLOR32 color)
+void KRR_FONTSHADERPROG2D_set_text_color(KRR_FONTSHADERPROG2D* program, COLOR32 color)
 {
   glUniform4f(program->text_color_location, color.r, color.g, color.b, color.a);
 }
 
-void KRR_FONT_polygon_program2d_enable_attrib_pointers(KRR_FONT_polygon_program2d* program)
+void KRR_FONTSHADERPROG2D_enable_attrib_pointers(KRR_FONTSHADERPROG2D* program)
 {
   glEnableVertexAttribArray(program->vertex_pos2d_location);
   glEnableVertexAttribArray(program->texture_coord_location); 
 }
 
-void KRR_FONT_polygon_program2d_disable_attrib_pointers(KRR_FONT_polygon_program2d* program)
+void KRR_FONTSHADERPROG2D_disable_attrib_pointers(KRR_FONTSHADERPROG2D* program)
 {
   glDisableVertexAttribArray(program->vertex_pos2d_location);
   glDisableVertexAttribArray(program->texture_coord_location);

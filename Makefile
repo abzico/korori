@@ -38,7 +38,7 @@ TARGETS := \
 .PHONY: all clean
 
 all: $(TARGETS) 
-	# create static library
+	# create a static library
 	ar rcs libkrr.a $^
 	
 $(OUTPUT): $(TARGETS_LINK)

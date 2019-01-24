@@ -12,7 +12,7 @@
 // spacing when render between character in pixel
 #define BETWEEN_CHAR_SPACING 4
 
-struct KRR_FONT_polygon_program2d_* shared_font_shaderprogram = NULL;
+struct KRR_FONTSHADERPROG2D_* shared_font_shaderprogram = NULL;
 
 // freetype font library
 // single shared variable for all instance of KRR_FONT during lifetime of application
@@ -482,21 +482,21 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
     // translate to rendering position
     glm_translate(shared_font_shaderprogram->modelview_matrix, (vec3){x, y, 0.f});
     // issue update to gpu
-    KRR_FONT_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
+    KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
 
     // set texture
     glBindTexture(GL_TEXTURE_2D, texture_id);
 
     // enable all attribute pointers
-    KRR_FONT_polygon_program2d_enable_attrib_pointers(shared_font_shaderprogram);
+    KRR_FONTSHADERPROG2D_enable_attrib_pointers(shared_font_shaderprogram);
 
     // bind vertex data
     glBindBuffer(GL_ARRAY_BUFFER, ss->vertex_data_buffer);
 
     // set texture coordinate attrib pointer
-    KRR_FONT_polygon_program2d_set_texcoord_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
+    KRR_FONTSHADERPROG2D_set_texcoord_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
     // set vertex data attrib pointer
-    KRR_FONT_polygon_program2d_set_vertex_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
+    KRR_FONTSHADERPROG2D_set_vertex_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
 
     // go through string
     int text_length = strlen(text);
@@ -508,7 +508,7 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
         // translate modelview matrix
         glm_translate_x(shared_font_shaderprogram->modelview_matrix, font->space);
         // issue update to gpu
-        KRR_FONT_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
+        KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
         render_x += font->space;
       }
       else if (text[i] == '\n')
@@ -516,7 +516,7 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
         // translate modelview matrix
         glm_translate(shared_font_shaderprogram->modelview_matrix, (vec3){ x - render_x, font->newline, 0.f});
         // issue update to gpu
-        KRR_FONT_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
+        KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
         render_y += font->newline;
         render_x += x - render_x;
       }
@@ -534,7 +534,7 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
         // move over
         glm_translate_x(shared_font_shaderprogram->modelview_matrix, clip->w + BETWEEN_CHAR_SPACING);
         // issue update to gpu
-        KRR_FONT_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
+        KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
         render_x += clip->w + BETWEEN_CHAR_SPACING;
       }
     }
@@ -544,7 +544,7 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // disable all attribute pointers
-    KRR_FONT_polygon_program2d_disable_attrib_pointers(shared_font_shaderprogram);
+    KRR_FONTSHADERPROG2D_disable_attrib_pointers(shared_font_shaderprogram);
 
     // set modelview matrix back to original one
     glm_mat4_copy(original_modelview_matrix, shared_font_shaderprogram->modelview_matrix);
@@ -601,20 +601,20 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
   // translate to render position
   glm_translate(shared_font_shaderprogram->modelview_matrix, (vec3){render_x, render_y, 0.f});
   // update modelview matrix immediately
-  KRR_FONT_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
+  KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
 
   // set texture
   glBindTexture(GL_TEXTURE_2D, texture_id);
 
   // enable all attribute pointers
-  KRR_FONT_polygon_program2d_enable_attrib_pointers(shared_font_shaderprogram);
+  KRR_FONTSHADERPROG2D_enable_attrib_pointers(shared_font_shaderprogram);
 
   // bind vertex data
   glBindBuffer(GL_ARRAY_BUFFER, ss->vertex_data_buffer);
 
   // set texcoord vertex pointer
-  KRR_FONT_polygon_program2d_set_texcoord_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
-  KRR_FONT_polygon_program2d_set_vertex_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
+  KRR_FONTSHADERPROG2D_set_texcoord_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
+  KRR_FONTSHADERPROG2D_set_vertex_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
 
   // go through string
   int text_length = strlen(text);
@@ -626,7 +626,7 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
       // translate modelview matrix
       glm_translate_x(shared_font_shaderprogram->modelview_matrix, font->space);
       // immediately issue udpate to gpu
-      KRR_FONT_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
+      KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
       render_x += font->space;
     }
     // newlines
@@ -650,7 +650,7 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
       // translate modelview matrix
       glm_translate(shared_font_shaderprogram->modelview_matrix, (vec3){target_x - render_x, font->newline, 0.f});
       // issue update to gpu immediately
-      KRR_FONT_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
+      KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
       render_y += font->newline;
       render_x += target_x - render_x;
     }
@@ -668,7 +668,7 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
       // move over
       glm_translate_x(shared_font_shaderprogram->modelview_matrix, clip->w + BETWEEN_CHAR_SPACING);
       // issue update to gpu
-      KRR_FONT_polygon_program2d_update_modelview_matrix(shared_font_shaderprogram);
+      KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
       render_x += clip->w + BETWEEN_CHAR_SPACING;
     }
   }
@@ -678,7 +678,7 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   // disable all attribute pointers
-  KRR_FONT_polygon_program2d_disable_attrib_pointers(shared_font_shaderprogram);
+  KRR_FONTSHADERPROG2D_disable_attrib_pointers(shared_font_shaderprogram);
 }
 
 GLfloat KRR_FONT_string_width(KRR_FONT* font, const char* string)

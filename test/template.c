@@ -7,7 +7,6 @@
 #include "graphics/texturedpp2d.h"
 #include "graphics/font.h"
 #include "graphics/fontpp2d.h"
-#include "graphics/doublemulticolorpp2d.h"
 
 // don't use this elsewhere
 #define CONTENT_BG_COLOR 0.f, 0.f, 0.f, 1.f
@@ -76,16 +75,6 @@ static KRR_TEXSHADERPROG2D* texture_shader = NULL;
 static KRR_FONTSHADERPROG2D* font_shader = NULL;
 static KRR_FONT* font = NULL;
 
-// double multicolor
-static KRR_DMULTICSHADERPROG2D* multicolor_shader = NULL;
-static GLuint vertex_vbo = 0;
-static GLuint rgby_vbo = 0;
-static GLuint cymw_vbo = 0;
-static GLuint gray_vbo = 0;
-static GLuint ibo = 0;
-static GLuint left_vao = 0;
-static GLuint right_vao = 0;
-
 void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_program, void* program)
 {
   // projection matrix
@@ -135,13 +124,7 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
 
 void usercode_app_went_windowed_mode()
 {
-  KRR_SHADERPROG_bind(multicolor_shader->program);
-  glm_mat4_copy(g_projection_matrix, multicolor_shader->projection_matrix);
-  KRR_gputil_update_projection_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
-
-  glm_mat4_copy(g_base_modelview_matrix, multicolor_shader->modelview_matrix);
-  KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
-
+	// set projection and modelview matrix to both of basic shaders
   KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
@@ -155,13 +138,7 @@ void usercode_app_went_windowed_mode()
 
 void usercode_app_went_fullscreen()
 {
-  KRR_SHADERPROG_bind(multicolor_shader->program);
-  glm_mat4_copy(g_projection_matrix, multicolor_shader->projection_matrix);
-  KRR_gputil_update_projection_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
-
-  glm_mat4_copy(g_base_modelview_matrix, multicolor_shader->modelview_matrix);
-  KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
-
+	// set projection and modelview matrix to both of basic shaders
   KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
@@ -261,22 +238,9 @@ bool usercode_loadmedia()
   }
 
   // TODO: Load media here...
-  multicolor_shader = KRR_DMULTICSHADERPROG2D_new();
-  if (!KRR_DMULTICSHADERPROG2D_load_program(multicolor_shader))
-  {
-    return false;
-  }
+	// END OF TODO
 
-  // initially update matrices for multicolor shader
-  KRR_SHADERPROG_bind(multicolor_shader->program);
-  // set matrices
-  glm_mat4_copy(g_projection_matrix, multicolor_shader->projection_matrix);
-  glm_mat4_copy(g_base_modelview_matrix, multicolor_shader->modelview_matrix);
-  // issue update matrices to gpu
-  KRR_gputil_update_projection_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
-  KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
-
-  // initially update all related matrices and related graphics stuf for both shaders
+  // initially update all related matrices and related graphics stuff for both basic shaders
   KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
@@ -291,102 +255,6 @@ bool usercode_loadmedia()
   // set font shader to all KRR_FONT as active
   shared_font_shaderprogram = font_shader;
   KRR_SHADERPROG_unbind(font_shader->program);
-
-  // set up VBO data
-  VERTEXPOS2D quad_pos[4] = {
-    { -50.0f, -50.f },
-    { 50.0f, -50.f },
-    { 50.0f, 50.0f },
-    { -50.0f, 50.0f }
-  };
-
-  COLOR32 quad_color_rgby[4] = {
-    { 1.0f, 0.0f, 0.0f, 1.0f },
-    { 1.0f, 1.0f, 0.0f, 1.0f },
-    { 0.0f, 1.0f, 0.0f, 1.0f },
-    { 0.0f, 0.0f, 1.0f, 1.0f }
-  };
-
-  COLOR32 quad_color_cymw[4] = {
-    { 0.0f, 1.0f, 1.0f, 1.0f },
-    { 1.0f, 1.0f, 0.0f, 1.0f },
-    { 1.0f, 0.0f, 1.0f, 1.0f },
-    { 1.0f, 1.0f, 1.0f, 1.0f }
-  };
-
-  COLOR32 quad_color_gray[4] = {
-    { 0.75f, 0.75f, 0.75f, 1.0f },
-    { 0.50f, 0.50f, 0.50f, 0.50f },
-    { 0.75f, 0.75f, 0.75f, 1.0f },
-    { 0.50f, 0.50f, 0.50f, 1.0f }
-  };
-
-  GLuint indices[4] = { 0, 1, 2, 3 };
-
-  // create VBOs
-  glGenBuffers(1, &vertex_vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
-  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(VERTEXPOS2D), quad_pos, GL_STATIC_DRAW);
-
-  glGenBuffers(1, &rgby_vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, rgby_vbo);
-  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(COLOR32), quad_color_rgby, GL_STATIC_DRAW);
-
-  glGenBuffers(1, &cymw_vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, cymw_vbo);
-  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(COLOR32), quad_color_cymw, GL_STATIC_DRAW);
-
-  glGenBuffers(1, &gray_vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, gray_vbo);
-  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(COLOR32), quad_color_gray, GL_STATIC_DRAW);
-
-  glGenBuffers(1, &ibo);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4 * sizeof(GLuint), indices, GL_STATIC_DRAW);
-
-  // left vao
-  glGenVertexArrays(1, &left_vao);
-
-  // bind vertex array
-  glBindVertexArray(left_vao);
-  // enable vertex attributes
-  KRR_DMULTICSHADERPROG2D_enable_all_vertex_attrib_pointers(multicolor_shader);
-
-  // set vertex data
-  glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
-  KRR_DMULTICSHADERPROG2D_set_attrib_vertex_pos2d_pointer_packed(multicolor_shader, NULL);
-
-  glBindBuffer(GL_ARRAY_BUFFER, rgby_vbo);
-  KRR_DMULTICSHADERPROG2D_set_attrib_multicolor_pointer_packed(multicolor_shader, 1, NULL);
-
-  glBindBuffer(GL_ARRAY_BUFFER, gray_vbo);
-  KRR_DMULTICSHADERPROG2D_set_attrib_multicolor_pointer_packed(multicolor_shader, 2, NULL);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-
-  // (note: not neccessary to unbin vao as setting a new one will overwrite the active vao, reduce cost in swithing vao)
-  // right vao
-  glGenVertexArrays(1, &right_vao);
-
-  // bind vertex array
-  glBindVertexArray(right_vao);
-  // enable vertex attributes
-  KRR_DMULTICSHADERPROG2D_enable_all_vertex_attrib_pointers(multicolor_shader);
-
-  // set vertex data
-  glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
-  KRR_DMULTICSHADERPROG2D_set_attrib_vertex_pos2d_pointer_packed(multicolor_shader, NULL);
-
-  glBindBuffer(GL_ARRAY_BUFFER, cymw_vbo);
-  KRR_DMULTICSHADERPROG2D_set_attrib_multicolor_pointer_packed(multicolor_shader, 1, NULL);
-
-  glBindBuffer(GL_ARRAY_BUFFER, gray_vbo);
-  KRR_DMULTICSHADERPROG2D_set_attrib_multicolor_pointer_packed(multicolor_shader, 2, NULL);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-
-  // unbine vao
-  glBindVertexArray(0);
 
   return true;
 }
@@ -487,36 +355,6 @@ void usercode_render()
   // note2: glViewport coordinate still in world coordinate, but for individual object (vertices) to be drawn, it's local coordinate
 
   // TODO: render code goes here...
-  // bind left vao
-  glBindVertexArray(left_vao);
-
-  // bind shader
-  KRR_SHADERPROG_bind(multicolor_shader->program);
-
-  // start fresh with modelview matrix
-  glm_mat4_copy(g_base_modelview_matrix, multicolor_shader->modelview_matrix);
-
-  // transform matrix for left quad
-  glm_translate(multicolor_shader->modelview_matrix, (vec3){g_logical_width * 1.f / 4.f, g_logical_height / 2.f, 0.f});
-  KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
-
-  // render left quad
-  glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
-
-  // bind right vao
-  glBindVertexArray(right_vao);
-
-  // start fresh
-  glm_mat4_copy(g_base_modelview_matrix, multicolor_shader->modelview_matrix);
-  // transform matrix for right quad
-  glm_translate(multicolor_shader->modelview_matrix, (vec3){g_logical_width * 3.f / 4.f, g_logical_height / 2.f, 0.f });
-  KRR_gputil_update_modelview_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
-
-  // render right quad
-  glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
-
-  // unbind shader
-  KRR_SHADERPROG_unbind(multicolor_shader->program);
 
   // disable scissor (if needed)
   if (g_need_clipping)
@@ -564,22 +402,4 @@ void usercode_close()
     KRR_FONT_free(font);
   if (font_shader != NULL)
     KRR_FONTSHADERPROG2D_free(font_shader);
-  if (texture_shader != NULL)
-    KRR_TEXSHADERPROG2D_free(texture_shader);
-
-  if (multicolor_shader != NULL)
-    KRR_DMULTICSHADERPROG2D_free(multicolor_shader);
-
-  if (vertex_vbo != 0)
-    glDeleteBuffers(1, &vertex_vbo);
-  if (rgby_vbo != 0)
-    glDeleteBuffers(1, &rgby_vbo);
-  if (cymw_vbo != 0)
-    glDeleteBuffers(1, &cymw_vbo);
-  if (gray_vbo != 0)
-    glDeleteBuffers(1, &gray_vbo);
-  if (left_vao != 0)
-    glDeleteVertexArrays(1, &left_vao);
-  if (right_vao != 0)
-    glDeleteVertexArrays(1, &right_vao);
 }

@@ -22,8 +22,8 @@ enum KRR_FONT_TEXTALIGNMENT
 // user can set this variable in runtime to different shader program
 // to achieve different rendering effect
 // it's safe to retain the original one then set it back when done
-struct KRR_FONT_polygon_program2d_;
-extern struct KRR_FONT_polygon_program2d_* shared_font_shaderprogram;
+struct KRR_FONTSHADERPROG2D_;
+extern struct KRR_FONTSHADERPROG2D_* shared_font_shaderprogram;
 
 typedef struct
 {

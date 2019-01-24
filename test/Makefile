@@ -16,7 +16,14 @@ endif
 LFLAGS += -lSDL2 -lSDL2_image -lSDL2_mixer -framework OpenGL -lGLEW -lfreetype -lcglm
 
 TARGETS = \
+	  template	\
 	  doublemulticolorshader
+
+DEPS = \
+       usercode.h	\
+       libkrr.a		\
+       main.o		\
+       copyresfiles
 
 all: libkrr.a main.o $(TARGETS) copyresfiles
 
@@ -26,6 +33,10 @@ main.o: $(srcdir)/main.c
 libkrr.a:
 	# change directory then make static library in which output is at $(libkrrpath)
 	cd .. && make
+
+template: $(srcdir)/template.c $(DEPS)
+	$(CC) -c $< $(CFLAGS) -o $@.o
+	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 doublemulticolorshader: $(srcdir)/doublemulticolorshader.c usercode.h libkrr.a main.o copyresfiles
 	$(CC) -c $< $(CFLAGS) -o $@.o
@@ -37,3 +48,4 @@ copyresfiles:
 clean:
 	rm -f $(TARGETS)
 	rm -f *.o
+	rm -rf ./res
