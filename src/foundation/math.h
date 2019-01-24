@@ -8,7 +8,7 @@
 extern float KRR_math_lerp(float a, float b, float t);
 
 /// Seed rand() function with current time via time(NULL).
-extern void KRR_math_rand_seed_time();
+extern void KRR_math_rand_seed_time(void);
 
 /// Seed rand() with seed
 /// \param seed Number to be set as seed for rand()

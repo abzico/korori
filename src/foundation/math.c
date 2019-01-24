@@ -7,7 +7,7 @@ float KRR_math_lerp(float a, float b, float t)
   return a + (b-a)*t;
 }
 
-void KRR_math_rand_seed_time()
+void KRR_math_rand_seed_time(void)
 {
   // set seed from current time
   srand(time(NULL));

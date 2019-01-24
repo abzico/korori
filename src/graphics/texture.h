@@ -56,7 +56,7 @@ typedef struct
 ///
 /// \return Newly created KRR_TEXTURE on heap.
 ///
-extern KRR_TEXTURE* KRR_TEXTURE_new();
+extern KRR_TEXTURE* KRR_TEXTURE_new(void);
 
 ///
 /// Free texture.

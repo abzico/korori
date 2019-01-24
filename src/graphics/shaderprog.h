@@ -15,7 +15,7 @@ typedef struct
 ///
 /// \return Newly created KRR_SHADERPROG returned as pointer to KRR_SHADERPROG
 ///
-extern KRR_SHADERPROG* KRR_SHADERPROG_new();
+extern KRR_SHADERPROG* KRR_SHADERPROG_new(void);
 
 ///
 /// Free shader program.

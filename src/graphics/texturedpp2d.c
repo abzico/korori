@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "foundation/common.h"
 
-KRR_TEXSHADERPROG2D* KRR_TEXSHADERPROG2D_new()
+KRR_TEXSHADERPROG2D* KRR_TEXSHADERPROG2D_new(void)
 {
   KRR_TEXSHADERPROG2D* out = malloc(sizeof(KRR_TEXSHADERPROG2D));
 

@@ -35,7 +35,7 @@ typedef struct KRR_TEXSHADERPROG2D_
 ///
 /// \return Newly created KRR_TEXSHADERPROG2D on heap.
 ///
-extern KRR_TEXSHADERPROG2D* KRR_TEXSHADERPROG2D_new();
+extern KRR_TEXSHADERPROG2D* KRR_TEXSHADERPROG2D_new(void);
 
 ///
 /// Free KRR_TEXSHADERPROG2D.

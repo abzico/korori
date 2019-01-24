@@ -67,7 +67,7 @@ void KRR_TEXTURE_free_internal_texture(KRR_TEXTURE* texture)
   free_VBO_IBO(texture);
 }
 
-KRR_TEXTURE* KRR_TEXTURE_new()
+KRR_TEXTURE* KRR_TEXTURE_new(void)
 {
   KRR_TEXTURE* out = malloc(sizeof(KRR_TEXTURE));
   init_defaults(out);

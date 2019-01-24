@@ -1,7 +1,7 @@
 #include "timer.h"
 #include <stdlib.h>
 
-KRR_TIMER* KRR_TIMER_createNew()
+KRR_TIMER* KRR_TIMER_createNew(void)
 {
   KRR_TIMER *timer = malloc(sizeof(KRR_TIMER));
 

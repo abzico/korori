@@ -32,7 +32,7 @@ typedef struct KRR_FONTSHADERPROG2D_
 ///
 /// \return Newly created KRR_FONTSHADERPROG2D
 ///
-extern KRR_FONTSHADERPROG2D* KRR_FONTSHADERPROG2D_new();
+extern KRR_FONTSHADERPROG2D* KRR_FONTSHADERPROG2D_new(void);
 
 ///
 /// free font shader program

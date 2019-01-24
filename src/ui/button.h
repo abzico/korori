@@ -34,7 +34,7 @@ typedef struct
  * 
  * Return newly created KRR_BUTTON in which caller needs to free it with KRR_BUTTON_Free().
  */
-extern KRR_BUTTON* KRR_BUTTON_create();
+extern KRR_BUTTON* KRR_BUTTON_create(void);
 
 /*
  * Call this function to update KRR_BUTTON's state, and execute user's custon handler function as set via its structure.

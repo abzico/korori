@@ -32,7 +32,7 @@ typedef struct KRR_DMULTICSHADERPROG2D_
 ///
 /// \return Newly created KRR_DMULTICSHADERPROG2D on heap.
 ///
-extern KRR_DMULTICSHADERPROG2D* KRR_DMULTICSHADERPROG2D_new();
+extern KRR_DMULTICSHADERPROG2D* KRR_DMULTICSHADERPROG2D_new(void);
 
 ///
 /// Free internals

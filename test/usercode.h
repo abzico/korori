@@ -26,7 +26,7 @@ extern bool usercode_init(int screen_width, int screen_height, int logical_width
 ///
 /// \return True if loading is successful, otherwise return false.
 ///
-extern bool usercode_loadmedia();
+extern bool usercode_loadmedia(void);
 
 ///
 /// Set screen's dimensions.
@@ -47,7 +47,7 @@ extern void usercode_update(float delta_time);
 ///
 /// Render
 ///
-extern void usercode_render();
+extern void usercode_render(void);
 
 ///
 /// Render average frame per second
@@ -67,4 +67,4 @@ extern void usercode_handle_event(SDL_Event *e, float delta_time);
 ///
 /// Free all resource
 ///
-extern void usercode_close();
+extern void usercode_close(void);

@@ -12,7 +12,7 @@ void KRR_SHADERPROG_init_defaults(KRR_SHADERPROG* shader_program)
   shader_program->program_id = 0;
 }
 
-KRR_SHADERPROG* KRR_SHADERPROG_new()
+KRR_SHADERPROG* KRR_SHADERPROG_new(void)
 {
   KRR_SHADERPROG* out = malloc(sizeof(KRR_SHADERPROG));
   KRR_SHADERPROG_init_defaults(out);

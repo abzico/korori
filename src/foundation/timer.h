@@ -20,7 +20,7 @@ typedef struct KRR_TIMER {
  * \brief Create a new timer.
  * \return Return a newly created KRR_TIMER*
  */
-extern KRR_TIMER* KRR_TIMER_createNew();
+extern KRR_TIMER* KRR_TIMER_createNew(void);
 
 /*
  * \brief Start the timer.

@@ -1,7 +1,7 @@
 #include "button.h"
 #include <stdbool.h>
 
-KRR_BUTTON* KRR_BUTTON_Create()
+KRR_BUTTON* KRR_BUTTON_Create(void)
 {
   KRR_BUTTON* ptr = malloc(sizeof(KRR_BUTTON));
   ptr->state = KRR_BUTTON_MOUSE_OUT;
