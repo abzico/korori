@@ -17,7 +17,8 @@ LFLAGS += -lSDL2 -lSDL2_image -lSDL2_mixer -framework OpenGL -lGLEW -lfreetype -
 
 TARGETS = \
 	  template	\
-	  doublemulticolorshader
+	  doublemulticolorshader	\
+	  rotatingplane
 
 DEPS = \
        usercode.h	\
@@ -39,6 +40,10 @@ template: $(srcdir)/template.c $(DEPS)
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 doublemulticolorshader: $(srcdir)/doublemulticolorshader.c usercode.h libkrr.a main.o copyresfiles
+	$(CC) -c $< $(CFLAGS) -o $@.o
+	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+
+rotatingplane: $(srcdir)/rotatingplane.c usercode.h libkrr.a main.o copyresfiles
 	$(CC) -c $< $(CFLAGS) -o $@.o
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
