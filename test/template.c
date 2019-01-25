@@ -166,7 +166,7 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   g_ri_view_height = g_screen_height;
 
   // calculate orthographic projection matrix
-	glm_ortho(0.0, g_screen_width, g_screen_height, 0.0, -1.0, 1.0, g_projection_matrix);
+	glm_ortho(0.0, g_screen_width, g_screen_height, 0.0, -300.0, 600.0, g_projection_matrix);
 	// calculate base modelview matrix (to reduce some of operations cost)
 	glm_mat4_identity(g_base_modelview_matrix);
 	glm_scale(g_base_modelview_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
@@ -289,7 +289,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         g_need_clipping = false;
 				
 				// re-calculate orthographic projection matrix
-				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -1.0, 1.0, g_projection_matrix);
+				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0, 600.0, g_projection_matrix);
 
 				// re-calculate base modelview matrix
 				// no need to scale as it's uniform 1.0 now
@@ -312,7 +312,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         g_need_clipping = true;
 
 				// re-calculate orthographic projection matrix
-				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -1.0, 1.0, g_projection_matrix);
+				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0, 600.0, g_projection_matrix);
 
 				// re-calculate base modelview matrix
 				glm_mat4_identity(g_base_modelview_matrix);

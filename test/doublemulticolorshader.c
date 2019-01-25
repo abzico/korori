@@ -382,7 +382,7 @@ bool usercode_loadmedia()
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 
-  // unbine vao
+  // unbind vao
   glBindVertexArray(0);
 
   return true;
