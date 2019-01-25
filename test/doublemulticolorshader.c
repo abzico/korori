@@ -575,6 +575,8 @@ void usercode_close()
     glDeleteBuffers(1, &cymw_vbo);
   if (gray_vbo != 0)
     glDeleteBuffers(1, &gray_vbo);
+  if (ibo != 0)
+    glDeleteBuffers(1, &ibo);
   if (left_vao != 0)
     glDeleteVertexArrays(1, &left_vao);
   if (right_vao != 0)
