@@ -32,6 +32,7 @@ TARGETS := \
 	  $(GPDIR)/plainpp2d.o \
 	  $(GPDIR)/multicolorpp2d.o \
 	  $(GPDIR)/texturedpp2d.o \
+	  $(GPDIR)/texturedpp3d.o \
 	  $(GPDIR)/fontpp2d.o \
 	  $(GPDIR)/doublemulticolorpp2d.o
 
@@ -87,6 +88,9 @@ $(GPDIR)/multicolorpp2d.o: $(GPDIR)/multicolorpp2d.c $(GPDIR)/multicolorpp2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(GPDIR)/texturedpp2d.o: $(GPDIR)/texturedpp2d.c $(GPDIR)/texturedpp2d.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(GPDIR)/texturedpp3d.o: $(GPDIR)/texturedpp3d.c $(GPDIR)/texturedpp3d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(GPDIR)/fontpp2d.o: $(GPDIR)/fontpp2d.c $(GPDIR)/fontpp2d.h

@@ -5,7 +5,7 @@
 #include "foundation/window.h"
 #include "foundation/util.h"
 #include "graphics/util.h"
-#include "graphics/texturedpp2d.h"
+#include "graphics/texturedpp3d.h"
 #include "graphics/font.h"
 #include "graphics/fontpp2d.h"
 
@@ -72,19 +72,19 @@ static GLuint fps_vao = 0;
 #endif
 
 // basic shaders and font
-static KRR_TEXSHADERPROG2D* texture_shader = NULL;
+static KRR_TEXSHADERPROG3D* texture_shader = NULL;
 static KRR_FONTSHADERPROG2D* font_shader = NULL;
 static KRR_FONT* font = NULL;
 
 // TODO: define variables here...
+static float texture_ratio; // will be filled
 static KRR_TEXTURE* texture = NULL;
 static GLuint vao = 0;
 static GLuint vertex_vbo = 0;
 static GLuint texcoord_vbo = 0;
 static GLuint ibo = 0;
 
-static float rotx = 0.f, roty = 0.f;
-static float scale_angle = 0.f, scale = 1.f;
+static float rotx = 0.f, roty = 0.f, rotz = 0.f;
 
 void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_program, void* program)
 {
@@ -95,12 +95,12 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
     if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
     {
       // convert to right type of program shader
-      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
+      KRR_TEXSHADERPROG3D* shader_ptr = (KRR_TEXSHADERPROG3D*)program;
 
       // copy calculated projection matrix to shader's then update to shader
       glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
 
-      KRR_TEXSHADERPROG2D_update_projection_matrix(shader_ptr);
+      KRR_TEXSHADERPROG3D_update_projection_matrix(shader_ptr);
     }
     // font shader
     else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
@@ -117,10 +117,10 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
     // texture shader
     if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
     {
-      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
+      KRR_TEXSHADERPROG3D* shader_ptr = (KRR_TEXSHADERPROG3D*)program;
       glm_mat4_copy(g_base_modelview_matrix, shader_ptr->modelview_matrix);
 
-      KRR_TEXSHADERPROG2D_update_modelview_matrix(shader_ptr);
+      KRR_TEXSHADERPROG3D_update_modelview_matrix(shader_ptr);
     }
     // font shader
     else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
@@ -175,6 +175,8 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 
   // calculate orthographic projection matrix
 	glm_ortho(0.0f, (float)g_screen_width, (float)g_screen_height, 0.0f, -300.0f, 600.0f, g_projection_matrix);
+  //glm_lookat((vec3){0.f, 0.f, 10.f}, (vec3){0.f, 0.f, 0.f}, (vec3){0.f, 1.0f, 0.f}, g_projection_matrix);
+  //glm_perspective(GLM_PI_4f, g_logical_width * 1.0f / g_logical_height, -300.0f, 600.0f, g_projection_matrix);
 	// calculate base modelview matrix (to reduce some of operations cost)
 	glm_mat4_identity(g_base_modelview_matrix);
 	glm_scale(g_base_modelview_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
@@ -189,6 +191,8 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // enable blending with default blend function
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  glEnable(GL_CULL_FACE);
   
   glEnable(GL_DEPTH_TEST);
 
@@ -228,8 +232,8 @@ bool usercode_loadmedia()
     return false;
   }
   // load texture shader
-  texture_shader = KRR_TEXSHADERPROG2D_new();
-  if (!KRR_TEXSHADERPROG2D_load_program(texture_shader))
+  texture_shader = KRR_TEXSHADERPROG3D_new();
+  if (!KRR_TEXSHADERPROG3D_load_program(texture_shader))
   {
     KRR_LOGE("Error loading texture shader");
     return false;
@@ -250,14 +254,14 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading alien-arcade texture");
     return false;
   }
+  // set aspect ratio of this texture
+  texture_ratio = texture->width * 1.0f / texture->height;
 
   // initially update all related matrices and related graphics stuf for both shaders
   KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  KRR_TEXSHADERPROG2D_set_texture_sampler(texture_shader, 0);
-  // set texture shader to all KRR_TEXTURE as active
-  shared_textured_shaderprogram = texture_shader;
+  KRR_TEXSHADERPROG3D_set_texture_sampler(texture_shader, 0);
 
   KRR_SHADERPROG_bind(font_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
@@ -267,36 +271,90 @@ bool usercode_loadmedia()
   shared_font_shaderprogram = font_shader;
   KRR_SHADERPROG_unbind(font_shader->program);
 
+  // cube representation
+  //
+  // number is indices-index
+  // faces are as follows (defined counter-clockwise; CCW, and divide quad into 2 triangles from top-left to bottom-right)
+  // - front-face
+  //    - 0-1-2
+  //    - 0-2-3
+  // - right-face
+  //    - 3-2-6
+  //    - 3-6-7
+  // - back-face
+  //    - 7-6-5
+  //    - 7-5-4
+  // - left-face
+  //    - 4-5-1
+  //    - 4-1-0
+  // - up-face
+  //    - 4-0-3
+  //    - 4-3-7
+  // - bottom-face
+  //    - 1-5-6
+  //    - 1-6-2
+  //
+  //
+  //        4--------7
+  //       /|       /|
+  //      / |      / |
+  //     0--------3  |
+  //     |  5-----|--6
+  //     | /      | /
+  //     1--------2
+  //
+  //
   // set up VBO data
   // front side
-  VERTEXPOS2D quad_pos[4] = {
-    {-1.0f, -1.0f },
-    {-1.0f, 1.0f },
-    {1.0f, 1.0f },
-    {1.0f, -1.0f }
+  VERTEXPOS3D quad_pos[8] = {
+    { -1.0f, -1.0f,  1.0f },
+    { -1.0f,  1.0f,  1.0f },
+    {  1.0f,  1.0f,  1.0f },
+    {  1.0f, -1.0f,  1.0f },
+    { -1.0f, -1.0f, -1.0f },
+    { -1.0f,  1.0f, -1.0f },
+    {  1.0f,  1.0f, -1.0f },
+    {  1.0f, -1.0f, -1.0f }, 
   };
 
-  TEXCOORD2D texcoord[4] = {
+  TEXCOORD2D texcoord[8] = {
     { 0.0f, 0.0f },
     { 0.0f, texture->height*1.0f/texture->physical_height_ },
     { texture->width*1.0f/texture->physical_width_, texture->height*1.0f/texture->physical_height_ },
-    { texture->width*1.0f/texture->physical_width_, 0.0f }
+    { texture->width*1.0f/texture->physical_width_, 0.0f },
+    { texture->width*1.0f/texture->physical_width_, 0.0f },
+    { texture->width*1.0f/texture->physical_width_, texture->height*1.0f/texture->physical_height_ },
+    { 0.0f, texture->height*1.0f/texture->physical_height_ },
+    { 0.0f, 0.0f }
   };
 
-  GLuint indices[4] = { 0, 1, 2, 3 };
+  GLuint indices[36] = { 
+    0, 1, 2,
+    0, 2, 3,
+    3, 2, 6,
+    3, 6, 7,
+    7, 6, 5,
+    7, 5, 4,
+    4, 5, 1,
+    4, 1, 0,
+    4, 0, 3,
+    4, 3, 7,
+    1, 5, 6,
+    1, 6, 2 
+  };
 
   // create VBOs
   glGenBuffers(1, &vertex_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
-  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(VERTEXPOS2D), quad_pos, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(VERTEXPOS3D), quad_pos, GL_STATIC_DRAW);
 
   glGenBuffers(1, &texcoord_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, texcoord_vbo);
-  glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(TEXCOORD2D), texcoord, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(TEXCOORD2D), texcoord, GL_STATIC_DRAW);
 
   glGenBuffers(1, &ibo);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4 * sizeof(GLuint), indices, GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36 * sizeof(GLuint), indices, GL_STATIC_DRAW);
 
 
   // vao, then bind
@@ -304,15 +362,15 @@ bool usercode_loadmedia()
   glBindVertexArray(vao);
 
   // enable vertex attributes
-  KRR_TEXSHADERPROG2D_enable_attrib_pointers(texture_shader);
+  KRR_TEXSHADERPROG3D_enable_attrib_pointers(texture_shader);
 
   // set vertex data
   glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
-  KRR_TEXSHADERPROG2D_set_vertex_pointer(texture_shader, sizeof(VERTEXPOS2D), NULL);
+  KRR_TEXSHADERPROG3D_set_vertex_pointer(texture_shader, sizeof(VERTEXPOS3D), NULL);
 
   // set texcoord data
   glBindBuffer(GL_ARRAY_BUFFER, texcoord_vbo);
-  KRR_TEXSHADERPROG2D_set_texcoord_pointer(texture_shader, sizeof(TEXCOORD2D), NULL);
+  KRR_TEXSHADERPROG3D_set_texcoord_pointer(texture_shader, sizeof(TEXCOORD2D), NULL);
 
   // ibo
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -393,18 +451,22 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 
 void usercode_update(float delta_time)
 {
-  scale = sin(glm_rad(scale_angle++)) * 2.f;
-  
-  rotx += 5.f;
+  rotx += 1.f;
   if (rotx >= 360.f)
   {
     rotx -= 360.f;
   }
 
-  roty += 1.f;
+  roty += 1.5f;
   if (roty >= 360.f)
   {
     roty -= 360.f;
+  }
+
+  rotz += 2.f;
+  if (rotz >= 360.0f)
+  {
+    rotz -= 360.0f;
   }
 }
 
@@ -443,14 +505,16 @@ void usercode_render()
   // rotate
   glm_mat4_copy(g_base_modelview_matrix, texture_shader->modelview_matrix);
   glm_translate(texture_shader->modelview_matrix, (vec3){g_logical_width/2.f, g_logical_height/2.f, 0.f});
-  glm_scale(texture_shader->modelview_matrix, (vec3){texture->width/2.5f, texture->height/2.5f, 1.f});
+  glm_scale(texture_shader->modelview_matrix, (vec3){80.0f, 80.0f, 80.0f});
   glm_rotate(texture_shader->modelview_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
   glm_rotate(texture_shader->modelview_matrix, glm_rad(rotx), (vec3){1.f, 0.f, 0.f});
+  glm_rotate(texture_shader->modelview_matrix, glm_rad(rotz), (vec3){0.f, 0.f, 1.f});
   // update modelview matrix
-  KRR_TEXSHADERPROG2D_update_modelview_matrix(texture_shader);
+  KRR_TEXSHADERPROG3D_update_modelview_matrix(texture_shader);
 
   // render quad
-  glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
+  glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, NULL);
+
 
   // unbind shader
   KRR_SHADERPROG_unbind(texture_shader->program);
@@ -505,7 +569,7 @@ void usercode_close()
   if (font_shader != NULL)
     KRR_FONTSHADERPROG2D_free(font_shader);
   if (texture_shader != NULL)
-    KRR_TEXSHADERPROG2D_free(texture_shader);
+    KRR_TEXSHADERPROG3D_free(texture_shader);
 
   if (texture != NULL)
     KRR_TEXTURE_free(texture);

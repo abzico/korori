@@ -31,9 +31,22 @@ typedef struct
 
 typedef struct
 {
+  GLfloat x;
+  GLfloat y;
+  GLfloat z;
+} VERTEXPOS3D;
+
+typedef struct
+{
   VERTEXPOS2D position;
   TEXCOORD2D texcoord;
 } VERTEXTEX2D;
+
+typedef struct
+{
+  VERTEXPOS3D position;
+  TEXCOORD2D texcoord;
+} VERTEXTEX3D;
 
 typedef struct
 {
