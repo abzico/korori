@@ -190,7 +190,7 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   if (error != GL_NO_ERROR)
   {
     KRR_util_print_callstack();
-    SDL_Log("Error initializing OpenGL! %s", KRR_gputil_error_string(error));
+    KRR_LOGE("Error initializing OpenGL! %s", KRR_gputil_error_string(error));
     return false;
   }
 
@@ -207,7 +207,7 @@ bool usercode_loadmedia()
     fps_font = KRR_FONT_new();
     if (!KRR_FONT_load_freetype(fps_font, "res/fonts/Minecraft.ttf", 14))
     {
-      SDL_Log("Unable to load font for rendering framerate");
+      KRR_LOGE("Unable to load font for rendering framerate");
       return false;
     }
   }
@@ -217,14 +217,14 @@ bool usercode_loadmedia()
   font = KRR_FONT_new();
   if (!KRR_FONT_load_freetype(font, "res/fonts/Minecraft.ttf", 40))
   {
-    SDL_Log("Error to load font");
+    KRR_LOGE("Error to load font");
     return false;
   }
   // load texture shader
   texture_shader = KRR_TEXSHADERPROG2D_new();
   if (!KRR_TEXSHADERPROG2D_load_program(texture_shader))
   {
-    SDL_Log("Error loading texture shader");
+    KRR_LOGE("Error loading texture shader");
     return false;
   }
   
@@ -232,7 +232,7 @@ bool usercode_loadmedia()
   font_shader = KRR_FONTSHADERPROG2D_new();
   if (!KRR_FONTSHADERPROG2D_load_program(font_shader))
   {
-    SDL_Log("Error loading font shader");
+    KRR_LOGE("Error loading font shader");
     return false;
   }
 
