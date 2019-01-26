@@ -1,4 +1,6 @@
 /// sameple for rotatingcube creating VBO, IBO, and VAO by hands in which position and texture coordinate are separated in two VBOs
+/// note: to have a clear texture mapping on the top and bottom face, you need to duplicate define vertices as
+///       a vertex can have only one texture coordinate,  but it's not the case in this example.
 
 #include "usercode.h"
 #include "foundation/common.h"
@@ -317,15 +319,26 @@ bool usercode_loadmedia()
     {  1.0f, -1.0f, -1.0f }, 
   };
 
+  // texture coordinate taken into account of padded POT texture, and un-aligned texture pixel
+  const float texcoord_width_offset_start = 0.5f/texture->physical_width_;
+  const float texcoord_width_offset_end = -0.5f/texture->physical_width_;
+  const float texcoord_height_offset_start = 0.5f/texture->physical_height_;
+  const float texcoord_height_offset_end = -0.5f/texture->physical_height_;
+
+  #define TEXCOORD_WOS texcoord_width_offset_start
+  #define TEXCOORD_WOE texcoord_width_offset_end
+  #define TEXCOORD_HOS texcoord_height_offset_start
+  #define TEXCOORD_HOE texcoord_height_offset_end
+  
   TEXCOORD2D texcoord[8] = {
-    { 0.0f, 0.0f },
-    { 0.0f, texture->height*1.0f/texture->physical_height_ },
-    { texture->width*1.0f/texture->physical_width_, texture->height*1.0f/texture->physical_height_ },
-    { texture->width*1.0f/texture->physical_width_, 0.0f },
-    { texture->width*1.0f/texture->physical_width_, 0.0f },
-    { texture->width*1.0f/texture->physical_width_, texture->height*1.0f/texture->physical_height_ },
-    { 0.0f, texture->height*1.0f/texture->physical_height_ },
-    { 0.0f, 0.0f }
+    { 0.0f + TEXCOORD_WOS, 0.0f + TEXCOORD_HOS },
+    { 0.0f + TEXCOORD_WOS, texture->height*1.0f/texture->physical_height_ + TEXCOORD_HOE },
+    { texture->width*1.0f/texture->physical_width_ + TEXCOORD_WOE, texture->height*1.0f/texture->physical_height_ + TEXCOORD_HOE },
+    { texture->width*1.0f/texture->physical_width_ + TEXCOORD_WOE, 0.0f + TEXCOORD_HOS },
+    { texture->width*1.0f/texture->physical_width_ + TEXCOORD_WOE, 0.0f + TEXCOORD_HOS },
+    { texture->width*1.0f/texture->physical_width_ + TEXCOORD_WOE, texture->height*1.0f/texture->physical_height_ + TEXCOORD_HOE },
+    { 0.0f + TEXCOORD_WOS, texture->height*1.0f/texture->physical_height_ + TEXCOORD_HOE },
+    { 0.0f + TEXCOORD_WOS, 0.0f + TEXCOORD_HOS }
   };
 
   GLuint indices[36] = { 
