@@ -3,7 +3,7 @@
 srcdir = .
 
 CC = gcc
-override CFLAGS += -std=c99 -Wall -I. -I../src -I/usr/local/include/SDL2 -I/Volumes/Slave/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/usr/local/include/GL -I/usr/local/include/freetype2
+override CFLAGS += -std=c99 -g -Wall -I. -I../src -I/usr/local/include/SDL2 -I/Volumes/Slave/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/usr/local/include/GL -I/usr/local/include/freetype2
 LIBKRR_FLAGS = -L../ -lkrr
 
 # add platform specific
