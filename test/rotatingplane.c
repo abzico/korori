@@ -75,9 +75,11 @@ static KRR_FONTSHADERPROG2D* font_shader = NULL;
 static KRR_FONT* font = NULL;
 
 // TODO: define variables here
+#define CLIPPED_TEX_SIZE 64.0f
 static float rotx = 0.f, roty = 0.f;
 static float scale_angle = 0.f, scale = 1.f;
 static KRR_TEXTURE* texture = NULL;
+static KRR_TEXTURE* texture_clipped = NULL;
 
 void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_program, void* program)
 {
@@ -249,7 +251,15 @@ bool usercode_loadmedia()
   texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(texture, "res/alien-arcade.png"))
   {
-    KRR_LOGE("Cannot loadd alien-arcade texture");
+    KRR_LOGE("Cannot load alien-arcade texture");
+    return false;
+  }
+
+  // load texture clipped
+  texture_clipped = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(texture_clipped, "res/sheet.png"))
+  {
+    KRR_LOGE("Cannot load sheet texture");
     return false;
   }
 	// END OF TODO
@@ -379,23 +389,42 @@ void usercode_render()
   // TODO: render code goes here...
   // bind vao
   KRR_TEXTURE_bind_vao(texture);
-  // bind shader program
-  KRR_SHADERPROG_bind(texture_shader->program);
+    // bind shader program
+    KRR_SHADERPROG_bind(texture_shader->program);
 
-  // rotate
-  glm_mat4_copy(g_base_modelview_matrix, texture_shader->modelview_matrix);
-  glm_translate(texture_shader->modelview_matrix, (vec3){g_logical_width/2.f, g_logical_height/2.f, 0.f});
-  glm_scale_uni(texture_shader->modelview_matrix, scale);
-  glm_rotate(texture_shader->modelview_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
-  glm_rotate(texture_shader->modelview_matrix, glm_rad(rotx), (vec3){1.f, 0.f, 0.f});
-  glm_translate(texture_shader->modelview_matrix, (vec3){-texture->width/2.f, -texture->height/2.f, 0});
+    // render normal texture
+    glm_mat4_copy(g_base_modelview_matrix, texture_shader->modelview_matrix);
+    glm_translate(texture_shader->modelview_matrix, (vec3){g_logical_width*1.f/4.f, g_logical_height/2.f, 0.f});
+    glm_scale_uni(texture_shader->modelview_matrix, scale);
+    glm_rotate(texture_shader->modelview_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
+    glm_rotate(texture_shader->modelview_matrix, glm_rad(rotx), (vec3){1.f, 0.f, 0.f});
+    glm_translate(texture_shader->modelview_matrix, (vec3){-texture->width/2.f, -texture->height/2.f, 0});
 
-  KRR_TEXTURE_render(texture, 0.f, 0.f, NULL);
+    KRR_TEXTURE_render(texture, 0.f, 0.f, NULL);
 
-  // unbind shader program
-  KRR_SHADERPROG_unbind(texture_shader->program);
+    // unbind shader program
+    KRR_SHADERPROG_unbind(texture_shader->program);
+
+  // bind clipped texture vao
+  KRR_TEXTURE_bind_vao(texture_clipped);
+    // bind shader program
+    KRR_SHADERPROG_bind(texture_shader->program);
+
+    // render clipped texture
+    glm_mat4_copy(g_base_modelview_matrix, texture_shader->modelview_matrix);
+    glm_translate(texture_shader->modelview_matrix, (vec3){g_logical_width*3.f/4.f, g_logical_height/2.f, 0.f});
+    glm_scale_uni(texture_shader->modelview_matrix, scale);
+    glm_rotate(texture_shader->modelview_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
+    glm_rotate(texture_shader->modelview_matrix, glm_rad(rotx), (vec3){1.f, 0.f, 0.f});
+    glm_translate(texture_shader->modelview_matrix, (vec3){-CLIPPED_TEX_SIZE/2.f, -CLIPPED_TEX_SIZE/2.f, 0});
+
+    KRR_TEXTURE_render(texture_clipped, 0.f, 0.f, &(RECT){320.f, 0.f, CLIPPED_TEX_SIZE, CLIPPED_TEX_SIZE});
+
+    // unbind shader program
+    KRR_SHADERPROG_unbind(texture_shader->program);
+
   // unbind vao
-  KRR_TEXTURE_unbind_vao(texture);
+  KRR_TEXTURE_unbind_vao(texture_clipped);
 
   // disable scissor (if needed)
   if (g_need_clipping)
@@ -441,4 +470,6 @@ void usercode_close()
     KRR_FONTSHADERPROG2D_free(font_shader);
   if (texture != NULL)
     KRR_TEXTURE_free(texture);
+  if (texture_clipped != NULL)
+    KRR_TEXTURE_free(texture_clipped);
 }
