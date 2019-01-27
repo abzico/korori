@@ -263,6 +263,26 @@ bool KRR_FONT_load_bitmap(KRR_FONT* font, const char* path)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   glBindTexture(GL_TEXTURE_2D, 0);
 
+  // setup vao's binding
+  //  use vao of spritesheet as KRR_FONT relies on it
+  KRR_SPRITESHEET* ss = font->spritesheet;
+  glBindVertexArray(ss->vao);
+
+    // enable all attribute pointers
+    KRR_FONTSHADERPROG2D_enable_attrib_pointers(shared_font_shaderprogram);
+
+    // bind vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, ss->vertex_data_buffer);
+
+    // set texture coordinate attrib pointer
+    KRR_FONTSHADERPROG2D_set_texcoord_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
+    // set vertex data attrib pointer
+    KRR_FONTSHADERPROG2D_set_vertex_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
+
+    // note: binding ibo will be done at rendering time depends on which character to render at that time
+
+  glBindVertexArray(0);
+
   // set spacing variables
   font->space = cell_width / 2.f;
   font->newline = a_bottom - top;
@@ -431,6 +451,26 @@ bool KRR_FONT_load_freetype(KRR_FONT* font, const char* path, GLuint pixel_size)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   glBindTexture(GL_TEXTURE_2D, 0);
 
+  // setup vao's binding
+  //  use vao of spritesheet as KRR_FONT relies on it
+  KRR_SPRITESHEET* ss = font->spritesheet;
+  glBindVertexArray(ss->vao);
+
+    // enable all attribute pointers
+    KRR_FONTSHADERPROG2D_enable_attrib_pointers(shared_font_shaderprogram);
+
+    // bind vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, ss->vertex_data_buffer);
+
+    // set texture coordinate attrib pointer
+    KRR_FONTSHADERPROG2D_set_texcoord_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
+    // set vertex data attrib pointer
+    KRR_FONTSHADERPROG2D_set_vertex_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
+
+    // note: binding ibo will be done at rendering time depends on which character to render at that time
+
+  glBindVertexArray(0);
+
   // set spacing variables
   font->space = cell_width / 2.0f;
   font->line_height = cell_height;
@@ -460,6 +500,17 @@ void KRR_FONT_free_font(KRR_FONT* font)
   font->newline = 0.f;
 }
 
+void KRR_FONT_bind_vao(KRR_FONT* font)
+{
+  KRR_SPRITESHEET* ss = font->spritesheet;
+
+  // as KRR_FONT relies on KRR_SPRITESHEET, thus we bind KRR_SPRITESHEET's vao
+  glBindVertexArray(ss->vao);
+
+  // bind texture
+  glBindTexture(GL_TEXTURE_2D, ss->ltexture->texture_id);
+}
+
 void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y)
 {
   // if there is texture to render from
@@ -474,11 +525,6 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
     GLfloat render_x = x;
     GLfloat render_y = y;
 
-    // save current state of modelview matrix
-    mat4 original_modelview_matrix;
-    // copy the current modelview matrix to original one, then we will work further on modelview matrix attached to shared_font_shaderprogram
-    glm_mat4_copy(shared_font_shaderprogram->modelview_matrix, original_modelview_matrix);
-
     // translate to rendering position
     glm_translate(shared_font_shaderprogram->modelview_matrix, (vec3){x, y, 0.f});
     // issue update to gpu
@@ -486,17 +532,6 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
 
     // set texture
     glBindTexture(GL_TEXTURE_2D, texture_id);
-
-    // enable all attribute pointers
-    KRR_FONTSHADERPROG2D_enable_attrib_pointers(shared_font_shaderprogram);
-
-    // bind vertex data
-    glBindBuffer(GL_ARRAY_BUFFER, ss->vertex_data_buffer);
-
-    // set texture coordinate attrib pointer
-    KRR_FONTSHADERPROG2D_set_texcoord_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
-    // set vertex data attrib pointer
-    KRR_FONTSHADERPROG2D_set_vertex_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
 
     // go through string
     int text_length = strlen(text);
@@ -538,16 +573,6 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
         render_x += clip->w + BETWEEN_CHAR_SPACING;
       }
     }
-
-    // unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    // disable all attribute pointers
-    KRR_FONTSHADERPROG2D_disable_attrib_pointers(shared_font_shaderprogram);
-
-    // set modelview matrix back to original one
-    glm_mat4_copy(original_modelview_matrix, shared_font_shaderprogram->modelview_matrix);
   }
 }
 
@@ -592,12 +617,6 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
     }
   }
 
-  // save current state of modelview matrix
-  mat4 original_modelview_matrix;
-  // from this frame, we will operate on top of current modelview matrix then when done
-  // we will set back original modelview matrix back (pretty much similar to fixed-function pipeline)
-  glm_mat4_copy(shared_font_shaderprogram->modelview_matrix, original_modelview_matrix);
-
   // translate to render position
   glm_translate(shared_font_shaderprogram->modelview_matrix, (vec3){render_x, render_y, 0.f});
   // update modelview matrix immediately
@@ -605,16 +624,6 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
 
   // set texture
   glBindTexture(GL_TEXTURE_2D, texture_id);
-
-  // enable all attribute pointers
-  KRR_FONTSHADERPROG2D_enable_attrib_pointers(shared_font_shaderprogram);
-
-  // bind vertex data
-  glBindBuffer(GL_ARRAY_BUFFER, ss->vertex_data_buffer);
-
-  // set texcoord vertex pointer
-  KRR_FONTSHADERPROG2D_set_texcoord_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
-  KRR_FONTSHADERPROG2D_set_vertex_pointer(shared_font_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
 
   // go through string
   int text_length = strlen(text);
@@ -672,13 +681,11 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
       render_x += clip->w + BETWEEN_CHAR_SPACING;
     }
   }
+}
 
-  // unbind buffers
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-  // disable all attribute pointers
-  KRR_FONTSHADERPROG2D_disable_attrib_pointers(shared_font_shaderprogram);
+void KRR_FONT_unbind_vao(KRR_FONT* font)
+{
+  glBindVertexArray(0);
 }
 
 GLfloat KRR_FONT_string_width(KRR_FONT* font, const char* string)

@@ -5,7 +5,7 @@ GPDIR := src/graphics
 UI_DIR := src/ui
 EXTERDIR := src/externals
 
-override CFLAGS += -std=c99 -Wall -Isrc/ -I/usr/local/include/SDL2 -I/Volumes/Slave/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/usr/local/include/GL -I/usr/local/include/freetype2
+override CFLAGS += -std=c99 -g -Wall -Isrc/ -I/usr/local/include/SDL2 -I/Volumes/Slave/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/usr/local/include/GL -I/usr/local/include/freetype2
 
 # add platform specific cflags
 UNAME_S := $(shell uname -s)
