@@ -15,6 +15,8 @@ typedef struct
   GLuint vertex_data_buffer;
   /// (internal use)
   GLuint* index_buffers;
+  /// (internal use)
+  GLuint vao;
 } KRR_SPRITESHEET;
 
 ///
@@ -67,6 +69,16 @@ extern bool KRR_SPRITESHEET_generate_databuffer(KRR_SPRITESHEET* spritesheet);
 extern void KRR_SPRITESHEET_free_sheet(KRR_SPRITESHEET* spritesheet);
 
 ///
+/// Bind vao.
+///
+/// It's not necessary to always call KRR_TEXTURE_unbind_vao() if next call is KRR_TEXTURE_bind_vao() with different KRR_TEXTURE.
+/// It will be overwritely set the active VAO.
+///
+/// \param spritesheet pointer to KRR_SPRITESHEET
+///
+extern void KRR_SPRITESHEET_bind_vao(KRR_SPRITESHEET* spritesheet);
+
+///
 /// Render sprite from specified index.
 ///
 /// \param spritesheet Pointer to KRR_SPRITESHEET
@@ -75,5 +87,12 @@ extern void KRR_SPRITESHEET_free_sheet(KRR_SPRITESHEET* spritesheet);
 /// \param y Y position to render
 ///
 extern void KRR_SPRITESHEET_render_sprite(KRR_SPRITESHEET* spritesheet, int index, GLfloat x, GLfloat y);
+
+///
+/// Unbind vao.
+///
+/// \param spritesheet pointer to KRR_SPRITESHEET
+///
+extern void KRR_SPRITESHEET_unbind_vao(KRR_SPRITESHEET* spriteshet);
 
 #endif

@@ -85,6 +85,13 @@ extern bool KRR_FONT_load_freetype(KRR_FONT* font, const char* path, GLuint pixe
 extern void KRR_FONT_free_font(KRR_FONT* font);
 
 ///
+/// Bind vao.
+///
+/// \param font pointerto KRR_FONT
+///
+extern void KRR_FONT_bind_vao(KRR_FONT* font);
+
+///
 /// Render text
 ///
 /// \param font Pointer to KRR_FONT
@@ -105,6 +112,13 @@ extern void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GL
 /// \param align Alignment to align text within the given area. See KRR_FONT_TEXTALIGNMENT.
 ///
 extern void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat y, const SIZE* area_size, int align);
+
+///
+/// Unbind vao.
+///
+/// \param font pointer to KRR_FONT
+///
+extern void KRR_FONT_unbind_vao(KRR_FONT* font);
 
 ///
 /// Get rendering area size forinput text.

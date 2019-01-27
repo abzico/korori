@@ -66,10 +66,6 @@ enum USERCODE_SHADERTYPE
 static void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_type, void* program);
 // -- end of section of function signatures -- //
 
-#ifndef DISABLE_FPS_CALC
-static GLuint fps_vao = 0;
-#endif
-
 // basic shaders and font
 static KRR_TEXSHADERPROG2D* texture_shader = NULL;
 static KRR_FONTSHADERPROG2D* font_shader = NULL;
@@ -220,11 +216,29 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 
 bool usercode_loadmedia()
 {
-  // load font to render framerate
-#ifndef DISABLE_FPS_CALC
+  // load texture shader
+  texture_shader = KRR_TEXSHADERPROG2D_new();
+  if (!KRR_TEXSHADERPROG2D_load_program(texture_shader))
   {
-    glGenVertexArrays(1, &fps_vao);
+    KRR_LOGE("Error loading texture shader");
+    return false;
+  }
+  // set texture shader to all KRR_TEXTURE as active
+  shared_textured_shaderprogram = texture_shader;
+  
+  // load font shader
+  font_shader = KRR_FONTSHADERPROG2D_new();
+  if (!KRR_FONTSHADERPROG2D_load_program(font_shader))
+  {
+    KRR_LOGE("Error loading font shader");
+    return false;
+  }
+  // set font shader to all KRR_FONT as active
+  shared_font_shaderprogram = font_shader;
 
+#ifndef DISABLE_FPS_CALC
+  // load font to render framerate
+  {
     fps_font = KRR_FONT_new();
     if (!KRR_FONT_load_freetype(fps_font, "res/fonts/Minecraft.ttf", 14))
     {
@@ -239,21 +253,6 @@ bool usercode_loadmedia()
   if (!KRR_FONT_load_freetype(font, "res/fonts/Minecraft.ttf", 40))
   {
     KRR_LOGE("Error to load font");
-    return false;
-  }
-  // load texture shader
-  texture_shader = KRR_TEXSHADERPROG2D_new();
-  if (!KRR_TEXSHADERPROG2D_load_program(texture_shader))
-  {
-    KRR_LOGE("Error loading texture shader");
-    return false;
-  }
-  
-  // load font shader
-  font_shader = KRR_FONTSHADERPROG2D_new();
-  if (!KRR_FONTSHADERPROG2D_load_program(font_shader))
-  {
-    KRR_LOGE("Error loading font shader");
     return false;
   }
 
@@ -278,15 +277,11 @@ bool usercode_loadmedia()
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   KRR_TEXSHADERPROG2D_set_texture_sampler(texture_shader, 0);
-  // set texture shader to all KRR_TEXTURE as active
-  shared_textured_shaderprogram = texture_shader;
 
   KRR_SHADERPROG_bind(font_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   KRR_FONTSHADERPROG2D_set_texture_sampler(font_shader, 0);
-  // set font shader to all KRR_FONT as active
-  shared_font_shaderprogram = font_shader;
   KRR_SHADERPROG_unbind(font_shader->program);
 
   // set up VBO data
@@ -529,7 +524,7 @@ void usercode_render_fps(int avg_fps)
   snprintf(fps_text, FPS_BUFFER-1, "%d", avg_fps);
 
   // bind fps-vao
-  glBindVertexArray(fps_vao);
+  KRR_FONT_bind_vao(fps_font);
 
   // use shared font shader
   KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
@@ -542,18 +537,13 @@ void usercode_render_fps(int avg_fps)
   KRR_SHADERPROG_unbind(shared_font_shaderprogram->program);
 
   // unbind fps-vao
-  glBindVertexArray(0);
+  KRR_FONT_unbind_vao(fps_font);
 #endif 
 }
 
 void usercode_close()
 {
 #ifndef DISABLE_FPS_CALC
-  if (fps_vao == 0)
-  {
-    glDeleteVertexArrays(1, &fps_vao);
-    fps_vao = 0;
-  }
   if (fps_font != NULL)
     KRR_FONT_free(fps_font);
 #endif

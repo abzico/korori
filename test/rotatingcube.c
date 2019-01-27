@@ -7,6 +7,7 @@
 #include "foundation/window.h"
 #include "foundation/util.h"
 #include "graphics/util.h"
+#include "graphics/texturedpp2d.h"
 #include "graphics/texturedpp3d.h"
 #include "graphics/font.h"
 #include "graphics/fontpp2d.h"
@@ -69,12 +70,9 @@ enum USERCODE_SHADERTYPE
 static void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_type, void* program);
 // -- end of section of function signatures -- //
 
-#ifndef DISABLE_FPS_CALC
-static GLuint fps_vao = 0;
-#endif
-
 // basic shaders and font
-static KRR_TEXSHADERPROG3D* texture_shader = NULL;
+static KRR_TEXSHADERPROG2D* texture_shader = NULL;
+static KRR_TEXSHADERPROG3D* texture3d_shader = NULL;
 static KRR_FONTSHADERPROG2D* font_shader = NULL;
 static KRR_FONT* font = NULL;
 
@@ -140,6 +138,10 @@ void usercode_app_went_windowed_mode()
   KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
+
+  KRR_SHADERPROG_bind(texture3d_shader->program);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
   // no need to unbind as we will bind a new one soon
 
   KRR_SHADERPROG_bind(font_shader->program);
@@ -153,6 +155,10 @@ void usercode_app_went_fullscreen()
   KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
+
+  KRR_SHADERPROG_bind(texture3d_shader->program);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
 
   KRR_SHADERPROG_bind(font_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
@@ -177,8 +183,6 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 
   // calculate orthographic projection matrix
 	glm_ortho(0.0f, (float)g_screen_width, (float)g_screen_height, 0.0f, -300.0f, 600.0f, g_projection_matrix);
-  //glm_lookat((vec3){0.f, 0.f, 10.f}, (vec3){0.f, 0.f, 0.f}, (vec3){0.f, 1.0f, 0.f}, g_projection_matrix);
-  //glm_perspective(GLM_PI_4f, g_logical_width * 1.0f / g_logical_height, -300.0f, 600.0f, g_projection_matrix);
 	// calculate base modelview matrix (to reduce some of operations cost)
 	glm_mat4_identity(g_base_modelview_matrix);
 	glm_scale(g_base_modelview_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
@@ -212,32 +216,20 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 
 bool usercode_loadmedia()
 {
-  // load font to render framerate
-#ifndef DISABLE_FPS_CALC
-  {
-    glGenVertexArrays(1, &fps_vao);
-
-    fps_font = KRR_FONT_new();
-    if (!KRR_FONT_load_freetype(fps_font, "res/fonts/Minecraft.ttf", 14))
-    {
-      KRR_LOGE("Unable to load font for rendering framerate");
-      return false;
-    }
-  }
-#endif
-  
-  // create font
-  font = KRR_FONT_new();
-  if (!KRR_FONT_load_freetype(font, "res/fonts/Minecraft.ttf", 40))
-  {
-    KRR_LOGE("Error to load font");
-    return false;
-  }
   // load texture shader
-  texture_shader = KRR_TEXSHADERPROG3D_new();
-  if (!KRR_TEXSHADERPROG3D_load_program(texture_shader))
+  texture_shader = KRR_TEXSHADERPROG2D_new();
+  if (!KRR_TEXSHADERPROG2D_load_program(texture_shader))
   {
     KRR_LOGE("Error loading texture shader");
+    return false;
+  }
+  shared_textured_shaderprogram = texture_shader;
+
+  // load texture3d shader
+  texture3d_shader = KRR_TEXSHADERPROG3D_new();
+  if (!KRR_TEXSHADERPROG3D_load_program(texture3d_shader))
+  {
+    KRR_LOGE("Error loading texture3d shader");
     return false;
   }
   
@@ -248,6 +240,28 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading font shader");
     return false;
   }
+  // set font shader to all KRR_FONT as active
+  shared_font_shaderprogram = font_shader;
+
+  // create font
+  font = KRR_FONT_new();
+  if (!KRR_FONT_load_freetype(font, "res/fonts/Minecraft.ttf", 40))
+  {
+    KRR_LOGE("Error to load font");
+    return false;
+  }
+
+  // load font to render framerate
+#ifndef DISABLE_FPS_CALC
+  {
+    fps_font = KRR_FONT_new();
+    if (!KRR_FONT_load_freetype(fps_font, "res/fonts/Minecraft.ttf", 14))
+    {
+      KRR_LOGE("Unable to load font for rendering framerate");
+      return false;
+    }
+  }
+#endif
 
   // TODO: Load media here...
   texture = KRR_TEXTURE_new();
@@ -263,14 +277,17 @@ bool usercode_loadmedia()
   KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  KRR_TEXSHADERPROG3D_set_texture_sampler(texture_shader, 0);
+  KRR_TEXSHADERPROG2D_set_texture_sampler(texture_shader, 0);
+  
+  KRR_SHADERPROG_bind(texture3d_shader->program);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
+  KRR_TEXSHADERPROG3D_set_texture_sampler(texture3d_shader, 0);
 
   KRR_SHADERPROG_bind(font_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODELVIEW_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   KRR_FONTSHADERPROG2D_set_texture_sampler(font_shader, 0);
-  // set font shader to all KRR_FONT as active
-  shared_font_shaderprogram = font_shader;
   KRR_SHADERPROG_unbind(font_shader->program);
 
   // cube representation
@@ -375,15 +392,15 @@ bool usercode_loadmedia()
   glBindVertexArray(vao);
 
   // enable vertex attributes
-  KRR_TEXSHADERPROG3D_enable_attrib_pointers(texture_shader);
+  KRR_TEXSHADERPROG3D_enable_attrib_pointers(texture3d_shader);
 
   // set vertex data
   glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
-  KRR_TEXSHADERPROG3D_set_vertex_pointer(texture_shader, sizeof(VERTEXPOS3D), NULL);
+  KRR_TEXSHADERPROG3D_set_vertex_pointer(texture3d_shader, sizeof(VERTEXPOS3D), NULL);
 
   // set texcoord data
   glBindBuffer(GL_ARRAY_BUFFER, texcoord_vbo);
-  KRR_TEXSHADERPROG3D_set_texcoord_pointer(texture_shader, sizeof(TEXCOORD2D), NULL);
+  KRR_TEXSHADERPROG3D_set_texcoord_pointer(texture3d_shader, sizeof(TEXCOORD2D), NULL);
 
   // ibo
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -510,27 +527,27 @@ void usercode_render()
   glBindVertexArray(vao);
 
   // bind shader
-  KRR_SHADERPROG_bind(texture_shader->program);
+  KRR_SHADERPROG_bind(texture3d_shader->program);
 
   // bind texture
   glBindTexture(GL_TEXTURE_2D, texture->texture_id);
 
   // rotate
-  glm_mat4_copy(g_base_modelview_matrix, texture_shader->modelview_matrix);
-  glm_translate(texture_shader->modelview_matrix, (vec3){g_logical_width/2.f, g_logical_height/2.f, 0.f});
-  glm_scale(texture_shader->modelview_matrix, (vec3){80.0f, 80.0f, 80.0f});
-  glm_rotate(texture_shader->modelview_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
-  glm_rotate(texture_shader->modelview_matrix, glm_rad(rotx), (vec3){1.f, 0.f, 0.f});
-  glm_rotate(texture_shader->modelview_matrix, glm_rad(rotz), (vec3){0.f, 0.f, 1.f});
+  glm_mat4_copy(g_base_modelview_matrix, texture3d_shader->modelview_matrix);
+  glm_translate(texture3d_shader->modelview_matrix, (vec3){g_logical_width/2.f, g_logical_height/2.f, 0.f});
+  glm_scale(texture3d_shader->modelview_matrix, (vec3){80.0f, 80.0f, 80.0f});
+  glm_rotate(texture3d_shader->modelview_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
+  glm_rotate(texture3d_shader->modelview_matrix, glm_rad(rotx), (vec3){1.f, 0.f, 0.f});
+  glm_rotate(texture3d_shader->modelview_matrix, glm_rad(rotz), (vec3){0.f, 0.f, 1.f});
   // update modelview matrix
-  KRR_TEXSHADERPROG3D_update_modelview_matrix(texture_shader);
+  KRR_TEXSHADERPROG3D_update_modelview_matrix(texture3d_shader);
 
   // render quad
   glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, NULL);
 
 
   // unbind shader
-  KRR_SHADERPROG_unbind(texture_shader->program);
+  KRR_SHADERPROG_unbind(texture3d_shader->program);
 
   // unbind vao
   glBindVertexArray(0);
@@ -548,8 +565,8 @@ void usercode_render_fps(int avg_fps)
   // form framerate string to render
   snprintf(fps_text, FPS_BUFFER-1, "%d", avg_fps);
 
-  // bind fps-vao
-  glBindVertexArray(fps_vao);
+  // bind font's vao
+  KRR_FONT_bind_vao(fps_font);
 
   // use shared font shader
   KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
@@ -562,18 +579,13 @@ void usercode_render_fps(int avg_fps)
   KRR_SHADERPROG_unbind(shared_font_shaderprogram->program);
 
   // unbind fps-vao
-  glBindVertexArray(0);
+  KRR_FONT_unbind_vao(fps_font);
 #endif 
 }
 
 void usercode_close()
 {
 #ifndef DISABLE_FPS_CALC
-  if (fps_vao == 0)
-  {
-    glDeleteVertexArrays(1, &fps_vao);
-    fps_vao = 0;
-  }
   if (fps_font != NULL)
     KRR_FONT_free(fps_font);
 #endif
@@ -582,7 +594,9 @@ void usercode_close()
   if (font_shader != NULL)
     KRR_FONTSHADERPROG2D_free(font_shader);
   if (texture_shader != NULL)
-    KRR_TEXSHADERPROG3D_free(texture_shader);
+    KRR_TEXSHADERPROG2D_free(texture_shader);
+  if (texture3d_shader != NULL)
+    KRR_TEXSHADERPROG3D_free(texture3d_shader);
 
   if (texture != NULL)
     KRR_TEXTURE_free(texture);

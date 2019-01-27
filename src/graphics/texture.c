@@ -21,8 +21,8 @@ static void init_defaults(KRR_TEXTURE* texture);
 static int find_next_pot(int value);
 
 // initialize VBO and IBO
-static void init_VBO_IBO(KRR_TEXTURE* texture);
-static void free_VBO_IBO(KRR_TEXTURE* texture);
+static void init_VAO_VBO_IBO(KRR_TEXTURE* texture);
+static void free_VAO_VBO_IBO(KRR_TEXTURE* texture);
 
 void init_defaults(KRR_TEXTURE* texture)
 {
@@ -34,6 +34,7 @@ void init_defaults(KRR_TEXTURE* texture)
   texture->pixel_format = 0;
   texture->physical_width_ = 0;
   texture->physical_height_ = 0;
+  texture->VAO_id = 0;
   texture->VBO_id = 0;
   texture->IBO_id = 0;
 }
@@ -64,7 +65,7 @@ void KRR_TEXTURE_free_internal_texture(KRR_TEXTURE* texture)
   texture->physical_height_ = 0;
   texture->pixel_format = 0;
 
-  free_VBO_IBO(texture);
+  free_VAO_VBO_IBO(texture);
 }
 
 KRR_TEXTURE* KRR_TEXTURE_new(void)
@@ -464,7 +465,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   }
 
   // init VBO and IBO
-  init_VBO_IBO(texture);
+  init_VAO_VBO_IBO(texture);
 
   // set pixel format
   texture->pixel_format = gl_format;
@@ -599,7 +600,7 @@ bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels
   }
 
   // init VBO and IBO
-  init_VBO_IBO(texture);
+  init_VAO_VBO_IBO(texture);
 
   // set pixel format
   texture->pixel_format = GL_RGBA;
@@ -607,84 +608,63 @@ bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels
   return true;
 }
 
+void KRR_TEXTURE_bind_vao(KRR_TEXTURE* texture)
+{
+  // bind vao
+  glBindVertexArray(texture->VAO_id);
+
+  // bind texture
+  glBindTexture(GL_TEXTURE_2D, texture->texture_id);
+}
+
 void KRR_TEXTURE_render(KRR_TEXTURE* texture, GLfloat x, GLfloat y, const RECT* clip)
 {
-  // texture coordinates
-  // fixed pixel bleeding when we render sub-region of texture
-  GLfloat tex_top = 0.0 + 0.5/texture->physical_height_;
-  GLfloat tex_bottom = texture->height * 1.0 / texture->physical_height_ - 0.5/texture->physical_height_;
-  GLfloat tex_left = 0.0 + 0.5/texture->physical_width_;
-  GLfloat tex_right = texture->width * 1.0 / texture->physical_width_ - 0.5/texture->physical_width_;
-
-  // vertex coordinates
-  GLfloat quad_width = texture->width;
-  GLfloat quad_height = texture->height;
-
   // handle clipping
+  // for performance-wise, we only do this when there's clipping info
   if (clip != NULL)
   {
     // modify texture coordinates
-    tex_left = clip->x / texture->physical_width_ + 0.5/texture->physical_width_;
-    tex_right = (clip->x + clip->w) / texture->physical_width_ - 0.5/texture->physical_width_;
-    tex_top = clip->y / texture->physical_height_ + 0.5/texture->physical_height_;
-    tex_bottom = (clip->y + clip->h) / texture->physical_height_ - 0.5/texture->physical_height_;
+    GLfloat tex_left = clip->x / texture->physical_width_ + 0.5/texture->physical_width_;
+    GLfloat tex_right = (clip->x + clip->w) / texture->physical_width_ - 0.5/texture->physical_width_;
+    GLfloat tex_top = clip->y / texture->physical_height_ + 0.5/texture->physical_height_;
+    GLfloat tex_bottom = (clip->y + clip->h) / texture->physical_height_ - 0.5/texture->physical_height_;
 
     // modify vertex coordinates
-    quad_width = clip->w;
-    quad_height = clip->h;
-  }
+    GLfloat quad_width = clip->w;
+    GLfloat quad_height = clip->h;
 
-  // save original modelview matrix
-  mat4 original_modelview_matrix;
-  // we will work on top of shader's modelview matrix
-  glm_mat4_copy(shared_textured_shaderprogram->modelview_matrix, original_modelview_matrix);
+    // set vertex data
+    VERTEXTEX2D vertex_data[4];
+
+    // texture coordinates
+    vertex_data[0].texcoord.s = tex_left;     vertex_data[0].texcoord.t = tex_top;
+    vertex_data[1].texcoord.s = tex_left;     vertex_data[1].texcoord.t = tex_bottom;
+    vertex_data[2].texcoord.s = tex_right;    vertex_data[2].texcoord.t = tex_bottom;
+    vertex_data[3].texcoord.s = tex_right;    vertex_data[3].texcoord.t = tex_top;
+
+    // vertex position
+    vertex_data[0].position.x = 0.f;          vertex_data[0].position.y = 0.f;
+    vertex_data[1].position.x = 0.f;          vertex_data[1].position.y = quad_height;
+    vertex_data[2].position.x = quad_width;   vertex_data[2].position.y = quad_height;
+    vertex_data[3].position.x = quad_width;   vertex_data[3].position.y = 0.f;
+
+    // update vertex buffer data to GPU
+    // note: for performance-wise, only do this when needed (in this case when there's clipping info)
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(VERTEXTEX2D), vertex_data);
+  }
 
   // move to rendering position
   glm_translate(shared_textured_shaderprogram->modelview_matrix, (vec3){x, y, 0.f});
   // issue update to gpu
   KRR_TEXSHADERPROG2D_update_modelview_matrix(shared_textured_shaderprogram);
 
-  // set vertex data
-  VERTEXTEX2D vertex_data[4];
+  // draw
+  glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
+}
 
-  // texture coordinates
-  vertex_data[0].texcoord.s = tex_left;     vertex_data[0].texcoord.t = tex_top;
-  vertex_data[1].texcoord.s = tex_left;     vertex_data[1].texcoord.t = tex_bottom;
-  vertex_data[2].texcoord.s = tex_right;    vertex_data[2].texcoord.t = tex_bottom;
-  vertex_data[3].texcoord.s = tex_right;    vertex_data[3].texcoord.t = tex_top;
-
-  // vertex position
-  vertex_data[0].position.x = 0.f;          vertex_data[0].position.y = 0.f;
-  vertex_data[1].position.x = 0.f;          vertex_data[1].position.y = quad_height;
-  vertex_data[2].position.x = quad_width;   vertex_data[2].position.y = quad_height;
-  vertex_data[3].position.x = quad_width;   vertex_data[3].position.y = 0.f;
-
-  // set texture id
-  glBindTexture(GL_TEXTURE_2D, texture->texture_id);
-  
-  // enable vertex and texture coordinate vertex attribute arrays
-  KRR_TEXSHADERPROG2D_enable_attrib_pointers(shared_textured_shaderprogram);
-  
-    // bind vertex buffer
-    glBindBuffer(GL_ARRAY_BUFFER, texture->VBO_id);
-    // update vertex buffer data to GPU
-    glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(VERTEXTEX2D), vertex_data);
-
-    // set texture coordinate data
-    KRR_TEXSHADERPROG2D_set_texcoord_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (const GLvoid*)offsetof(VERTEXTEX2D, texcoord));
-    // set vertex data
-    KRR_TEXSHADERPROG2D_set_vertex_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (const GLvoid*)offsetof(VERTEXTEX2D, position));
-
-    // draw quad using vertex and index data
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, texture->IBO_id);
-    glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
-
-  // unbind
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-  // disable vertex and texture coord attribute pointer
-  KRR_TEXSHADERPROG2D_disable_attrib_pointers(shared_textured_shaderprogram);
+void KRR_TEXTURE_unbind_vao(KRR_TEXTURE* texture)
+{
+  glBindVertexArray(0);
 }
 
 bool KRR_TEXTURE_lock(KRR_TEXTURE* texture)
@@ -1117,7 +1097,7 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels32(KRR_TEXTURE* texture)
       texture->pixels = NULL;
 
       // init VBO and IBO
-      init_VBO_IBO(texture);
+      init_VAO_VBO_IBO(texture);
 
       // set pixel format
       texture->pixel_format = GL_RGBA;
@@ -1183,7 +1163,7 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture)
       texture->pixels = NULL;
 
       // init VBO and IBO
-      init_VBO_IBO(texture);
+      init_VAO_VBO_IBO(texture);
 
       // set pixel format
       texture->pixel_format = GL_RED;
@@ -1207,16 +1187,46 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture)
   return false;
 }
 
-void init_VBO_IBO(KRR_TEXTURE* texture)
+void init_VAO_VBO_IBO(KRR_TEXTURE* texture)
 {
-  // if texture is loaded and VBO doesn't already exist
-  if (texture->texture_id != 0 && texture->VBO_id == 0)
+  // if texture is loaded and buffers aren't created yet
+  if (texture->texture_id != 0 && 
+      texture->VAO_id == 0 &&
+      texture->VBO_id == 0 &&
+      texture->IBO_id == 0)
   {
+    // vertex array object
+    glGenVertexArrays(1, &texture->VAO_id);
+
     // vertex data
     VERTEXTEX2D vertex_data[4];
-    GLuint index_data[4];
+
+    // create initial vertex data
+    // texture coordinates
+    // fixed pixel bleeding when we render sub-region of texture
+    GLfloat tex_top = 0.0 + 0.5/texture->physical_height_;
+    GLfloat tex_bottom = texture->height * 1.0 / texture->physical_height_ - 0.5/texture->physical_height_;
+    GLfloat tex_left = 0.0 + 0.5/texture->physical_width_;
+    GLfloat tex_right = texture->width * 1.0 / texture->physical_width_ - 0.5/texture->physical_width_;
+
+    // vertex coordinates
+    GLfloat quad_width = texture->width;
+    GLfloat quad_height = texture->height;
+
+    // texture coordinates
+    vertex_data[0].texcoord.s = tex_left;     vertex_data[0].texcoord.t = tex_top;
+    vertex_data[1].texcoord.s = tex_left;     vertex_data[1].texcoord.t = tex_bottom;
+    vertex_data[2].texcoord.s = tex_right;    vertex_data[2].texcoord.t = tex_bottom;
+    vertex_data[3].texcoord.s = tex_right;    vertex_data[3].texcoord.t = tex_top;
+
+    // vertex position
+    vertex_data[0].position.x = 0.f;          vertex_data[0].position.y = 0.f;
+    vertex_data[1].position.x = 0.f;          vertex_data[1].position.y = quad_height;
+    vertex_data[2].position.x = quad_width;   vertex_data[2].position.y = quad_height;
+    vertex_data[3].position.x = quad_width;   vertex_data[3].position.y = 0.f;
 
     // set rendering indices
+    GLuint index_data[4];
     index_data[0] = 0;
     index_data[1] = 1;
     index_data[2] = 2;
@@ -1233,18 +1243,47 @@ void init_VBO_IBO(KRR_TEXTURE* texture)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, texture->IBO_id);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4 * sizeof(GLuint), index_data, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // set up binding process for VAO
+    glBindVertexArray(texture->VAO_id);
+
+      // enable vertex attribute arrays
+      KRR_TEXSHADERPROG2D_enable_attrib_pointers(shared_textured_shaderprogram);
+
+      // bind vertex buffer
+      glBindBuffer(GL_ARRAY_BUFFER, texture->VBO_id);
+
+      // set texture coordinate data
+      KRR_TEXSHADERPROG2D_set_texcoord_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (const GLvoid*)offsetof(VERTEXTEX2D, texcoord));
+      // set vertex data
+      KRR_TEXSHADERPROG2D_set_vertex_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (const GLvoid*)offsetof(VERTEXTEX2D, position));
+
+      // bind ibo
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, texture->IBO_id);
+
+    // unbind vao
+    glBindVertexArray(0);
   }
 }
 
-void free_VBO_IBO(KRR_TEXTURE* texture)
+void free_VAO_VBO_IBO(KRR_TEXTURE* texture)
 {
-  if (texture->VBO_id != 0 && texture->IBO_id != 0)
+  if (texture->VBO_id != 0)
   {
     glDeleteBuffers(1, &texture->VBO_id);
-    glDeleteBuffers(1, &texture->IBO_id);
-
     texture->VBO_id = 0;
+  }
+
+  if (texture->IBO_id != 0)
+  {
+    glDeleteBuffers(1, &texture->IBO_id);
     texture->IBO_id = 0;
+  }
+
+  if (texture->VAO_id != 0)
+  {
+    glDeleteVertexArrays(1, &texture->VAO_id);
+    texture->VAO_id = 0;
   }
 }
 

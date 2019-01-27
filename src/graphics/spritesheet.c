@@ -15,6 +15,7 @@ void init_defaults(KRR_SPRITESHEET* spritesheet)
   spritesheet->clips = NULL;
   spritesheet->vertex_data_buffer = 0;
   spritesheet->index_buffers = NULL;
+  spritesheet->vao = 0;
 }
 
 void free_internals(KRR_SPRITESHEET* spritesheet)
@@ -32,6 +33,8 @@ void free_internals(KRR_SPRITESHEET* spritesheet)
     vector_free(spritesheet->clips);
     spritesheet->clips = NULL;
   }
+
+  // *vbo, ibo, and vao will be cleared in KRR_SPRITESHEET_free()
 }
 
 KRR_SPRITESHEET* KRR_SPRITESHEET_new(void)
@@ -85,6 +88,8 @@ bool KRR_SPRITESHEET_generate_databuffer(KRR_SPRITESHEET* spritesheet)
     // allocate buffer for index buffer
     spritesheet->index_buffers = malloc(total_sprites * 4 * sizeof(GLuint));
 
+    // allocate vao
+    glGenVertexArrays(1, &spritesheet->vao);
     // allocate vertex data buffer name
     glGenBuffers(1, &spritesheet->vertex_data_buffer);
     // allocate index buffer 
@@ -158,6 +163,23 @@ bool KRR_SPRITESHEET_generate_databuffer(KRR_SPRITESHEET* spritesheet)
     glBindBuffer(GL_ARRAY_BUFFER, spritesheet->vertex_data_buffer);
     glBufferData(GL_ARRAY_BUFFER, total_sprites * 4 * sizeof(VERTEXTEX2D), vertex_data, GL_STATIC_DRAW);
 
+    // set up binding process for vao
+    glBindVertexArray(spritesheet->vao);
+
+      // enable all attribute pointers
+      KRR_TEXSHADERPROG2D_enable_attrib_pointers(shared_textured_shaderprogram);
+
+      // bind vertex data
+      glBindBuffer(GL_ARRAY_BUFFER, spritesheet->vertex_data_buffer);
+
+      // set texture coordinate attrib pointer
+      KRR_TEXSHADERPROG2D_set_vertex_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
+      // set vertex data attrib pointer
+      KRR_TEXSHADERPROG2D_set_texcoord_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
+
+    // unbind vao
+    glBindVertexArray(0);
+
 		GLenum error = glGetError();
 		if (error != GL_NO_ERROR)
 		{
@@ -185,14 +207,14 @@ bool KRR_SPRITESHEET_generate_databuffer(KRR_SPRITESHEET* spritesheet)
 
 void KRR_SPRITESHEET_free_sheet(KRR_SPRITESHEET* spritesheet)
 {
-  // clear vertex buffer
+  // delete vertex buffer
   if (spritesheet->vertex_data_buffer != 0)
   {
     glDeleteBuffers(1, &spritesheet->vertex_data_buffer);
     spritesheet->vertex_data_buffer = 0;
   }
 
-  // clear index buffer
+  // delete index buffer
   if (spritesheet->index_buffers != NULL)
   {
     glDeleteBuffers(spritesheet->clips->len, spritesheet->index_buffers);
@@ -201,45 +223,40 @@ void KRR_SPRITESHEET_free_sheet(KRR_SPRITESHEET* spritesheet)
     spritesheet->index_buffers = NULL;
   }
 
+  // delete vao
+  if (spritesheet->vao != 0)
+  {
+    glDeleteVertexArrays(1, &spritesheet->vao);
+    spritesheet->vao = 0;
+  }
+
   // clear clips
   vector_clear(spritesheet->clips);
 }
 
+void KRR_SPRITESHET_bind_vao(KRR_SPRITESHEET* spritesheet)
+{
+  // bind vao
+  glBindVertexArray(spritesheet->vao);
+
+  // bind texture
+  glBindTexture(GL_TEXTURE_2D, spritesheet->ltexture->texture_id);
+}
+
 void KRR_SPRITESHEET_render_sprite(KRR_SPRITESHEET* spritesheet, int index, GLfloat x, GLfloat y)
 {
-  // save the current modelview matrix
-  mat4 original_modelview_matrix;
-  // copy original modelview matrix, then we work on top of modelview matrix of shared_textured_shaderprogram
-  glm_mat4_copy(shared_textured_shaderprogram->modelview_matrix, original_modelview_matrix);
-  
 	// move to rendering position
   glm_translate(shared_textured_shaderprogram->modelview_matrix, (vec3){x, y, 0.f});
   // issue update to gpu
   KRR_TEXSHADERPROG2D_update_modelview_matrix(shared_textured_shaderprogram);
 
-  // set texture
-  glBindTexture(GL_TEXTURE_2D, spritesheet->ltexture->texture_id);
-
-  // enable all attribute pointers
-  // use shared global variable of shader for KRR_TEXTURE here
-  KRR_TEXSHADERPROG2D_enable_attrib_pointers(shared_textured_shaderprogram);
-
-  // bind vertex data
-  glBindBuffer(GL_ARRAY_BUFFER, spritesheet->vertex_data_buffer);
-
-  // set texture coordinate attrib pointer
-  KRR_TEXSHADERPROG2D_set_vertex_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, texcoord));
-  // set vertex data attrib pointer
-  KRR_TEXSHADERPROG2D_set_texcoord_pointer(shared_textured_shaderprogram, sizeof(VERTEXTEX2D), (GLvoid*)offsetof(VERTEXTEX2D, position));
-
   // bind index buffer
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, spritesheet->index_buffers[index]);
   // draw using data from vertex and index buffer
   glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
+}
 
-  // disable all attribute pointers
-  KRR_TEXSHADERPROG2D_disable_attrib_pointers(shared_textured_shaderprogram);
-
-  // set modelview matrix back to original one
-  glm_mat4_copy(original_modelview_matrix, shared_textured_shaderprogram->modelview_matrix);
+void KRR_SPRITESHEET_unbind_vao(KRR_SPRITESHEET* spritesheet)
+{
+  glBindVertexArray(0);
 }

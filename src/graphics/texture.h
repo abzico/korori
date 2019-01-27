@@ -44,6 +44,9 @@ typedef struct
   /// case of NPOT texture
   int physical_height_;
 
+  // VAO
+  GLuint VAO_id;
+
   // VBO
   GLuint VBO_id;
 
@@ -110,6 +113,17 @@ extern bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const c
 extern bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels, GLuint width, GLuint height);
 
 ///
+/// Bind VAO of this texture.
+/// This function should be called once for rendering the same texture; batch rendering per se.
+///
+/// It's not necessary to always call KRR_TEXTURE_unbind_vao() if next call is KRR_TEXTURE_bind_vao() with different KRR_TEXTURE.
+/// It will be overwritely set the active VAO.
+///
+/// \param texture pointer to KRR_TEXTURE
+///
+extern void KRR_TEXTURE_bind_vao(KRR_TEXTURE* texture);
+
+///
 /// Render texture.
 ///
 /// \param texture KRR_TEXTURE to render
@@ -118,6 +132,13 @@ extern bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint*
 /// \param clip Clipping rectangle to render part of the texture. NULL to render fully of texture.
 ///
 extern void KRR_TEXTURE_render(KRR_TEXTURE* texture, GLfloat x, GLfloat y, const RECT* clip);
+
+///
+/// Unbind vao of this texture.
+///
+/// \param texture pointer to KRR_TEXTURE
+///
+extern void KRR_TEXTURE_unbind_vao(KRR_TEXTURE* texture);
 
 ///
 /// Lock texture to manipulate pixel data.
