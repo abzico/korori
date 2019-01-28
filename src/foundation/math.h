@@ -2,10 +2,14 @@
 #define KRR_math_h_
 
 #include "SDL.h"
-#include <stdbool.h>
 #include "types.h"
+#include "foundation/common.h"
 
 extern float KRR_math_lerp(float a, float b, float t);
+
+/// lerp vector
+/// vector a is in,out
+extern void KRR_math_lerpv(vec3 a, vec3 b, float t);
 
 /// Seed rand() function with current time via time(NULL).
 extern void KRR_math_rand_seed_time(void);

@@ -246,9 +246,9 @@ void KRR_SPRITESHET_bind_vao(KRR_SPRITESHEET* spritesheet)
 void KRR_SPRITESHEET_render_sprite(KRR_SPRITESHEET* spritesheet, int index, GLfloat x, GLfloat y)
 {
 	// move to rendering position
-  glm_translate(shared_textured_shaderprogram->modelview_matrix, (vec3){x, y, 0.f});
+  glm_translate(shared_textured_shaderprogram->model_matrix, (vec3){x, y, 0.f});
   // issue update to gpu
-  KRR_TEXSHADERPROG2D_update_modelview_matrix(shared_textured_shaderprogram);
+  KRR_TEXSHADERPROG2D_update_view_matrix(shared_textured_shaderprogram);
 
   // bind index buffer
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, spritesheet->index_buffers[index]);

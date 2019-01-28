@@ -654,9 +654,9 @@ void KRR_TEXTURE_render(KRR_TEXTURE* texture, GLfloat x, GLfloat y, const RECT* 
   }
 
   // move to rendering position
-  glm_translate(shared_textured_shaderprogram->modelview_matrix, (vec3){x, y, 0.f});
+  glm_translate(shared_textured_shaderprogram->model_matrix, (vec3){x, y, 0.f});
   // issue update to gpu
-  KRR_TEXSHADERPROG2D_update_modelview_matrix(shared_textured_shaderprogram);
+  KRR_TEXSHADERPROG2D_update_model_matrix(shared_textured_shaderprogram);
 
   // draw
   glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);

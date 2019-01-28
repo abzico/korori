@@ -22,9 +22,13 @@ typedef struct KRR_TEXSHADERPROG2D_
   mat4 projection_matrix;
   GLint projection_matrix_location;
 
-  // modelview matrix
-  mat4 modelview_matrix;
-  GLint modelview_matrix_location;
+  // view matrix
+  mat4 view_matrix;
+  GLint view_matrix_location;
+
+  // model matrix
+  mat4 model_matrix;
+  GLint model_matrix_location;
 
 } KRR_TEXSHADERPROG2D;
 
@@ -61,11 +65,18 @@ extern bool KRR_TEXSHADERPROG2D_load_program(KRR_TEXSHADERPROG2D* program);
 extern void KRR_TEXSHADERPROG2D_update_projection_matrix(KRR_TEXSHADERPROG2D* program);
 
 ///
-/// update modelview matrix
+/// update view matrix
 ///
 /// \param program pointer to KRR_TEXSHADERPROG2D
 ///
-extern void KRR_TEXSHADERPROG2D_update_modelview_matrix(KRR_TEXSHADERPROG2D* program);
+extern void KRR_TEXSHADERPROG2D_update_view_matrix(KRR_TEXSHADERPROG2D* program);
+
+///
+/// update model matrix
+///
+/// \param program pointer to KRR_TEXSHADERPROG2D
+///
+extern void KRR_TEXSHADERPROG2D_update_model_matrix(KRR_TEXSHADERPROG2D* program);
 
 ///
 /// set vertex pointer

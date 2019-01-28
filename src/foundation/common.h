@@ -8,6 +8,12 @@
 #include <stdbool.h>
 #include "window.h"
 
+// use library call
+// for inline
+#include <cglm/cglm.h>
+// for function call
+//#include <cglm/call.h>
+
 #include "SDL_log.h"
 #define KRR_LOG(fmt, ...) SDL_Log(fmt, ##__VA_ARGS__)
 #define KRR_LOGV(fmt, ...) SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, fmt, ##__VA_ARGS__)
