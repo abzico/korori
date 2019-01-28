@@ -14,8 +14,10 @@ KRR_TEXSHADERPROG2D* KRR_TEXSHADERPROG2D_new(void)
   out->texture_sampler_location = -1;
   glm_mat4_identity(out->projection_matrix);
   out->projection_matrix_location = -1;
-  glm_mat4_identity(out->modelview_matrix);
-  out->modelview_matrix_location = -1;
+  glm_mat4_identity(out->view_matrix);
+  out->view_matrix_location = -1;
+  glm_mat4_identity(out->model_matrix);
+  out->model_matrix_location = -1;
 
   // create underlying shader program
   out->program = KRR_SHADERPROG_new();
@@ -106,10 +108,15 @@ bool KRR_TEXSHADERPROG2D_load_program(KRR_TEXSHADERPROG2D* program)
   {
     KRR_LOGW("Warning: projection_matrix is invalid glsl variable name");
   }
-  program->modelview_matrix_location = glGetUniformLocation(uprog->program_id, "modelview_matrix");
-  if (program->modelview_matrix_location == -1)
+  program->view_matrix_location = glGetUniformLocation(uprog->program_id, "view_matrix");
+  if (program->view_matrix_location == -1)
   {
-    KRR_LOGW("Warning: modelview_matrix is invalid glsl variable name");
+    KRR_LOGW("Warning: view_matrix is invalid glsl variable name");
+  }
+  program->model_matrix_location = glGetUniformLocation(uprog->program_id, "model_matrix");
+  if (program->model_matrix_location == -1)
+  {
+    KRR_LOGW("Warning: model_matrix is invalid glsl variable name");
   }
 
   program->vertex_pos2d_location = glGetAttribLocation(uprog->program_id, "vertex_pos2d");
@@ -141,9 +148,14 @@ void KRR_TEXSHADERPROG2D_update_projection_matrix(KRR_TEXSHADERPROG2D* program)
   glUniformMatrix4fv(program->projection_matrix_location, 1, GL_FALSE, program->projection_matrix[0]);
 }
 
-void KRR_TEXSHADERPROG2D_update_modelview_matrix(KRR_TEXSHADERPROG2D* program)
+void KRR_TEXSHADERPROG2D_update_view_matrix(KRR_TEXSHADERPROG2D* program)
 {
-  glUniformMatrix4fv(program->modelview_matrix_location, 1, GL_FALSE, program->modelview_matrix[0]);
+  glUniformMatrix4fv(program->view_matrix_location, 1, GL_FALSE, program->view_matrix[0]);
+}
+
+void KRR_TEXSHADERPROG2D_update_model_matrix(KRR_TEXSHADERPROG2D* program)
+{
+  glUniformMatrix4fv(program->model_matrix_location, 1, GL_FALSE, program->model_matrix[0]);
 }
 
 void KRR_TEXSHADERPROG2D_set_vertex_pointer(KRR_TEXSHADERPROG2D* program, GLsizei stride, const GLvoid* data)

@@ -55,20 +55,12 @@ extern GLuint KRR_gputil_map_color_RGBA_to_ABGR(GLuint color);
 extern GLenum KRR_gputil_anyerror(const char* prefix);
 
 ///
-/// Update projection matrix at the location then issue update to GPU.
-///
-/// \param location location of uniform variable in shader code
-/// \param matrix projection matrix to update
-///
-extern void KRR_gputil_update_projection_matrix(GLint location, mat4 matrix);
-
-///
-/// Update modelview matrix at the location then issue update to GPU.
+/// Update matrix at the location then issue update to GPU.
 ///
 /// \param location location of uniform variable in shader code
 /// \param matrix modelview matrix to update
 ///
-extern void KRR_gputil_update_modelview_matrix(GLint location, mat4 matrix);
+extern void KRR_gputil_update_matrix(GLint location, mat4 matrix);
 
 ///
 /// Enable vertex attribute pointers from input variable of locations.
@@ -85,5 +77,16 @@ extern void KRR_gputil_enable_vertex_attrib_pointers(GLint location, ...);
 /// \param location location to disable in variadic.
 ///
 extern void KRR_gputil_disable_vertex_attrib_pointers(GLint location, ...);
+
+///
+/// Create view matrix from input parameters
+/// Note: It won't update for roll rotation even if you supply rotation value there in rot.
+///
+/// \param trans translation
+/// \param rot rotation angle, in degrees
+/// \param scale uniformed scale
+/// \param dst destination matrix to receive result
+///
+extern void KRR_gputil_create_view_matrix(vec3 trans, vec3 rot, float scale, mat4 dst);
 
 #endif

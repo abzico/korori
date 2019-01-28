@@ -98,12 +98,7 @@ GLenum KRR_gputil_anyerror(const char* prefix)
   return error;
 }
 
-void KRR_gputil_update_projection_matrix(GLint location, mat4 matrix)
-{
-  glUniformMatrix4fv(location, 1, GL_FALSE, matrix[0]);
-}
-
-void KRR_gputil_update_modelview_matrix(GLint location, mat4 matrix)
+void KRR_gputil_update_matrix(GLint location, mat4 matrix)
 {
   glUniformMatrix4fv(location, 1, GL_FALSE, matrix[0]);
 }
@@ -138,4 +133,13 @@ void KRR_gputil_disable_vertex_attrib_pointers(GLint location, ...)
   }
 
   va_end(va);
+}
+
+void KRR_gputil_create_view_matrix(vec3 trans, vec3 rot, float scale, mat4 dst)
+{
+  glm_mat4_identity(dst);
+  glm_scale_uni(dst, scale);
+  glm_rotate(dst, glm_rad(-rot[1]), (vec3){0.f, 1.f, 0.f});
+  glm_rotate(dst, glm_rad(-rot[0]), (vec3){1.f, 0.f, 0.f});
+  glm_translate(dst, (vec3){-trans[0], -trans[1], -trans[2]});
 }

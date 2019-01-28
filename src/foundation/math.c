@@ -7,6 +7,14 @@ float KRR_math_lerp(float a, float b, float t)
   return a + (b-a)*t;
 }
 
+void KRR_math_lerpv(vec3 a, vec3 b, float t)
+{
+  // return result in vector a
+  a[0] = a[0] + (b[0]-a[0])*t;
+  a[1] = a[1] + (b[1]-a[1])*t;
+  a[2] = a[2] + (b[2]-a[2])*t;
+}
+
 void KRR_math_rand_seed_time(void)
 {
   // set seed from current time
