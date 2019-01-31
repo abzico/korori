@@ -108,7 +108,18 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
       KRR_FONTSHADERPROG2D_update_projection_matrix(shader_ptr);
     }
   }
-  // note: there's no view matrix code here as we won't transform camera in this sample
+  // view matrix
+  else if (matrix_type == USERCODE_MATRIXTYPE_VIEW_MATRIX)
+  {
+    // texture shader
+    if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
+    {
+      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
+      glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
+
+      KRR_TEXSHADERPROG2D_update_view_matrix(shader_ptr);
+    }
+  }
   // model matrix
   else if (matrix_type == USERCODE_MATRIXTYPE_MODEL_MATRIX)
   {
@@ -124,9 +135,9 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
     else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
     {
       KRR_FONTSHADERPROG2D* shader_ptr = (KRR_FONTSHADERPROG2D*)program;
-      glm_mat4_copy(g_base_model_matrix, shader_ptr->modelview_matrix);
+      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
 
-      KRR_FONTSHADERPROG2D_update_modelview_matrix(shader_ptr);
+      KRR_FONTSHADERPROG2D_update_model_matrix(shader_ptr);
     }
   }
 }
@@ -422,7 +433,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 				// re-calculate orthographic projection matrix
 				glm_ortho(0.0f, (float)g_ri_view_width, (float)g_ri_view_height, 0.0f, -1.0f, 1.0f, g_projection_matrix);
 
-				// re-calculate base modelview matrix
+				// re-calculate base model matrix
 				// no need to scale as it's uniform 1.0 now
 				glm_mat4_identity(g_base_model_matrix);
 
@@ -445,7 +456,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 				// re-calculate orthographic projection matrix
 				glm_ortho(0.0f, (float)g_ri_view_width, (float)g_ri_view_height, 0.0f, -1.0f, 1.0f, g_projection_matrix);
 
-				// re-calculate base modelview matrix
+				// re-calculate base model matrix
 				glm_mat4_identity(g_base_model_matrix);
 				// also scale
 				glm_scale(g_base_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
@@ -535,8 +546,8 @@ void usercode_render_fps(int avg_fps)
   // use shared font shader
   KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
     // start with clean state of model matrix
-    glm_mat4_copy(g_base_model_matrix, shared_font_shaderprogram->modelview_matrix);
-    KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
+    glm_mat4_copy(g_base_model_matrix, shared_font_shaderprogram->model_matrix);
+    KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
 
     // render text on top right
     KRR_FONT_render_textex(fps_font, fps_text, 0.f, 4.f, &(SIZE){g_logical_width, g_logical_height}, KRR_FONT_TEXTALIGNMENT_RIGHT | KRR_FONT_TEXTALIGNMENT_TOP);

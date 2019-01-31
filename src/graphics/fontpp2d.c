@@ -10,13 +10,13 @@ void free_internals_(KRR_FONTSHADERPROG2D* program)
   program->vertex_pos2d_location = -1;
   program->texture_coord_location = -1;
   program->projection_matrix_location = -1;
-  program->modelview_matrix_location = -1;
+  program->model_matrix_location = -1;
   program->texture_sampler_location = -1;
   program->text_color_location = -1;
 
   // set matrix to identity
   glm_mat4_identity(program->projection_matrix);
-  glm_mat4_identity(program->modelview_matrix);
+  glm_mat4_identity(program->model_matrix);
   
   // free underlying shader program
   KRR_SHADERPROG_free(program->program);
@@ -32,11 +32,11 @@ KRR_FONTSHADERPROG2D* KRR_FONTSHADERPROG2D_new(void)
   out->vertex_pos2d_location = -1;
   out->texture_coord_location = -1;
   out->projection_matrix_location = -1;
-  out->modelview_matrix_location = -1;
+  out->model_matrix_location = -1;
   out->texture_sampler_location = -1;
   out->text_color_location = -1;
   glm_mat4_identity(out->projection_matrix);
-  glm_mat4_identity(out->modelview_matrix);
+  glm_mat4_identity(out->model_matrix);
 
   // create underlying shader program
   // we will take care of this automatically when freeing
@@ -175,10 +175,10 @@ bool KRR_FONTSHADERPROG2D_load_program(KRR_FONTSHADERPROG2D* program)
   {
     KRR_LOGW("Warning: cannot get location of projection_matrix");
   }
-  program->modelview_matrix_location = glGetUniformLocation(program_id, "modelview_matrix");
-  if (program->modelview_matrix_location == -1)
+  program->model_matrix_location = glGetUniformLocation(program_id, "model_matrix");
+  if (program->model_matrix_location == -1)
   {
-    KRR_LOGW("Warning: cannot get location of modelview_matrix");
+    KRR_LOGW("Warning: cannot get location of model_matrix");
   }
   program->texture_sampler_location = glGetUniformLocation(program_id, "texture_sampler");
   if (program->texture_sampler_location == -1)
@@ -199,9 +199,9 @@ void KRR_FONTSHADERPROG2D_update_projection_matrix(KRR_FONTSHADERPROG2D* program
   glUniformMatrix4fv(program->projection_matrix_location, 1, GL_FALSE, program->projection_matrix[0]);
 }
 
-void KRR_FONTSHADERPROG2D_update_modelview_matrix(KRR_FONTSHADERPROG2D* program)
+void KRR_FONTSHADERPROG2D_update_model_matrix(KRR_FONTSHADERPROG2D* program)
 {
-  glUniformMatrix4fv(program->modelview_matrix_location, 1, GL_FALSE, program->modelview_matrix[0]);
+  glUniformMatrix4fv(program->model_matrix_location, 1, GL_FALSE, program->model_matrix[0]);
 }
 
 void KRR_FONTSHADERPROG2D_set_vertex_pointer(KRR_FONTSHADERPROG2D* program, GLsizei stride, const GLvoid* data)

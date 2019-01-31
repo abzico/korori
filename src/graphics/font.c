@@ -526,9 +526,9 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
     GLfloat render_y = y;
 
     // translate to rendering position
-    glm_translate(shared_font_shaderprogram->modelview_matrix, (vec3){x, y, 0.f});
+    glm_translate(shared_font_shaderprogram->model_matrix, (vec3){x, y, 0.f});
     // issue update to gpu
-    KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
+    KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
 
     // set texture
     glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -541,17 +541,17 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
       if (text[i] == ' ')
       {
         // translate modelview matrix
-        glm_translate_x(shared_font_shaderprogram->modelview_matrix, font->space);
+        glm_translate_x(shared_font_shaderprogram->model_matrix, font->space);
         // issue update to gpu
-        KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
+        KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
         render_x += font->space;
       }
       else if (text[i] == '\n')
       {
         // translate modelview matrix
-        glm_translate(shared_font_shaderprogram->modelview_matrix, (vec3){ x - render_x, font->newline, 0.f});
+        glm_translate(shared_font_shaderprogram->model_matrix, (vec3){ x - render_x, font->newline, 0.f});
         // issue update to gpu
-        KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
+        KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
         render_y += font->newline;
         render_x += x - render_x;
       }
@@ -567,9 +567,9 @@ void KRR_FONT_render_text(KRR_FONT* font, const char* text, GLfloat x, GLfloat y
         // get clip
         RECT* clip = (RECT*)vector_get(ss->clips, ascii);
         // move over
-        glm_translate_x(shared_font_shaderprogram->modelview_matrix, clip->w + BETWEEN_CHAR_SPACING);
+        glm_translate_x(shared_font_shaderprogram->model_matrix, clip->w + BETWEEN_CHAR_SPACING);
         // issue update to gpu
-        KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
+        KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
         render_x += clip->w + BETWEEN_CHAR_SPACING;
       }
     }
@@ -618,9 +618,9 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
   }
 
   // translate to render position
-  glm_translate(shared_font_shaderprogram->modelview_matrix, (vec3){render_x, render_y, 0.f});
+  glm_translate(shared_font_shaderprogram->model_matrix, (vec3){render_x, render_y, 0.f});
   // update modelview matrix immediately
-  KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
+  KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
 
   // set texture
   glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -633,9 +633,9 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
     if (text[i] == ' ')
     {
       // translate modelview matrix
-      glm_translate_x(shared_font_shaderprogram->modelview_matrix, font->space);
+      glm_translate_x(shared_font_shaderprogram->model_matrix, font->space);
       // immediately issue udpate to gpu
-      KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
+      KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
       render_x += font->space;
     }
     // newlines
@@ -657,9 +657,9 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
         }
       }
       // translate modelview matrix
-      glm_translate(shared_font_shaderprogram->modelview_matrix, (vec3){target_x - render_x, font->newline, 0.f});
+      glm_translate(shared_font_shaderprogram->model_matrix, (vec3){target_x - render_x, font->newline, 0.f});
       // issue update to gpu immediately
-      KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
+      KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
       render_y += font->newline;
       render_x += target_x - render_x;
     }
@@ -675,9 +675,9 @@ void KRR_FONT_render_textex(KRR_FONT* font, const char* text, GLfloat x, GLfloat
       // get clip
       RECT* clip = (RECT*)vector_get(ss->clips, ascii);
       // move over
-      glm_translate_x(shared_font_shaderprogram->modelview_matrix, clip->w + BETWEEN_CHAR_SPACING);
+      glm_translate_x(shared_font_shaderprogram->model_matrix, clip->w + BETWEEN_CHAR_SPACING);
       // issue update to gpu
-      KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
+      KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
       render_x += clip->w + BETWEEN_CHAR_SPACING;
     }
   }

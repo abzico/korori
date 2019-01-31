@@ -124,14 +124,6 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
 
       KRR_TEXSHADERPROG3D_update_view_matrix(shader_ptr);
     }
-    // font shader
-    else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
-    {
-      KRR_FONTSHADERPROG2D* shader_ptr = (KRR_FONTSHADERPROG2D*)program;
-      glm_mat4_copy(g_view_matrix, shader_ptr->modelview_matrix);
-
-      KRR_FONTSHADERPROG2D_update_modelview_matrix(shader_ptr);
-    }
   }
   // model matrix
   else if (matrix_type == USERCODE_MATRIXTYPE_MODEL_MATRIX)
@@ -148,9 +140,9 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
     else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
     {
       KRR_FONTSHADERPROG2D* shader_ptr = (KRR_FONTSHADERPROG2D*)program;
-      glm_mat4_copy(g_base_model_matrix, shader_ptr->modelview_matrix);
+      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
 
-      KRR_FONTSHADERPROG2D_update_modelview_matrix(shader_ptr);
+      KRR_FONTSHADERPROG2D_update_model_matrix(shader_ptr);
     }
   }
 }
@@ -601,8 +593,8 @@ void usercode_render_fps(int avg_fps)
   // use shared font shader
   KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
     // start with clean state of model matrix
-    glm_mat4_copy(g_base_model_matrix, shared_font_shaderprogram->modelview_matrix);
-    KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
+    glm_mat4_copy(g_base_model_matrix, shared_font_shaderprogram->model_matrix);
+    KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
 
     // render text on top right
     KRR_FONT_render_textex(fps_font, fps_text, 0.f, 4.f, &(SIZE){g_logical_width, g_logical_height}, KRR_FONT_TEXTALIGNMENT_RIGHT | KRR_FONT_TEXTALIGNMENT_TOP);
