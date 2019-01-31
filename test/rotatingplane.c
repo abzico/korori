@@ -542,4 +542,6 @@ void usercode_close()
     KRR_TEXTURE_free(texture);
   if (texture_clipped != NULL)
     KRR_TEXTURE_free(texture_clipped);
+  if (texture_shader != NULL)
+    KRR_TEXSHADERPROG2D_free(texture_shader);
 }
