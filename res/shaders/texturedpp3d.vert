@@ -2,7 +2,8 @@
 
 // transformation matrices
 uniform mat4 projection_matrix;
-uniform mat4 modelview_matrix;
+uniform mat4 view_matrix;
+uniform mat4 model_matrix;
 
 // vertex position attribute
 in vec3 vertex_pos3d;
@@ -17,5 +18,5 @@ void main()
   outin_texcoord = texcoord;
 
   // process vertex
-  gl_Position = projection_matrix * modelview_matrix * vec4(vertex_pos3d.x, vertex_pos3d.y, vertex_pos3d.z, 1.0);
+  gl_Position = projection_matrix * view_matrix * model_matrix * vec4(vertex_pos3d.x, vertex_pos3d.y, vertex_pos3d.z, 1.0);
 }

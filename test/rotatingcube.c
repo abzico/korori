@@ -42,7 +42,7 @@ static bool g_need_clipping = false;
 
 static mat4 g_projection_matrix;
 static mat4 g_view_matrix;
-// base modelview matrix to reduce some of mathematics operation initially
+// base model matrix to reduce some of mathematics operation initially
 static mat4 g_base_model_matrix;
 // -- section of variables for maintaining aspect ratio -- //
 
@@ -113,7 +113,26 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
       KRR_FONTSHADERPROG2D_update_projection_matrix(shader_ptr);
     }
   }
-  // note: not view matrix update code here as we won't transform camera
+  // view matrix
+  else if (matrix_type == USERCODE_MATRIXTYPE_VIEW_MATRIX)
+  {
+    // texture shader
+    if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
+    {
+      KRR_TEXSHADERPROG3D* shader_ptr = (KRR_TEXSHADERPROG3D*)program;
+      glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
+
+      KRR_TEXSHADERPROG3D_update_view_matrix(shader_ptr);
+    }
+    // font shader
+    else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
+    {
+      KRR_FONTSHADERPROG2D* shader_ptr = (KRR_FONTSHADERPROG2D*)program;
+      glm_mat4_copy(g_view_matrix, shader_ptr->modelview_matrix);
+
+      KRR_FONTSHADERPROG2D_update_modelview_matrix(shader_ptr);
+    }
+  }
   // model matrix
   else if (matrix_type == USERCODE_MATRIXTYPE_MODEL_MATRIX)
   {
@@ -121,9 +140,9 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
     if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
     {
       KRR_TEXSHADERPROG3D* shader_ptr = (KRR_TEXSHADERPROG3D*)program;
-      glm_mat4_copy(g_base_model_matrix, shader_ptr->modelview_matrix);
+      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
 
-      KRR_TEXSHADERPROG3D_update_modelview_matrix(shader_ptr);
+      KRR_TEXSHADERPROG3D_update_model_matrix(shader_ptr);
     }
     // font shader
     else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
@@ -145,6 +164,7 @@ void usercode_app_went_windowed_mode()
 
   KRR_SHADERPROG_bind(texture3d_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
   // no need to unbind as we will bind a new one soon
 
@@ -163,6 +183,7 @@ void usercode_app_went_fullscreen()
 
   KRR_SHADERPROG_bind(texture3d_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
 
   KRR_SHADERPROG_bind(font_shader->program);
@@ -190,7 +211,7 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 	glm_ortho(0.0f, (float)g_screen_width, (float)g_screen_height, 0.0f, -300.0f, 600.0f, g_projection_matrix);
   // calculate view matrix
   glm_mat4_identity(g_view_matrix);
-	// calculate base modelview matrix (to reduce some of operations cost)
+	// calculate base model matrix (to reduce some of operations cost)
 	glm_mat4_identity(g_base_model_matrix);
 	glm_scale(g_base_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
 
@@ -289,6 +310,7 @@ bool usercode_loadmedia()
   
   KRR_SHADERPROG_bind(texture3d_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
   KRR_TEXSHADERPROG3D_set_texture_sampler(texture3d_shader, 0);
 
@@ -541,14 +563,14 @@ void usercode_render()
   glBindTexture(GL_TEXTURE_2D, texture->texture_id);
 
   // rotate
-  glm_mat4_copy(g_base_model_matrix, texture3d_shader->modelview_matrix);
-  glm_translate(texture3d_shader->modelview_matrix, (vec3){g_logical_width/2.f, g_logical_height/2.f, 0.f});
-  glm_scale(texture3d_shader->modelview_matrix, (vec3){80.0f, 80.0f, 80.0f});
-  glm_rotate(texture3d_shader->modelview_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
-  glm_rotate(texture3d_shader->modelview_matrix, glm_rad(rotx), (vec3){1.f, 0.f, 0.f});
-  glm_rotate(texture3d_shader->modelview_matrix, glm_rad(rotz), (vec3){0.f, 0.f, 1.f});
-  // update modelview matrix
-  KRR_TEXSHADERPROG3D_update_modelview_matrix(texture3d_shader);
+  glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
+  glm_translate(texture3d_shader->model_matrix, (vec3){g_logical_width/2.f, g_logical_height/2.f, 0.f});
+  glm_scale(texture3d_shader->model_matrix, (vec3){80.0f, 80.0f, 80.0f});
+  glm_rotate(texture3d_shader->model_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
+  glm_rotate(texture3d_shader->model_matrix, glm_rad(rotx), (vec3){1.f, 0.f, 0.f});
+  glm_rotate(texture3d_shader->model_matrix, glm_rad(rotz), (vec3){0.f, 0.f, 1.f});
+  // update model matrix
+  KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
 
   // render quad
   glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, NULL);
@@ -578,7 +600,7 @@ void usercode_render_fps(int avg_fps)
 
   // use shared font shader
   KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
-    // start with clean state of modelview matrix
+    // start with clean state of model matrix
     glm_mat4_copy(g_base_model_matrix, shared_font_shaderprogram->modelview_matrix);
     KRR_FONTSHADERPROG2D_update_modelview_matrix(shared_font_shaderprogram);
 
