@@ -34,7 +34,8 @@ TARGETS := \
 	  $(GPDIR)/texturedpp2d.o \
 	  $(GPDIR)/texturedpp3d.o \
 	  $(GPDIR)/fontpp2d.o \
-	  $(GPDIR)/doublemulticolorpp2d.o
+	  $(GPDIR)/doublemulticolorpp2d.o \
+	  $(GPDIR)/objloader.o \
 
 .PHONY: all clean
 
@@ -97,6 +98,9 @@ $(GPDIR)/fontpp2d.o: $(GPDIR)/fontpp2d.c $(GPDIR)/fontpp2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.o: $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.c $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(GPDIR)/objloader.o: $(GPDIR)/objloader.c $(GPDIR)/objloader.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(PROGRAM).o: $(PROGRAM).c
