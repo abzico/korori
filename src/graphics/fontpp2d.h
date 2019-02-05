@@ -16,13 +16,13 @@ typedef struct KRR_FONTSHADERPROG2D_
   /// uniform location
   /// (internal use)
   GLint projection_matrix_location;
-  GLint modelview_matrix_location;
+  GLint model_matrix_location;
   GLint texture_sampler_location;
   GLint text_color_location;
 
   /// matrices
   mat4 projection_matrix;
-  mat4 modelview_matrix;
+  mat4 model_matrix;
 
 } KRR_FONTSHADERPROG2D;
 
@@ -57,11 +57,11 @@ extern bool KRR_FONTSHADERPROG2D_load_program(KRR_FONTSHADERPROG2D* program);
 extern void KRR_FONTSHADERPROG2D_update_projection_matrix(KRR_FONTSHADERPROG2D* program);
 
 ///
-/// update modelview matrix then to update to gpu.
+/// update model matrix then to update to gpu.
 ///
 /// \param program pointer to program
 ///
-extern void KRR_FONTSHADERPROG2D_update_modelview_matrix(KRR_FONTSHADERPROG2D* program);
+extern void KRR_FONTSHADERPROG2D_update_model_matrix(KRR_FONTSHADERPROG2D* program);
 
 ///
 /// set vertex pointer then to update to gpu
