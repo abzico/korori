@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "SDL.h"
 #include "SDL_image.h"
@@ -180,7 +181,7 @@ void render(float deltaTime)
 
 #ifndef DISABLE_FPS_CALC
     // render fps
-    usercode_render_fps((int)common_avgFPS);
+    usercode_render_fps((int)lroundf(common_avgFPS));
 #endif
   }
 }
@@ -245,7 +246,7 @@ int main(int argc, char* args[])
             common_frameAccumTime -= 1.0f;
           }
 #endif
-          common_frameTime = 0.0f;
+          common_frameTime -= FIXED_UPDATERATE;
 
           // handle events on queue
           // if it's 0, then it has no pending event
