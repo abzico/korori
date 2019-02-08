@@ -222,6 +222,7 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // enable face culling
   glEnable(GL_CULL_FACE);
 
+  // enable depth test
   glEnable(GL_DEPTH_TEST);
 
   // check for errors
