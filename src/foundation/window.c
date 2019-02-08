@@ -1,8 +1,8 @@
 #include "window.h"
+#include "SDL_log.h"
 #include <stdlib.h>
 
 #define WINDOW_TITLE_BUFFER 60
-static char temp_chrs[WINDOW_TITLE_BUFFER];
 static void initialize_values(KRR_WINDOW* window)
 {
   window->window = NULL;
@@ -92,9 +92,6 @@ void KRR_WINDOW_handle_event(KRR_WINDOW* window, SDL_Event *e, float delta_time)
   // window event occurred
   if (e->type == SDL_WINDOWEVENT && e->window.windowID == window->id)
   {
-    // caption update flag
-    bool update_caption = false;
-
     switch (e->window.event)
     {
       // window moved
@@ -134,25 +131,31 @@ void KRR_WINDOW_handle_event(KRR_WINDOW* window, SDL_Event *e, float delta_time)
       // mouse entered window
       case SDL_WINDOWEVENT_ENTER:
         window->has_mouse_focus = true;
-        update_caption = true;
         break;
 
       // mouse left window
       case SDL_WINDOWEVENT_LEAVE:
         window->has_mouse_focus = false;
-        update_caption = true;
         break;
 
       // window has keyboard focus
       case SDL_WINDOWEVENT_FOCUS_GAINED:
         window->has_keyboard_focus = true;
-        update_caption = true;
+
+        if (window->on_window_focus_gained != NULL)
+        {
+          window->on_window_focus_gained(window->id);
+        }
         break;
 
       // window lost keyboard focus
       case SDL_WINDOWEVENT_FOCUS_LOST:
         window->has_keyboard_focus = false;
-        update_caption = true;
+
+        if (window->on_window_focus_lost != NULL)
+        {
+          window->on_window_focus_lost(window->id);
+        }
         break;
 
       // window minimized
@@ -174,14 +177,6 @@ void KRR_WINDOW_handle_event(KRR_WINDOW* window, SDL_Event *e, float delta_time)
       case SDL_WINDOWEVENT_CLOSE:
         SDL_HideWindow(window->window);
         break;
-    }
-
-    // update window caption with new data
-    if (update_caption)
-    {
-      // update window's title depending on focus of mouse and keyboard
-      snprintf(temp_chrs, WINDOW_TITLE_BUFFER, "%s ID:%d [%d|%d]", window->original_title, window->id, window->has_mouse_focus, window->has_keyboard_focus);
-      SDL_SetWindowTitle(window->window, temp_chrs);
     }
   }
 

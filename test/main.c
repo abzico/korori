@@ -31,6 +31,8 @@
 
 // cap thus using fixed deltaTime step
 #define FIXED_UPDATERATE .01666666666666666666
+// slow down fps when app doesn't have focus
+#define COLDSTATE_UPDATERATE 0.1
 
 // -- functions
 bool init();
@@ -40,15 +42,41 @@ void update(float deltaTime);
 void render(float deltaTime);
 void close();
 
+static void on_window_focus_gained(Uint32 window_id);
+
+static void on_window_focus_lost(Uint32 window_id);
+
 // opengl context
 SDL_GLContext opengl_context;
 
 // -- variables
 bool quit = false;
+static bool app_active = true;
+static double active_updaterate = FIXED_UPDATERATE;
 
 // independent time loop
 Uint32 currTime = 0;
 Uint32 prevTime = 0;
+
+void on_window_focus_gained(Uint32 window_id)
+{
+  if (window_id == gWindow->id)
+  {
+    // change target framerate back to normal
+    active_updaterate = FIXED_UPDATERATE;
+    app_active = true;
+  }
+}
+
+void on_window_focus_lost(Uint32 window_id)
+{
+  if (window_id == gWindow->id)
+  {
+    // slow down framerate
+    active_updaterate = COLDSTATE_UPDATERATE;
+    app_active = false;
+  }
+}
 
 bool init() {
   // initialize sdl
@@ -78,8 +106,10 @@ bool init() {
     KRR_LOGE("Window could not be created! SDL_Error: %s", SDL_GetError());
     return false;
   }
-	// listen to window's resize event
+	// listen to window's events
 	gWindow->on_window_resize = usercode_set_screen_dimension;
+  gWindow->on_window_focus_gained = on_window_focus_gained;
+  gWindow->on_window_focus_lost = on_window_focus_lost;
 
   // create opengl context
   opengl_context = SDL_GL_CreateContext(gWindow->window);
@@ -93,10 +123,11 @@ bool init() {
   KRR_LOG("OpenGL version %s\nGLSL version: %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
   // use vsync
-  //if (SDL_GL_SetSwapInterval(1) != 0)
-  //{
-  //  KRR_LOGW("Warning: Unable to enable vsync! %s", SDL_GetError());
-  //}
+  // we need to enable vsync to resolve stuttering issue for now
+  if (SDL_GL_SetSwapInterval(1) != 0)
+  {
+    KRR_LOGW("Warning: Unable to enable vsync! %s", SDL_GetError());
+  }
 
   // init glew
   glewExperimental = GL_TRUE;
@@ -233,7 +264,7 @@ int main(int argc, char* args[])
 				// update accumulated time for calculating framerate
         common_frameAccumTime += deltaTime;
 #endif
-        if (common_frameTime >= FIXED_UPDATERATE)
+        if (common_frameTime >= active_updaterate)
         {
 #ifndef DISABLE_FPS_CALC
           common_frameCount++;
@@ -246,26 +277,33 @@ int main(int argc, char* args[])
             common_frameAccumTime -= 1.0f;
           }
 #endif
-          common_frameTime -= FIXED_UPDATERATE;
 
           // handle events on queue
           // if it's 0, then it has no pending event
           // we keep polling all event in each game loop until there is no more pending one left
           while (SDL_PollEvent(&e) != 0)
           {
+            // handle window's events
+            KRR_WINDOW_handle_event(gWindow, &e, common_frameTime);
             // update user's handleEvent()
-            handleEvent(&e, FIXED_UPDATERATE);
+            handleEvent(&e, common_frameTime);
           }
 
-          update(FIXED_UPDATERATE);
-          render(FIXED_UPDATERATE);
-        }
-        else {
-          render(0); 
+          update(common_frameTime);
+          render(common_frameTime);
+
+          // reset frametime
+          common_frameTime -= active_updaterate;
+
+          // update screen
+          SDL_GL_SwapWindow(gWindow->window);
         }
 
-        // update screen
-        SDL_GL_SwapWindow(gWindow->window);
+        // eat less CPU cycles
+        if (!app_active)
+        {
+          SDL_Delay(COLDSTATE_UPDATERATE * 1000.0);
+        }
       }
     }
   }

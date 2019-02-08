@@ -58,6 +58,21 @@ typedef struct {
   /// \param new_height New window/s height
   void (*on_window_resize)(Uint32 window_id, int new_width, int new_height);
 
+  /// callback available to be set when window has gained keyboard focus
+  /// this can be used especially to slow down framerate when app is not active,
+  /// to reduce CPU usage.
+  ///
+  /// \param window_id window id
+  ///
+  void (*on_window_focus_gained)(Uint32 window_id);
+
+  /// callback available to be set when window has lost keyboard focus.
+  /// this can be used especially to set framerate back to normal when app gains back active.
+  ///
+  /// \param window_id window id
+  ///
+  void (*on_window_focus_lost)(Uint32 window_id);
+
   /// handle evant callback that can be set.
   /// This function will be called after internal handling event is carried out.
   ///
