@@ -39,32 +39,32 @@ libkrr.a:
 	cd .. && make
 
 template: $(srcdir)/template.c $(DEPS)
-	echo "\nbuilding $@"
+	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 doublemulticolorshader: $(srcdir)/doublemulticolorshader.c usercode.h libkrr.a main.o copyresfiles
-	echo "\nbuilding $@"
+	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 rotatingplane: $(srcdir)/rotatingplane.c usercode.h libkrr.a main.o copyresfiles
-	echo "\nbuilding $@"
+	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 rotatingcube: $(srcdir)/rotatingcube.c usercode.h libkrr.a main.o copyresfiles
-	echo "\nbuilding $@"
+	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 readobjfile_manual: $(srcdir)/readobjfile_manual.c usercode.h libkrr.a main.o copyresfiles
-	echo "\nbuilding $@"
+	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 readobjfile: $(srcdir)/readobjfile.c usercode.h libkrr.a main.o copyresfiles
-	echo "\nbuilding $@"
+	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
