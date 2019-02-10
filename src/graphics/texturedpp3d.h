@@ -32,6 +32,9 @@ typedef struct KRR_TEXSHADERPROG3D_
 
 } KRR_TEXSHADERPROG3D;
 
+// shared textured 3d shader-program
+extern KRR_TEXSHADERPROG3D* shared_textured3d_shaderprogram;
+
 ///
 /// create a new textured polygon shader.
 /// it will automatically create underlying KRR_SHADERPROG for us.

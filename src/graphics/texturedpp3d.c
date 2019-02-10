@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include "foundation/common.h"
 
+// this should be set once in user's program
+KRR_TEXSHADERPROG3D* shared_textured3d_shaderprogram = NULL;
+
 KRR_TEXSHADERPROG3D* KRR_TEXSHADERPROG3D_new(void)
 {
   KRR_TEXSHADERPROG3D* out = malloc(sizeof(KRR_TEXSHADERPROG3D));
