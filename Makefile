@@ -36,6 +36,7 @@ TARGETS := \
 	  $(GPDIR)/fontpp2d.o \
 	  $(GPDIR)/doublemulticolorpp2d.o \
 	  $(GPDIR)/objloader.o \
+	  $(GPDIR)/model.o
 
 .PHONY: all clean
 
@@ -101,6 +102,9 @@ $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.o: $(GPDIR)/gl_ldouble_multicol
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(GPDIR)/objloader.o: $(GPDIR)/objloader.c $(GPDIR)/objloader.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(GPDIR)/model.o: $(GPDIR)/model.c $(GPDIR)/model.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(PROGRAM).o: $(PROGRAM).c
