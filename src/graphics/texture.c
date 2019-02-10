@@ -1298,7 +1298,7 @@ void KRR_TEXTURE_create_pixels32(KRR_TEXTURE* texture, GLuint image_width, GLuin
     // create pixels
     GLuint pixel_count = image_width * image_height;
     // allocate new memory space, and set to 0 for full transparent black color
-    texture->pixels = calloc(pixel_count, sizeof(GLuint));
+    texture->pixels = calloc(1, sizeof(GLuint) * pixel_count);
 
     // copy pixel data
     texture->width = image_width;
@@ -1420,7 +1420,7 @@ void KRR_TEXTURE_create_pixels8(KRR_TEXTURE* texture, GLuint image_width, GLuint
     // create pixels
     GLuint pixel_count = image_width * image_height;
     // allocate memory space and set to 0 for fully transparent black color
-    texture->pixels8 = calloc(pixel_count,  sizeof(GLubyte));
+    texture->pixels8 = calloc(1,  sizeof(GLubyte) * pixel_count);
 
     // copy pixel data
     texture->width = image_width;

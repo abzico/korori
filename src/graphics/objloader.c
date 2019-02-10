@@ -92,9 +92,9 @@ int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* 
   // start with lowest enough space to hold elements
   // the true number of element is tracked along the way, and
   // we will adjust the number of space later at the end to reduce un-needed memory usage
-  vertices = calloc(v_alloc_count, sizeof(VERTEXPOS3D));
-  texcoords = calloc(vt_alloc_count, sizeof(TEXCOORD2D));
-  normals = calloc(vn_alloc_count, sizeof(NORMAL));
+  vertices = calloc(1, sizeof(VERTEXPOS3D) * v_alloc_count);
+  texcoords = calloc(1, sizeof(TEXCOORD2D) * vt_alloc_count);
+  normals = calloc(1, sizeof(NORMAL) * vn_alloc_count);
 
   // flag checking whether it has been entered into 'f ' case
   bool entered_f = false;
@@ -211,14 +211,14 @@ int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* 
 
         // allocate memory space
         // allocate vertices enough space initially
-        out_vertices = calloc(final_vertices_count, sizeof(VERTEXTEXNORM3D));
+        out_vertices = calloc(1, sizeof(VERTEXTEXNORM3D) * final_vertices_count);
         // allocate with initial guess space
         final_indices_count = INITIAL_ELEM_COUNT * 3;
-        out_indices = calloc(final_indices_count, sizeof(GLuint));
+        out_indices = calloc(1, sizeof(GLuint) * final_indices_count);
 
         // allocate memory space for dup table
         // number of element for table won't grow as each element might maintain its own duplicate list
-        v_set_table = calloc(final_vertices_count, sizeof(DUPS));
+        v_set_table = calloc(1, sizeof(DUPS) * final_vertices_count);
 
         // save vertices count for later use
         // this value won't be modified by handle_f_v() function
