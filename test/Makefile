@@ -20,6 +20,7 @@ TARGETS = \
 	  doublemulticolorshader	\
 	  rotatingplane	\
 	  rotatingcube	\
+	  readobjfile_manual	\
 	  readobjfile
 
 DEPS = \
@@ -50,6 +51,10 @@ rotatingplane: $(srcdir)/rotatingplane.c usercode.h libkrr.a main.o copyresfiles
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 rotatingcube: $(srcdir)/rotatingcube.c usercode.h libkrr.a main.o copyresfiles
+	$(CC) -c $< $(CFLAGS) -o $@.o
+	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+
+readobjfile_manual: $(srcdir)/readobjfile_manual.c usercode.h libkrr.a main.o copyresfiles
 	$(CC) -c $< $(CFLAGS) -o $@.o
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 

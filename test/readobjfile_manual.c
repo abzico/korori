@@ -1,6 +1,5 @@
 // sample to read .obj file then show textured model on screen
-// demonstrate usage of SIMPLEMODEL
-// you still need to bind vao, and relevant shader and texture information before calling actual SIMPLEMODEL_render() function. This is for optimized batch rendering.
+// demonstrate manual building of VBO as part of VAO to draw loaded .obj file, and another wrapped one via SIMPLEMODEL struct
 
 #include "usercode.h"
 #include "foundation/common.h"
@@ -9,7 +8,6 @@
 #include "graphics/util.h"
 #include "graphics/texturedpp2d.h"
 #include "graphics/texturedpp3d.h"
-#include "graphics/model.h"
 #include "graphics/font.h"
 #include "graphics/fontpp2d.h"
 #include "graphics/objloader.h"
@@ -82,7 +80,11 @@ static KRR_FONT* font = NULL;
 
 // TODO: define variables here
 static KRR_TEXTURE* texture = NULL;
-static SIMPLEMODEL* sm = NULL;
+
+static GLuint vao = 0;
+static GLuint vertex_vbo = 0;
+static GLuint ibo = 0;
+static int indices_count = 0;
 
 static float roty = 0.f;
 static float rotz = 0.f;
@@ -315,14 +317,55 @@ bool usercode_loadmedia()
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   KRR_FONTSHADERPROG2D_set_texture_sampler(font_shader, 0);
   KRR_SHADERPROG_unbind(font_shader->program);
+  
+  // load vertices and indices from .obj file
+  VERTEXTEXNORM3D* vertices = NULL;
+  int vertices_count = 0;
 
-  // load .obj model
-  sm = SIMPLEMODEL_new();
-  if (!SIMPLEMODEL_load_objfile(sm, "res/models/stall.obj"))
-  {
-    KRR_LOGE("Error loading .obj file");
-    return false;
-  }
+  GLuint* indices = NULL;
+
+  KRR_load_objfile("res/models/stall.obj", &vertices, &vertices_count, &indices, &indices_count);
+  //for (int i=0; i<vertices_count; i++)
+  //{
+  //  KRR_LOGI("[%d] = %.2f, %.2f, %.2f", i, vertices[i].position.x, vertices[i].position.y, vertices[i].position.z);
+  //  KRR_LOGI("[%d] = %.2f, %.2f", i, vertices[i].texcoord.s, vertices[i].texcoord.t);
+  //  KRR_LOGI("[%d] = %.2f, %.2f, %.2f", i, vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z);
+  //  KRR_LOGI("");
+  //}
+
+  // create vbo
+  glGenBuffers(1, &vertex_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
+  glBufferData(GL_ARRAY_BUFFER, vertices_count * sizeof(VERTEXTEXNORM3D), vertices, GL_STATIC_DRAW);
+
+  glGenBuffers(1, &ibo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_count * sizeof(GLuint), indices, GL_STATIC_DRAW);
+
+  // free vertices and indices
+  free(vertices);
+  vertices = NULL;
+  free(indices);
+  indices = NULL;
+
+  // vao
+  glGenVertexArrays(1, &vao);
+  // bind vao
+  glBindVertexArray(vao);
+
+    // enable vertex attributes
+    KRR_TEXSHADERPROG3D_enable_attrib_pointers(texture3d_shader);
+
+    // set vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
+    KRR_TEXSHADERPROG3D_set_vertex_pointer(texture3d_shader, sizeof(VERTEXTEXNORM3D), (GLvoid*)offsetof(VERTEXTEXNORM3D, position));
+    KRR_TEXSHADERPROG3D_set_texcoord_pointer(texture3d_shader, sizeof(VERTEXTEXNORM3D), (GLvoid*)offsetof(VERTEXTEXNORM3D, texcoord));
+
+    // ibo
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+
+  // unbind vao
+  glBindVertexArray(0);
 
   return true;
 }
@@ -434,7 +477,7 @@ void usercode_render()
 
   // TODO: render code goes here...
   // bind vao
-  glBindVertexArray(sm->vao_id);
+  glBindVertexArray(vao);
 
     // bind shader
     KRR_SHADERPROG_bind(texture3d_shader->program);
@@ -442,7 +485,6 @@ void usercode_render()
     // bind texture
     glBindTexture(GL_TEXTURE_2D, texture->texture_id);
 
-    // instance 1
     // transform model matrix
     glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
     glm_translate(texture3d_shader->model_matrix, (vec3){g_logical_width/2.f, g_logical_height/2.f, 0.f});
@@ -455,17 +497,7 @@ void usercode_render()
     KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
 
     // render
-    SIMPLEMODEL_render(sm);
-
-    // instance 2
-    glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
-    glm_translate(texture3d_shader->model_matrix, (vec3){g_logical_width * 3.f / 4.f, g_logical_height/2.f, 0.f});
-    glm_scale(texture3d_shader->model_matrix, (vec3){20.0f, 20.0f, 20.0f});
-    glm_rotate(texture3d_shader->model_matrix, glm_rad(roty), (vec3){1.f, 1.f, 0.f});
-    KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
-
-    // render
-    SIMPLEMODEL_render(sm);
+    glDrawElements(GL_TRIANGLES, indices_count, GL_UNSIGNED_INT, NULL);
 
     // unbind shader
     KRR_SHADERPROG_unbind(texture3d_shader->program);
@@ -519,6 +551,12 @@ void usercode_close()
   if (texture3d_shader != NULL)
     KRR_TEXSHADERPROG3D_free(texture3d_shader);
 
-  if (sm != NULL)
-    SIMPLEMODEL_free(&sm);
+  if (texture != NULL)
+    KRR_TEXTURE_free(texture);
+  if (vertex_vbo != 0)
+    glDeleteBuffers(1, &vertex_vbo);
+  if (ibo != 0)
+    glDeleteBuffers(1, &ibo);
+  if (vao != 0)
+    glDeleteVertexArrays(1, &vao);
 }
