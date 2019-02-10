@@ -520,5 +520,5 @@ void usercode_close()
     KRR_TEXSHADERPROG3D_free(texture3d_shader);
 
   if (sm != NULL)
-    SIMPLEMODEL_free(&sm);
+    SIMPLEMODEL_free(sm);
 }

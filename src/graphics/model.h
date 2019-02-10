@@ -59,10 +59,9 @@ extern void SIMPLEMODEL_render(SIMPLEMODEL* sm);
 
 ///
 /// Free a simple model.
-/// After this call, sm will be set to NULL.
 ///
 /// \param sm pointer to pointer of SIMPLEMODEL
 ///
-extern void SIMPLEMODEL_free(SIMPLEMODEL** sm);
+extern void SIMPLEMODEL_free(SIMPLEMODEL* sm);
 
 #endif

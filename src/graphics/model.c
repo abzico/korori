@@ -114,15 +114,12 @@ void SIMPLEMODEL_unload(SIMPLEMODEL* sm)
   SIMPLEMODEL_free_internals(sm);
 }
 
-void SIMPLEMODEL_free(SIMPLEMODEL** sm)
+void SIMPLEMODEL_free(SIMPLEMODEL* sm)
 {
-  SIMPLEMODEL_free_internals(*sm);
+  SIMPLEMODEL_free_internals(sm);
   
   // free source
-  free(*sm);
-  *sm = NULL;
-  
-  // nullify inputer pointer so user doesn't have to set to NULL again
+  free(sm);
   sm = NULL;
 }
 
