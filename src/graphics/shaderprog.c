@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "foundation/common.h"
+#include "foundation/log.h"
 #include "foundation/util.h"
 #include "graphics/shaderprog_internals.h"
 #include "graphics/util.h"

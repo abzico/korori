@@ -1,6 +1,6 @@
 #include "fontpp2d.h"
 #include <stdlib.h>
-#include "foundation/common.h"
+#include "foundation/log.h"
 
 static void free_internals_(KRR_FONTSHADERPROG2D* program);
 

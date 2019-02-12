@@ -1,6 +1,6 @@
 #include "multicolorpp2d.h"
 #include <stdlib.h>
-#include "foundation/common.h"
+#include "foundation/log.h"
 
 static void init_defaults(KRR_MULTCSHADERPROG2D* program);
 
