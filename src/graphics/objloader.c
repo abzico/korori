@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
-#include "foundation/common.h"
+#include "foundation/log.h"
 
 // start with 100 empty space to hold elements
 #define INITIAL_ELEM_COUNT 100

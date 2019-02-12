@@ -1,7 +1,7 @@
 #include "font.h"
 #include <stdlib.h>
 #include <stddef.h>
-#include "foundation/common.h"
+#include "foundation/log.h"
 #include "externals/vector.h"
 #include "graphics/texture_internals.h"
 #include FT_BITMAP_H

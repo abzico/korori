@@ -1,6 +1,6 @@
 #include "texturedpp3d.h"
 #include <stdlib.h>
-#include "foundation/common.h"
+#include "foundation/log.h"
 
 // this should be set once in user's program
 KRR_TEXSHADERPROG3D* shared_textured3d_shaderprogram = NULL;

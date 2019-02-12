@@ -1,7 +1,7 @@
 #include "plainpp2d.h"
 #include <stdlib.h>
 #include "graphics/shaderprog_internals.h"
-#include "foundation/common.h"
+#include "foundation/log.h"
 
 static void init_defaults(KRR_PLAINSHADERPROG2D* program);
 
