@@ -39,10 +39,10 @@ static void free_dup_recur(DUP* dup_ptr)
   else
   {
     free_dup_recur(dup_ptr->next);
+    dup_ptr->next = NULL;
 
     // free this node
     free(dup_ptr);
-    dup_ptr->next = NULL;
   }
 }
 
