@@ -21,7 +21,8 @@ TARGETS = \
 	  rotatingplane	\
 	  rotatingcube	\
 	  readobjfile_manual	\
-	  readobjfile
+	  readobjfile	\
+	  headless
 
 DEPS = \
        usercode.h	\
@@ -33,6 +34,9 @@ all: libkrr.a main.o $(TARGETS) copyresfiles
 
 main.o: $(srcdir)/main.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+main-headless.o: $(srcdir)/main.c
+	$(CC) $(CFLAGS) -DSDL_HEADLESS -c $< -o $@
 
 libkrr.a:
 	# change directory then make static library in which output is at $(libkrrpath)
@@ -67,6 +71,11 @@ readobjfile: $(srcdir)/readobjfile.c usercode.h libkrr.a main.o copyresfiles
 	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+
+headless: $(srcdir)/headless.c usercode.h libkrr.a main-headless.o copyresfiles
+	@echo "\nbuilding $@"
+	$(CC) -c $< $(CFLAGS) -DSDL_HEADLESS -o $@.o
+	$(CC) $@.o main-headless.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 copyresfiles:
 	cp -pR ../res ./
