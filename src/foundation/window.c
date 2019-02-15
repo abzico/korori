@@ -43,8 +43,9 @@ KRR_WINDOW* KRR_WINDOW_new(const char* title, int screen_width, int screen_heigh
 
 bool KRR_WINDOW_init(KRR_WINDOW *window, const char* title, int screen_width, int screen_height, int window_flags, int renderer_flags)
 {
-  // always use SDL_WINDOW_SHOWN to logical or with input flags
-  window->window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, SDL_WINDOW_SHOWN | window_flags);
+  // not always assume to set SDL_WINDOW_SHOWN all the time, in case of headless we do need
+  // SDL_WINDOW_HIDDEN
+  window->window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, window_flags);
   if (window->window != NULL)
   {
     window->has_mouse_focus = true;

@@ -98,10 +98,14 @@ bool init() {
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-  // create window
-  // if we set SDL_WINDOW_OPENGL flag then renderer won't be created for this window
-  // thus make sure you cannot use LTexture anymore as it heavilty use renderer as created in KRR_WINDOW
-  gWindow = KRR_WINDOW_new("Korori - Test", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL, 0);
+  // preprocessor check for sample for 'headless' sample only
+#ifdef SDL_HEADLESS
+  // create window headless
+  gWindow = KRR_WINDOW_new("Korori - Test", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL, 0);
+#else
+  // create window normally
+  gWindow = KRR_WINDOW_new("Korori - Test", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL, 0);
+#endif
   if (gWindow == NULL) {
     KRR_LOGE("Window could not be created! SDL_Error: %s", SDL_GetError());
     return false;
