@@ -1,4 +1,4 @@
-#version 150
+#version 330
 
 // texture color
 uniform vec4 text_color = vec4(1.0, 1.0, 1.0, 1.0);
