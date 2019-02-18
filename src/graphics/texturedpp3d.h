@@ -12,6 +12,7 @@ typedef struct KRR_TEXSHADERPROG3D_
   // attribute location
   GLint vertex_pos3d_location;
   GLint texcoord_location;
+  GLint normal_location;
 
   // uniform color to apply to texture's pixels
   GLint texture_color_location;
@@ -29,6 +30,11 @@ typedef struct KRR_TEXSHADERPROG3D_
   // model matrix
   mat4 model_matrix;
   GLint model_matrix_location;
+
+  // light
+  GLint light_position_location;
+  GLint light_color_location;
+  LIGHT light;
 
 } KRR_TEXSHADERPROG3D;
 
@@ -69,6 +75,7 @@ extern void KRR_TEXSHADERPROG3D_update_projection_matrix(KRR_TEXSHADERPROG3D* pr
 
 ///
 /// update view matrix
+/// set view matrix information (see header) first then call this function to update to GPU
 ///
 /// \param program pointer to KRR_TEXSHADERPROG3D
 ///
@@ -76,10 +83,18 @@ extern void KRR_TEXSHADERPROG3D_update_view_matrix(KRR_TEXSHADERPROG3D* program)
 
 ///
 /// update model matrix
+/// set model matrix information (see header) first then call this function to update to GPU
 ///
 /// \param program pointer to KRR_TEXSHADERPROG3D
 ///
 extern void KRR_TEXSHADERPROG3D_update_model_matrix(KRR_TEXSHADERPROG3D* program);
+
+///
+/// update light information
+/// set light information first (see header) then call this function to update to GPU
+///
+/// \param program poitner to 
+extern void KRR_TEXSHADERPROG3D_update_light(KRR_TEXSHADERPROG3D* program);
 
 ///
 /// set vertex pointer
@@ -91,13 +106,22 @@ extern void KRR_TEXSHADERPROG3D_update_model_matrix(KRR_TEXSHADERPROG3D* program
 extern void KRR_TEXSHADERPROG3D_set_vertex_pointer(KRR_TEXSHADERPROG3D* program, GLsizei stride, const GLvoid* data);
 
 ///
-/// set texcoordinate pointer
+/// set texcoordinate pointer of attribute vertice
 ///
 /// \param program pointer to KRR_TEXSHADERPROG3D
 /// \param stride space in bytes to the next attribute in the next element
 /// \param data opaque pointer to data buffer offset
 ///
 extern void KRR_TEXSHADERPROG3D_set_texcoord_pointer(KRR_TEXSHADERPROG3D* program, GLsizei stride, const GLvoid* data);
+
+///
+/// set normal pointer of attribute vertice
+///
+/// \param program pointer to KRR_TEXSHADERPROG3D
+/// \param stride space in bytes to the next attribute in the next element
+/// \param data opaque pointer to data buffer offset
+///
+extern void KRR_TEXSHADERPROG3D_set_normal_pointer(KRR_TEXSHADERPROG3D* program, GLsizei stride, const GLvoid* data);
 
 ///
 /// set texture color.

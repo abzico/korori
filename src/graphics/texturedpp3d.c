@@ -13,6 +13,7 @@ KRR_TEXSHADERPROG3D* KRR_TEXSHADERPROG3D_new(void)
   out->program = NULL;
   out->vertex_pos3d_location = -1;
   out->texcoord_location = -1;
+  out->normal_location = -1;
   out->texture_color_location = -1;
   out->texture_sampler_location = -1;
   glm_mat4_identity(out->projection_matrix);
@@ -21,6 +22,10 @@ KRR_TEXSHADERPROG3D* KRR_TEXSHADERPROG3D_new(void)
   out->view_matrix_location = -1;
   glm_mat4_identity(out->model_matrix);
   out->model_matrix_location = -1;
+  out->light_position_location = -1;
+  out->light_color_location = -1;
+  glm_vec3_zero(out->light.pos);
+  glm_vec3_one(out->light.color);
 
   // create underlying shader program
   out->program = KRR_SHADERPROG_new();
@@ -132,6 +137,11 @@ bool KRR_TEXSHADERPROG3D_load_program(KRR_TEXSHADERPROG3D* program)
   {
     KRR_LOGW("Warning: texcoord_location is invalid glsl variable name");
   }
+  program->normal_location = glGetAttribLocation(uprog->program_id, "normal");
+  if (program->normal_location == -1)
+  {
+    KRR_LOGW("Warning: normal_location is invalid glsl variable name");
+  }
   program->texture_color_location = glGetUniformLocation(uprog->program_id, "texture_color");
   if (program->texture_color_location == -1)
   {
@@ -141,6 +151,16 @@ bool KRR_TEXSHADERPROG3D_load_program(KRR_TEXSHADERPROG3D* program)
   if (program->texture_sampler_location == -1)
   {
     KRR_LOGW("Warning: texture_sampler is invalid glsl variable name");
+  }
+  program->light_position_location = glGetUniformLocation(uprog->program_id, "light_position");
+  if (program->light_position_location == -1)
+  {
+    KRR_LOGW("Warning: light_position is invalid glsl variable name");
+  }
+  program->light_color_location = glGetUniformLocation(uprog->program_id, "light_color");
+  if (program->light_color_location == -1)
+  {
+    KRR_LOGW("Warning: light_color is invalid glsl variable name");
   }
 
   return true;
@@ -161,6 +181,12 @@ void KRR_TEXSHADERPROG3D_update_model_matrix(KRR_TEXSHADERPROG3D* program)
   glUniformMatrix4fv(program->model_matrix_location, 1, GL_FALSE, program->model_matrix[0]);
 }
 
+void KRR_TEXSHADERPROG3D_update_light(KRR_TEXSHADERPROG3D* program)
+{
+  glUniform3fv(program->light_position_location, 1, &program->light.pos[0]);
+  glUniform3fv(program->light_color_location, 1, &program->light.color[0]);
+}
+
 void KRR_TEXSHADERPROG3D_set_vertex_pointer(KRR_TEXSHADERPROG3D* program, GLsizei stride, const GLvoid* data)
 {
   glVertexAttribPointer(program->vertex_pos3d_location, 3, GL_FLOAT, GL_FALSE, stride, data); 
@@ -169,6 +195,11 @@ void KRR_TEXSHADERPROG3D_set_vertex_pointer(KRR_TEXSHADERPROG3D* program, GLsize
 void KRR_TEXSHADERPROG3D_set_texcoord_pointer(KRR_TEXSHADERPROG3D* program, GLsizei stride, const GLvoid* data)
 {
   glVertexAttribPointer(program->texcoord_location, 2, GL_FLOAT, GL_FALSE, stride, data);
+}
+
+void KRR_TEXSHADERPROG3D_set_normal_pointer(KRR_TEXSHADERPROG3D* program, GLsizei stride, const GLvoid* data)
+{
+  glVertexAttribPointer(program->normal_location, 3, GL_FLOAT, GL_FALSE, stride, data);
 }
 
 void KRR_TEXSHADERPROG3D_set_texture_color(KRR_TEXSHADERPROG3D* program, COLOR32 color)
@@ -185,10 +216,12 @@ void KRR_TEXSHADERPROG3D_enable_attrib_pointers(KRR_TEXSHADERPROG3D* program)
 {
   glEnableVertexAttribArray(program->vertex_pos3d_location);
   glEnableVertexAttribArray(program->texcoord_location);
+  glEnableVertexAttribArray(program->normal_location);
 }
 
 void KRR_TEXSHADERPROG3D_disable_attrib_pointers(KRR_TEXSHADERPROG3D* program)
 {
   glDisableVertexAttribArray(program->vertex_pos3d_location);
   glDisableVertexAttribArray(program->texcoord_location);
+  glDisableVertexAttribArray(program->normal_location);
 }

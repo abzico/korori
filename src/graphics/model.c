@@ -91,6 +91,7 @@ bool SIMPLEMODEL_load_objfile(SIMPLEMODEL* sm, const char* filepath)
     glBindBuffer(GL_ARRAY_BUFFER, sm->vbo_id);
     KRR_TEXSHADERPROG3D_set_vertex_pointer(shared_textured3d_shaderprogram, sizeof(VERTEXTEXNORM3D), (GLvoid*)offsetof(VERTEXTEXNORM3D, position));
     KRR_TEXSHADERPROG3D_set_texcoord_pointer(shared_textured3d_shaderprogram, sizeof(VERTEXTEXNORM3D), (GLvoid*)offsetof(VERTEXTEXNORM3D, texcoord));
+    KRR_TEXSHADERPROG3D_set_normal_pointer(shared_textured3d_shaderprogram, sizeof(VERTEXTEXNORM3D), (GLvoid*)offsetof(VERTEXTEXNORM3D, normal));
 
     // ibo
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sm->ibo_id);

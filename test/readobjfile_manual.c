@@ -360,6 +360,7 @@ bool usercode_loadmedia()
     glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
     KRR_TEXSHADERPROG3D_set_vertex_pointer(texture3d_shader, sizeof(VERTEXTEXNORM3D), (GLvoid*)offsetof(VERTEXTEXNORM3D, position));
     KRR_TEXSHADERPROG3D_set_texcoord_pointer(texture3d_shader, sizeof(VERTEXTEXNORM3D), (GLvoid*)offsetof(VERTEXTEXNORM3D, texcoord));
+    KRR_TEXSHADERPROG3D_set_normal_pointer(texture3d_shader, sizeof(VERTEXTEXNORM3D), (GLvoid*)offsetof(VERTEXTEXNORM3D, normal));
 
     // ibo
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -485,14 +486,19 @@ void usercode_render()
     // bind texture
     glBindTexture(GL_TEXTURE_2D, texture->texture_id);
 
+    // update position of light to base on the original position of model first then offset further
+    vec3 light_pos = {g_logical_width/2.0f * g_ri_scale_x, g_logical_height*3.0f/4.0f * g_ri_scale_y, 100.f};
+    vec3 light_color = {1.0f, 1.f, 1.f};
+
+    glm_vec3_copy(light_pos, texture3d_shader->light.pos);
+    glm_vec3_copy(light_color, texture3d_shader->light.color);
+    KRR_TEXSHADERPROG3D_update_light(texture3d_shader);
+
     // transform model matrix
     glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
     glm_translate(texture3d_shader->model_matrix, (vec3){g_logical_width/2.f, g_logical_height/2.f, 0.f});
     glm_scale(texture3d_shader->model_matrix, (vec3){30.0f, 30.0f, 30.0f});
-    //glm_scale(texture3d_shader->model_matrix, (vec3){60.0f, 60.0f, 60.0f});
-    //glm_rotate(texture3d_shader->model_matrix, glm_rad(90.f), (vec3){0.f, 1.f, 0.f});
     glm_rotate(texture3d_shader->model_matrix, glm_rad(roty), (vec3){1.f, 1.f, 0.f});
-    //glm_rotate(texture3d_shader->model_matrix, glm_rad(rotz), (vec3){0.f, 0.f, 1.f});
     //update model matrix
     KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
 
@@ -540,19 +546,37 @@ void usercode_close()
 {
 #ifndef DISABLE_FPS_CALC
   if (fps_font != NULL)
+  {
     KRR_FONT_free(fps_font);
+    fps_font = NULL;
+  }
 #endif
   if (font != NULL)
+  {
     KRR_FONT_free(font);
+    font = NULL;
+  }
   if (font_shader != NULL)
+  {
     KRR_FONTSHADERPROG2D_free(font_shader);
+    font_shader = NULL;
+  }
   if (texture_shader != NULL)
+  {
     KRR_TEXSHADERPROG2D_free(texture_shader);
+    texture_shader = NULL;
+  }
   if (texture3d_shader != NULL)
+  {
     KRR_TEXSHADERPROG3D_free(texture3d_shader);
+    texture3d_shader = NULL;
+  }
 
   if (texture != NULL)
+  {
     KRR_TEXTURE_free(texture);
+    texture = NULL;
+  }
   if (vertex_vbo != 0)
     glDeleteBuffers(1, &vertex_vbo);
   if (ibo != 0)

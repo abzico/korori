@@ -84,6 +84,7 @@ static KRR_TEXTURE* texture = NULL;
 static GLuint vao = 0;
 static GLuint vertex_vbo = 0;
 static GLuint texcoord_vbo = 0;
+static GLuint normal_vbo = 0;
 static GLuint ibo = 0;
 
 static float rotx = 0.f, roty = 0.f, rotz = 0.f;
@@ -380,6 +381,18 @@ bool usercode_loadmedia()
     { 0.0f + TEXCOORD_WOS, 0.0f + TEXCOORD_HOS }
   };
 
+  NORMAL normal_dup = {1.0f, 1.0f, 1.0f};
+  NORMAL normals[8] = {
+    normal_dup,
+    normal_dup,
+    normal_dup,
+    normal_dup,
+    normal_dup,
+    normal_dup,
+    normal_dup,
+    normal_dup
+  };
+
   GLuint indices[36] = { 
     0, 1, 2,
     0, 2, 3,
@@ -404,10 +417,16 @@ bool usercode_loadmedia()
   glBindBuffer(GL_ARRAY_BUFFER, texcoord_vbo);
   glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(TEXCOORD2D), texcoord, GL_STATIC_DRAW);
 
+  // trick that we create normals that give good result of lighting
+  // as we need it to have the size elements (size) of vertice array
+  // it's fake
+  glGenBuffers(1, &normal_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, normal_vbo);
+  glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(NORMAL), normals, GL_STATIC_DRAW);
+
   glGenBuffers(1, &ibo);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36 * sizeof(GLuint), indices, GL_STATIC_DRAW);
-
 
   // vao, then bind
   glGenVertexArrays(1, &vao);
@@ -423,6 +442,10 @@ bool usercode_loadmedia()
   // set texcoord data
   glBindBuffer(GL_ARRAY_BUFFER, texcoord_vbo);
   KRR_TEXSHADERPROG3D_set_texcoord_pointer(texture3d_shader, sizeof(TEXCOORD2D), NULL);
+
+  // set normal data
+  glBindBuffer(GL_ARRAY_BUFFER, normal_vbo);
+  KRR_TEXSHADERPROG3D_set_normal_pointer(texture3d_shader, sizeof(NORMAL), NULL);
 
   // ibo
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -554,6 +577,14 @@ void usercode_render()
   // bind texture
   glBindTexture(GL_TEXTURE_2D, texture->texture_id);
 
+  // update position of light to base on the original position of model first then offset further
+  vec3 light_pos = {g_logical_width/2.0f * g_ri_scale_x, g_logical_height/2.0f * g_ri_scale_y + 300.0f, 50.0f};
+  vec3 light_color = {1.0f, 1.f, 1.f};
+
+  glm_vec3_copy(light_pos, texture3d_shader->light.pos);
+  glm_vec3_copy(light_color, texture3d_shader->light.color);
+  KRR_TEXSHADERPROG3D_update_light(texture3d_shader);
+
   // rotate
   glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
   glm_translate(texture3d_shader->model_matrix, (vec3){g_logical_width/2.f, g_logical_height/2.f, 0.f});
@@ -609,22 +640,44 @@ void usercode_close()
 {
 #ifndef DISABLE_FPS_CALC
   if (fps_font != NULL)
+  {
     KRR_FONT_free(fps_font);
+    fps_font = NULL;
+  }
 #endif
   if (font != NULL)
+  {
     KRR_FONT_free(font);
+    font = NULL;
+  }
   if (font_shader != NULL)
+  {
     KRR_FONTSHADERPROG2D_free(font_shader);
+    font_shader = NULL;
+  }
   if (texture_shader != NULL)
+  {
     KRR_TEXSHADERPROG2D_free(texture_shader);
+    texture_shader = NULL;
+  }
   if (texture3d_shader != NULL)
+  {
     KRR_TEXSHADERPROG3D_free(texture3d_shader);
+    texture3d_shader = NULL;
+  }
 
   if (texture != NULL)
+  {
     KRR_TEXTURE_free(texture);
+    texture = NULL;
+  }
 
   if (vertex_vbo != 0)
     glDeleteBuffers(1, &vertex_vbo);
+  if (texcoord_vbo != 0) 
+    glDeleteBuffers(1, &texcoord_vbo);
+  if (normal_vbo != 0)
+    glDeleteBuffers(1, &normal_vbo);
   if (ibo != 0)
     glDeleteBuffers(1, &ibo);
   if (vao != 0)

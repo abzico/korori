@@ -2,6 +2,7 @@
 #define KRR_graphics_types_h_
 
 #include "gl.h"
+#include <cglm/cglm.h>
 
 typedef struct
 {
@@ -81,5 +82,11 @@ typedef struct
   VERTEXPOS2D pos;
   COLOR32 color;
 } MULTCOLOR2D;
+
+typedef struct
+{
+  vec3 pos;
+  vec3 color;
+} LIGHT;
 
 #endif

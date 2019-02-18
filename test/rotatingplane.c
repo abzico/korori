@@ -532,16 +532,34 @@ void usercode_close()
 {
 #ifndef DISABLE_FPS_CALC
   if (fps_font != NULL)
+  {
     KRR_FONT_free(fps_font);
+    fps_font = NULL;
+  }
 #endif
   if (font != NULL)
+  {
     KRR_FONT_free(font);
+    font = NULL;
+  }
   if (font_shader != NULL)
+  {
     KRR_FONTSHADERPROG2D_free(font_shader);
+    font_shader = NULL;
+  }
   if (texture != NULL)
+  {
     KRR_TEXTURE_free(texture);
+    texture = NULL;
+  }
   if (texture_clipped != NULL)
+  {
     KRR_TEXTURE_free(texture_clipped);
+    texture_clipped = NULL;
+  }
   if (texture_shader != NULL)
+  {
     KRR_TEXSHADERPROG2D_free(texture_shader);
+    texture_shader = NULL;
+  }
 }
