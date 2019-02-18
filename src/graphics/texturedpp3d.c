@@ -1,5 +1,6 @@
 #include "texturedpp3d.h"
 #include <stdlib.h>
+#include <string.h>
 #include "foundation/log.h"
 
 // this should be set once in user's program
@@ -24,8 +25,10 @@ KRR_TEXSHADERPROG3D* KRR_TEXSHADERPROG3D_new(void)
   out->model_matrix_location = -1;
   out->light_position_location = -1;
   out->light_color_location = -1;
-  glm_vec3_zero(out->light.pos);
-  glm_vec3_one(out->light.color);
+  memset(&out->light.pos, 0, sizeof(out->light.pos)); 
+  out->light.color.r = 0.0f;
+  out->light.color.g = 0.0f;
+  out->light.color.b = 0.0f;
 
   // create underlying shader program
   out->program = KRR_SHADERPROG_new();
@@ -183,8 +186,8 @@ void KRR_TEXSHADERPROG3D_update_model_matrix(KRR_TEXSHADERPROG3D* program)
 
 void KRR_TEXSHADERPROG3D_update_light(KRR_TEXSHADERPROG3D* program)
 {
-  glUniform3fv(program->light_position_location, 1, &program->light.pos[0]);
-  glUniform3fv(program->light_color_location, 1, &program->light.color[0]);
+  glUniform3fv(program->light_position_location, 1, &program->light.pos);
+  glUniform3fv(program->light_color_location, 1, &program->light.color);
 }
 
 void KRR_TEXSHADERPROG3D_set_vertex_pointer(KRR_TEXSHADERPROG3D* program, GLsizei stride, const GLvoid* data)

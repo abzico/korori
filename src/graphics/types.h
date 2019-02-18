@@ -2,7 +2,6 @@
 #define KRR_graphics_types_h_
 
 #include "gl.h"
-#include <cglm/cglm.h>
 
 typedef struct
 {
@@ -74,8 +73,17 @@ typedef struct
   GLfloat r;
   GLfloat g;
   GLfloat b;
+} COLOR3F;
+
+typedef struct
+{
+  GLfloat r;
+  GLfloat g;
+  GLfloat b;
   GLfloat a;
 } COLOR32;
+
+typedef COLOR32 COLOR4F;
 
 typedef struct
 {
@@ -85,8 +93,8 @@ typedef struct
 
 typedef struct
 {
-  vec3 pos;
-  vec3 color;
+  VERTEXPOS3D pos;
+  COLOR3F color;
 } LIGHT;
 
 #endif
