@@ -226,6 +226,9 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
     return false;
   }
 
+  KRR_LOGI("sizeof(vec2) = %lu", sizeof(vec2));
+  KRR_LOGI("sizeof(vec3) = %lu", sizeof(vec3));
+
   return true;
 }
 

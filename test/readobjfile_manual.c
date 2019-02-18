@@ -490,8 +490,9 @@ void usercode_render()
     vec3 light_pos = {g_logical_width/2.0f * g_ri_scale_x, g_logical_height*3.0f/4.0f * g_ri_scale_y, 100.f};
     vec3 light_color = {1.0f, 1.f, 1.f};
 
-    glm_vec3_copy(light_pos, texture3d_shader->light.pos);
-    glm_vec3_copy(light_color, texture3d_shader->light.color);
+    memcpy(&texture3d_shader->light.pos, &light_pos, sizeof(light_pos));
+    memcpy(&texture3d_shader->light.color, &light_color, sizeof(light_color));
+
     KRR_TEXSHADERPROG3D_update_light(texture3d_shader);
 
     // transform model matrix
