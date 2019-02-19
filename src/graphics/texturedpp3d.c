@@ -15,7 +15,6 @@ KRR_TEXSHADERPROG3D* KRR_TEXSHADERPROG3D_new(void)
   out->vertex_pos3d_location = -1;
   out->texcoord_location = -1;
   out->normal_location = -1;
-  out->texture_color_location = -1;
   out->texture_sampler_location = -1;
   glm_mat4_identity(out->projection_matrix);
   out->projection_matrix_location = -1;
@@ -29,6 +28,8 @@ KRR_TEXSHADERPROG3D* KRR_TEXSHADERPROG3D_new(void)
   out->light.color.r = 1.0f;
   out->light.color.g = 1.0f;
   out->light.color.b = 1.0f;
+  out->shine_damper = 1.0f;
+  out->reflectivity = 0.0f;
 
   // create underlying shader program
   out->program = KRR_SHADERPROG_new();
@@ -145,11 +146,6 @@ bool KRR_TEXSHADERPROG3D_load_program(KRR_TEXSHADERPROG3D* program)
   {
     KRR_LOGW("Warning: normal_location is invalid glsl variable name");
   }
-  program->texture_color_location = glGetUniformLocation(uprog->program_id, "texture_color");
-  if (program->texture_color_location == -1)
-  {
-    KRR_LOGW("Warning: texture_color is invalid glsl variable name");
-  }
   program->texture_sampler_location = glGetUniformLocation(uprog->program_id, "texture_sampler");
   if (program->texture_sampler_location == -1)
   {
@@ -164,6 +160,16 @@ bool KRR_TEXSHADERPROG3D_load_program(KRR_TEXSHADERPROG3D* program)
   if (program->light_color_location == -1)
   {
     KRR_LOGW("Warning: light_color is invalid glsl variable name");
+  }
+  program->shine_damper_location = glGetUniformLocation(uprog->program_id, "shine_damper");
+  if (program->shine_damper_location == -1)
+  {
+    KRR_LOGW("Warning: shine_damper is invalid glsl variable name");
+  }
+  program->reflectivity_location = glGetUniformLocation(uprog->program_id, "reflectivity");
+  if (program->reflectivity_location == -1)
+  {
+    KRR_LOGW("Warning: reflectivity is invalid glsl variable name");
   }
 
   return true;
@@ -190,6 +196,12 @@ void KRR_TEXSHADERPROG3D_update_light(KRR_TEXSHADERPROG3D* program)
   glUniform3fv(program->light_color_location, 1, &program->light.color.r);
 }
 
+void KRR_TEXSHADERPROG3D_update_shininess(KRR_TEXSHADERPROG3D* program)
+{
+  glUniform1f(program->shine_damper_location, program->shine_damper);
+  glUniform1f(program->reflectivity_location, program->reflectivity);
+}
+
 void KRR_TEXSHADERPROG3D_set_vertex_pointer(KRR_TEXSHADERPROG3D* program, GLsizei stride, const GLvoid* data)
 {
   glVertexAttribPointer(program->vertex_pos3d_location, 3, GL_FLOAT, GL_FALSE, stride, data); 
@@ -203,11 +215,6 @@ void KRR_TEXSHADERPROG3D_set_texcoord_pointer(KRR_TEXSHADERPROG3D* program, GLsi
 void KRR_TEXSHADERPROG3D_set_normal_pointer(KRR_TEXSHADERPROG3D* program, GLsizei stride, const GLvoid* data)
 {
   glVertexAttribPointer(program->normal_location, 3, GL_FLOAT, GL_FALSE, stride, data);
-}
-
-void KRR_TEXSHADERPROG3D_set_texture_color(KRR_TEXSHADERPROG3D* program, COLOR32 color)
-{
-  glUniform4fv(program->texture_color_location, 1, (const GLfloat*)&color);
 }
 
 void KRR_TEXSHADERPROG3D_set_texture_sampler(KRR_TEXSHADERPROG3D* program, GLuint sampler)
