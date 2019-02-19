@@ -97,4 +97,10 @@ typedef struct
   COLOR3F color;
 } LIGHT;
 
+typedef struct
+{
+  GLfloat shine_dumper;
+  GLfloat reflectvity;
+} MATERIAL;
+
 #endif

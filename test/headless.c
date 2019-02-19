@@ -356,6 +356,11 @@ bool usercode_loadmedia()
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
   KRR_TEXSHADERPROG3D_set_texture_sampler(texture3d_shader, 0);
 
+  // update shininess
+  texture3d_shader->shine_damper = 10.0f;
+  texture3d_shader->reflectivity = 0.1f;
+  KRR_TEXSHADERPROG3D_update_shininess(texture3d_shader);
+
   KRR_SHADERPROG_bind(font_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
