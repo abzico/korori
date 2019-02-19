@@ -23,7 +23,8 @@ TARGETS = \
 	  readobjfile_manual	\
 	  readobjfile	\
 	  headless	\
-	  advanced_model
+	  advanced_model	\
+	  terrain
 
 DEPS = \
        usercode.h	\
@@ -79,6 +80,11 @@ headless: $(srcdir)/headless.c usercode.h libkrr.a main-headless.o copyresfiles
 	$(CC) $@.o main-headless.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 advanced_model: $(srcdir)/advanced_model.c usercode.h libkrr.a main.o copyresfiles
+	@echo "\nbuilding $@"
+	$(CC) -c $< $(CFLAGS) -o $@.o
+	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+
+terrain: $(srcdir)/terrain.c usercode.h libkrr.a main.o copyresfiles
 	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
 	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)

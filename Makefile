@@ -36,7 +36,9 @@ TARGETS := \
 	  $(GPDIR)/fontpp2d.o \
 	  $(GPDIR)/doublemulticolorpp2d.o \
 	  $(GPDIR)/objloader.o \
-	  $(GPDIR)/model.o
+	  $(GPDIR)/model.o	\
+	  $(GPDIR)/terrain_shader3d.o	\
+	  $(GPDIR)/terrain.o	\
 
 .PHONY: all clean
 
@@ -105,6 +107,12 @@ $(GPDIR)/objloader.o: $(GPDIR)/objloader.c $(GPDIR)/objloader.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(GPDIR)/model.o: $(GPDIR)/model.c $(GPDIR)/model.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(GPDIR)/terrain_shader3d.o: $(GPDIR)/terrain_shader3d.c $(GPDIR)/terrain_shader3d.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(GPDIR)/terrain.o: $(GPDIR)/terrain.c $(GPDIR)/terrain.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(PROGRAM).o: $(PROGRAM).c
