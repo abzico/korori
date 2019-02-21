@@ -142,8 +142,7 @@ int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* 
 
         // copy by values
         vertices[vertices_i].x = temp_v[0];
-        // flip y-axis as exported from modeling tool
-        vertices[vertices_i].y = -temp_v[1];
+        vertices[vertices_i].y = temp_v[1];
         vertices[vertices_i++].z = temp_v[2];
       }
       else
@@ -164,8 +163,7 @@ int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* 
         }
 
         texcoords[texcoords_i].s = temp_v[0];
-        // flip y-axis for texture coordinate as y-axis is flipped for model importing
-        texcoords[texcoords_i++].t = 1.0f-temp_v[1];
+        texcoords[texcoords_i++].t = temp_v[1];
       }
       else
       {
