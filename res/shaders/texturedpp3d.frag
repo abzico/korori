@@ -26,9 +26,10 @@ void main()
   vec3 diffuse = brightness * light_color;
 
   // calculate specular
+  // note: normalize tocam_dir here as there's no guaruntee it will be unit vector after interpolation resulting from vertex shader
   vec3 fromlight_dir = -light_dir;
   vec3 reflected_light_dir = reflect(fromlight_dir, unit_normal);
-  float specular_factor = max(dot(reflected_light_dir, tocam_dir), 0.0);
+  float specular_factor = max(dot(reflected_light_dir, normalize(tocam_dir)), 0.0);
   float damped_factor = pow(specular_factor, shine_damper);
   vec3 final_specular = damped_factor * light_color * reflectivity;
 

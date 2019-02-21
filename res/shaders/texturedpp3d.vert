@@ -29,7 +29,7 @@ void main()
 
   // calculate direction to camera
   mat4 inv_vm = inverse(view_matrix);
-  tocam_dir = normalize(vec3(inv_vm[0][3], inv_vm[1][3], inv_vm[2][3]) - frag_pos);
+  tocam_dir = vec3(inv_vm[0][3], inv_vm[1][3], inv_vm[2][3]) - frag_pos;
 
   // process vertex
   gl_Position = projection_matrix * view_matrix * world_position;
