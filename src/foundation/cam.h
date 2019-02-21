@@ -14,6 +14,11 @@ typedef struct
   vec3 rot;
   /// target rotation to rotate to for this frame
   vec3 torot;
+
+  /// forward vector
+  vec3 forward;
+  /// up vector
+  vec3 up;
 } KRR_CAM;
 
 #endif
