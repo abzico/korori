@@ -14,6 +14,7 @@
 #include "graphics/model.h"
 #include "graphics/font.h"
 #include "graphics/fontpp2d.h"
+#include <math.h>
 
 // don't use this elsewhere
 #define CONTENT_BG_COLOR 0.f, 0.f, 0.f, 1.f
@@ -63,6 +64,7 @@ enum USERCODE_MATRIXTYPE
 enum USERCODE_SHADERTYPE
 {
   USERCODE_SHADERTYPE_TEXTURE_SHADER,
+  USERCODE_SHADERTYPE_TEXTURE3D_SHADER,
   USERCODE_SHADERTYPE_TERRAIN_SHADER,
   USERCODE_SHADERTYPE_FONT_SHADER
 };
@@ -86,11 +88,13 @@ static KRR_FONT* font = NULL;
 
 // TODO: define variables here
 static KRR_TEXTURE* texture = NULL;
+static KRR_TEXTURE* texture2 = NULL;
 static SIMPLEMODEL* sm = NULL;
 static TERRAIN* tr = NULL;
 static KRR_CAM cam;
+static float roty = 0.0f;
 
-static float rotz = 0.f;
+static bool is_leftmouse_click = false;
 
 void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_program, void* program)
 {
@@ -108,15 +112,19 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
 
       KRR_TEXSHADERPROG2D_update_projection_matrix(shader_ptr);
     }
+    // texture3d shader
+    else if (shader_program == USERCODE_SHADERTYPE_TEXTURE3D_SHADER)
+    {
+      KRR_TEXSHADERPROG3D* shader_ptr = (KRR_TEXSHADERPROG3D*)program;
+      glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
+      KRR_TEXSHADERPROG3D_update_projection_matrix(shader_ptr);
+      KRR_LOGI("update projection matrix for texture3d");
+    }
     // terrain shader
     else if (shader_program == USERCODE_SHADERTYPE_TERRAIN_SHADER)
     {
-      // convert to right type of program shader
       KRR_TERRAINSHADERPROG3D* shader_ptr = (KRR_TERRAINSHADERPROG3D*)program;
-
-      // copy calculated projection matrix to shader's then update to shader
       glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
-
       KRR_TERRAINSHADERPROG3D_update_projection_matrix(shader_ptr);
     }
     // font shader
@@ -124,7 +132,6 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
     {
       KRR_FONTSHADERPROG2D* shader_ptr = (KRR_FONTSHADERPROG2D*)program;
       glm_mat4_copy(g_ui_projection_matrix, shader_ptr->projection_matrix);
-
       KRR_FONTSHADERPROG2D_update_projection_matrix(shader_ptr);
     }
   }
@@ -136,15 +143,20 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
     {
       KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
       glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
-
       KRR_TEXSHADERPROG2D_update_view_matrix(shader_ptr);
+    }
+    // texture3d shader
+    else if (shader_program == USERCODE_SHADERTYPE_TEXTURE3D_SHADER)
+    {
+      KRR_TEXSHADERPROG3D* shader_ptr = (KRR_TEXSHADERPROG3D*)program;
+      glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
+      KRR_TEXSHADERPROG3D_update_view_matrix(shader_ptr);
     }
     // terrain shader
     else if (shader_program == USERCODE_SHADERTYPE_TERRAIN_SHADER)
     {
       KRR_TERRAINSHADERPROG3D* shader_ptr = (KRR_TERRAINSHADERPROG3D*)program;
       glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
-
       KRR_TERRAINSHADERPROG3D_update_view_matrix(shader_ptr);
     }
   }
@@ -159,7 +171,7 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
 
       KRR_TEXSHADERPROG2D_update_model_matrix(shader_ptr);
     }
-    // texture shader
+    // texture3d shader
     else if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
     {
       KRR_TERRAINSHADERPROG3D* shader_ptr = (KRR_TERRAINSHADERPROG3D*)program;
@@ -181,21 +193,25 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
 void usercode_app_went_windowed_mode()
 {
 	// set projection, view and model matrix to both of basic shaders
+  // texture 2d
   KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
 
+  // texture 3d
   KRR_SHADERPROG_bind(texture3d_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
 
+  // terrain 3d
   KRR_SHADERPROG_bind(terrain3d_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
 
+  // font
   KRR_SHADERPROG_bind(font_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
@@ -205,21 +221,25 @@ void usercode_app_went_windowed_mode()
 void usercode_app_went_fullscreen()
 {
 	// set projection, view and model matrix to both of basic shaders
+  // texture 2d
   KRR_SHADERPROG_bind(texture_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
 
+  // texture 3d
   KRR_SHADERPROG_bind(texture3d_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
 
+  // terrain 3d
   KRR_SHADERPROG_bind(terrain3d_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
 
+  // font
   KRR_SHADERPROG_bind(font_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
@@ -243,7 +263,7 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 
   // calculate orthographic projection matrix
 	glm_ortho(0.0, g_screen_width, g_screen_height, 0.0, -300.f, 6000.0, g_ui_projection_matrix);
-  glm_perspective(glm_rad(60.0f), g_screen_width * 1.0f / g_screen_height, 0.1f, 6000.0f, g_projection_matrix);
+  glm_perspective(GLM_PI_4f, g_screen_width * 1.0f / g_screen_height, 0.01f, 10000.0f, g_projection_matrix);
   // calcualte view matrix
   glm_mat4_identity(g_view_matrix);
 	// calculate base model matrix (to reduce some of operations cost)
@@ -266,6 +286,11 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 
   // enable depth test
   glEnable(GL_DEPTH_TEST);
+
+  // initially start user's camera looking at -z, and up with +y
+  glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, cam.forward);
+  glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, cam.up);
+  glm_vec3_copy((vec3){0.0f, 1.0f, 3.0f}, cam.pos);
 
   // check for errors
   GLenum error = glGetError();
@@ -348,6 +373,13 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading model's texture");
     return false;
   }
+  // texture 2
+  texture2 = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(texture2, "res/models/stallTexture.png"))
+  {
+    KRR_LOGE("Error loading white texture");
+    return false;
+  }
 
   // initially update all related matrices and related graphics stuff for both basic shaders
   KRR_SHADERPROG_bind(texture_shader->program);
@@ -357,12 +389,12 @@ bool usercode_loadmedia()
   KRR_TEXSHADERPROG2D_set_texture_sampler(texture_shader, 0);
 
   KRR_SHADERPROG_bind(texture3d_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
   KRR_TEXSHADERPROG3D_set_texture_sampler(texture3d_shader, 0);
   texture3d_shader->shine_damper = 10.0f;
-  texture3d_shader->reflectivity = 0.1f;
+  texture3d_shader->reflectivity = 0.2f;
   KRR_TEXSHADERPROG3D_update_shininess(texture3d_shader);
 
   KRR_SHADERPROG_bind(terrain3d_shader->program);
@@ -372,7 +404,7 @@ bool usercode_loadmedia()
   KRR_TERRAINSHADERPROG3D_set_texture_sampler(terrain3d_shader, 0);
 
   terrain3d_shader->shine_damper = 10.0f;
-  terrain3d_shader->reflectivity = 0.1f;
+  terrain3d_shader->reflectivity = 0.35f;
   KRR_TERRAINSHADERPROG3D_update_shininess(terrain3d_shader);
 
   terrain3d_shader->texcoord_repeat = 10.0f;
@@ -387,7 +419,7 @@ bool usercode_loadmedia()
 
   // load .obj model
   sm = SIMPLEMODEL_new();
-  if (!SIMPLEMODEL_load_objfile(sm, "res/models/dragon.obj"))
+  if (!SIMPLEMODEL_load_objfile(sm, "res/models/stall.obj"))
   {
     KRR_LOGE("Error loading .obj file");
     return false;
@@ -395,7 +427,7 @@ bool usercode_loadmedia()
   
   // load from generation of terrain
   tr = KRR_TERRAIN_new();
-  if (!KRR_TERRAIN_load_from_generation(tr, 4, 4, 200))
+  if (!KRR_TERRAIN_load_from_generation(tr, 1, 1, 200))
   {
     KRR_LOGE("Error loading terrain from generation");
     return false;
@@ -436,7 +468,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 				
 				// re-calculate projection matrices for both ui and 3d view
 				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0f, 6000.0, g_ui_projection_matrix);
-        glm_perspective(glm_rad(60.0f), g_ri_view_width * 1.0f / g_ri_view_height, 0.1f, 6000.0f, g_projection_matrix);
+        glm_perspective(GLM_PI_4f, g_ri_view_width * 1.0f / g_ri_view_height, 0.01f, 10000.0f, g_projection_matrix);
 
 				// re-calculate base model matrix
 				// no need to scale as it's uniform 1.0 now
@@ -460,7 +492,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 
 				// re-calculate projection matrices for both ui and 3d view
 				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0f, 6000.0, g_ui_projection_matrix);
-        glm_perspective(glm_rad(60.0f), g_ri_view_width * 1.0f / g_ri_view_height, 0.1f, 6000.0f, g_projection_matrix);
+        glm_perspective(GLM_PI_4f, g_ri_view_width * 1.0f / g_ri_view_height, 0.01f, 10000.0f, g_projection_matrix);
 
 				// re-calculate base model matrix
 				glm_mat4_identity(g_base_model_matrix);
@@ -472,55 +504,149 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       }
     }
   }
+  else if (e->type == SDL_MOUSEBUTTONDOWN)
+  {
+    if (e->button.button == SDL_BUTTON_LEFT)
+    {
+      // allow to change forward, and up vector of user
+      is_leftmouse_click = true;
+    }
+  }
+  else if (e->type == SDL_MOUSEBUTTONUP)
+  {
+    if (e->button.button == SDL_BUTTON_LEFT)
+    {
+      // disable allowance to chagne direction of user's vectors
+      is_leftmouse_click = false;
+    }
+  }
+
+  if (is_leftmouse_click && e->type == SDL_MOUSEMOTION)
+  {
+    SDL_MouseMotionEvent motion = e->motion;
+    //KRR_LOGI("xrel = %d, yrel = %d", motion.xrel, motion.yrel);
+
+    bool need_update = false;
+
+    // if there's change along x-axis
+    // then we rotate user's y-axis
+    if (motion.xrel != 0)
+    {
+      need_update = true;
+    }
+
+    // if there's change along y-axis
+    // then we rotate user's x-axis
+    if (motion.yrel != 0)
+    {
+      need_update = true;
+    }
+
+    // check if need to update view matrix
+    if (need_update)
+    {
+      cam.rot[0] -= motion.xrel;
+      cam.rot[1] -= motion.yrel;
+
+      // clamp on increasing values
+      // these will preserve the sign of cam.rot[x]
+      cam.rot[0] = (int)cam.rot[0] % 360;
+      cam.rot[1] = (int)cam.rot[1] % 360;
+
+      // 1. rotate up & forward vector affected from changed in y-direction of mouse movement
+      // rotate up vector
+      vec3 up;
+      glm_vec3_copy(GLM_YUP, up);
+      glm_vec3_rotate(up, glm_rad(cam.rot[1]), GLM_XUP);
+      glm_vec3_normalize(up);
+      glm_vec3_copy(up, cam.up);
+
+      // rotate forward vector
+      vec3 forward;
+      glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, forward);
+      glm_vec3_rotate(forward, glm_rad(cam.rot[1]), GLM_XUP);
+      glm_vec3_normalize(forward);
+      //glm_vec3_copy(forward, cam.forward);
+
+      // 2. rotate forward vector affected from change in x-direction of mouse movement
+      glm_vec3_rotate(forward, glm_rad(cam.rot[0]), GLM_YUP);
+      glm_vec3_normalize(forward);
+      glm_vec3_copy(forward, cam.forward);
+    }
+  }
 
   // handle multiple key presses at once
-  bool cam_update = false;
   const Uint8* key_state = SDL_GetKeyboardState(NULL);
 
   // move speed is distance per second
-  #define MOVE_SPEED 30.0f
-  #define MOVE_FACTOR 0.1f
+  #define MOVE_SPEED 0.25f
 
   if (key_state[SDL_SCANCODE_A])
   {
-    cam.topos[0] -= MOVE_SPEED;
-    cam_update = true;
+    vec3 side;
+    glm_vec3_cross(cam.forward, cam.up, side);
+    vec3 temp;
+    glm_vec3_scale(side, -MOVE_SPEED * delta_time, temp);
+    glm_vec3_add(cam.pos, temp, cam.pos);
   }
   if (key_state[SDL_SCANCODE_D])
   {
-    cam.topos[0] += MOVE_SPEED;
-    cam_update = true;
+    vec3 side;
+    glm_vec3_cross(cam.forward, cam.up, side);
+    vec3 temp;
+    glm_vec3_scale(side, MOVE_SPEED * delta_time, temp);
+    glm_vec3_add(cam.pos, temp, cam.pos);
   }
   if (key_state[SDL_SCANCODE_W])
   {
-    cam.topos[1] -= MOVE_SPEED;
-    cam_update = true;
+    vec3 temp;
+    glm_vec3_scale(cam.forward, MOVE_SPEED * delta_time, temp);
+    glm_vec3_add(cam.pos, temp, cam.pos);
   }
   if (key_state[SDL_SCANCODE_S])
   {
-    cam.topos[1] += MOVE_SPEED;
-    cam_update = true;
+    vec3 temp;
+    glm_vec3_scale(cam.forward, -MOVE_SPEED * delta_time, temp);
+    glm_vec3_add(cam.pos, temp, cam.pos);
   }
+  if (key_state[SDL_SCANCODE_E])
+  {
+    vec3 temp;
+    glm_vec3_scale(cam.up, MOVE_SPEED * delta_time, temp);
+    glm_vec3_add(cam.pos, temp, cam.pos);
+  }
+  if (key_state[SDL_SCANCODE_Q])
+  {
+    vec3 temp;
+    glm_vec3_scale(cam.up, -MOVE_SPEED * delta_time, temp);
+    glm_vec3_add(cam.pos, temp, cam.pos);
+  }
+}
+
+void update_camera(float delta_time)
+{
+  vec3 cam_target;
+  glm_vec3_add(cam.pos, cam.forward, cam_target);
+  glm_lookat(cam.pos, cam_target, cam.up, g_view_matrix);
+
+  // texture 3d
+  KRR_SHADERPROG_bind(texture3d_shader->program);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
+
+  // terrain 3d
+  KRR_SHADERPROG_bind(terrain3d_shader->program);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
+  KRR_SHADERPROG_unbind(terrain3d_shader->program);
 }
 
 void usercode_update(float delta_time)
 {
-  // lerp camera's position
-  // always do this for smoothness
-  KRR_math_lerpv(cam.pos, cam.topos, MOVE_FACTOR);
+  update_camera(delta_time);
 
-  // update view matrix
-  cam.rot[0] = 90.0f;
-  KRR_gputil_create_view_matrix(cam.pos, cam.rot, 1.0f, g_view_matrix);
-
-  KRR_SHADERPROG_bind(terrain3d_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-  KRR_SHADERPROG_unbind(terrain3d_shader->program);
-
-  rotz += 1.0f;
-  if (rotz >= 360.f)
+  roty += 0.3f;
+  if (roty > 360.0f)
   {
-    rotz -= 360.f;
+    roty -= 360.0f;
   }
 }
 
@@ -560,19 +686,19 @@ void usercode_render()
 
     // set light info
     {
-    vec3 light_pos = {g_logical_width/2.0f * g_ri_scale_x, g_logical_height*3.0/4.0f * g_ri_scale_y + 100, 0.0f};
-    vec3 light_color = {1.0f, 1.f, 1.f};
+      vec3 light_pos = {100.0f, 10.0f, 50.0f};
+      vec3 light_color = {1.0f, 1.f, 1.f};
 
-    memcpy(&terrain3d_shader->light.pos, &light_pos, sizeof(light_pos));
-    memcpy(&terrain3d_shader->light.color, &light_color, sizeof(light_color));
+      memcpy(&terrain3d_shader->light.pos, &light_pos, sizeof(light_pos));
+      memcpy(&terrain3d_shader->light.color, &light_color, sizeof(light_color));
     }
     KRR_TERRAINSHADERPROG3D_update_light(terrain3d_shader);
 
     // transform model matrix
     glm_mat4_copy(g_base_model_matrix, terrain3d_shader->model_matrix);
-    //glm_translate(terrain3d_shader->model_matrix, (vec3){g_logical_width/2.f-4*200/2.0, -g_logical_height/2.f, -4*200/2.0});
-    //glm_scale(terrain3d_shader->model_matrix, (vec3){30.0f, 1.0f, 30.0f});
-    glm_rotate(terrain3d_shader->model_matrix, glm_rad(rotz), (vec3){1.f, 0.f, 0.f});
+    // rotate around itself
+    glm_rotate(terrain3d_shader->model_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
+    glm_translate(terrain3d_shader->model_matrix, (vec3){-200.0f/2, 0.0f, -200.0f/2});
     //update model matrix
     KRR_TERRAINSHADERPROG3D_update_model_matrix(terrain3d_shader);
 
@@ -581,6 +707,36 @@ void usercode_render()
 
     // unbind shader
     KRR_SHADERPROG_unbind(terrain3d_shader->program);
+
+  glBindVertexArray(sm->vao_id);
+    KRR_SHADERPROG_bind(texture3d_shader->program);
+    glBindTexture(GL_TEXTURE_2D, texture2->texture_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // set light info
+    {
+      vec3 light_pos = {100.0f, 10.0f, 50.0f};
+      vec3 light_color = {1.0f, 1.f, 1.f};
+
+      memcpy(&terrain3d_shader->light.pos, &light_pos, sizeof(light_pos));
+      memcpy(&terrain3d_shader->light.color, &light_color, sizeof(light_color));
+    }
+    KRR_TEXSHADERPROG3D_update_light(texture3d_shader);
+
+    // transform model matrix
+    glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
+    glm_translate(texture3d_shader->model_matrix, (vec3){0.0f, 0.0f, -50.0f});
+    //update model matrix
+    KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
+
+    // render
+    SIMPLEMODEL_render(sm);
+
+    // unbind shader
+    KRR_SHADERPROG_unbind(texture3d_shader->program);
+
+  glBindVertexArray(0);
   
   // unbind vao
   KRR_SHADERPROG_unbind(terrain3d_shader->program);
