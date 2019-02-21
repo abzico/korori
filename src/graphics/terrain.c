@@ -108,8 +108,8 @@ bool KRR_TERRAIN_load_from_generation(TERRAIN* tr, unsigned int grid_width_size,
   // generate terrain's vertices and indices
   KRR_TERRAIN_generate(grid_width_size, grid_height_size, size, &tr->vertices, &tr->vertices_count, &tr->indices, &tr->indices_count);
 
-  KRR_LOGI("vertices count = %d", tr->vertices_count);
-  KRR_LOGI("indices count = %d", tr->indices_count);
+  KRR_LOGI("terrain vertices count = %d", tr->vertices_count);
+  KRR_LOGI("terrain indices count = %d", tr->indices_count);
 
   // create vbo
   glGenBuffers(1, &tr->vbo_id);
