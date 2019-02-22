@@ -110,7 +110,10 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   glm_mat4_identity(g_view_matrix);
 	// calculate base model matrix (to reduce some of operations cost)
 	glm_mat4_identity(g_base_model_matrix);
-	glm_scale(g_base_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
+
+  // calculate base model for ui model matrix, and scale it
+  glm_mat4_identity(g_base_ui_model_matrix);
+	glm_scale(g_base_ui_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
 
   // initialize the viewport
   // define the area where to render, for now full screen
