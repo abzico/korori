@@ -1,3 +1,7 @@
+// demo custom shader
+// note that shader is based on orthographic projection matrix
+// note2: don't be afraid for long number of lines in this sample as I included doublemulticolor shader code (320 lines in total) in this source code as it's super custom and not really suitable to be provided by engine itself. Just look for comment of for start and end of such section.
+
 #include "usercode.h"
 #include "functs.h"
 #include "foundation/common.h"
@@ -8,7 +12,6 @@
 #include "graphics/texturedpp2d.h"
 #include "graphics/font.h"
 #include "graphics/fontpp2d.h"
-#include "graphics/doublemulticolorpp2d.h"
 
 // don't use this elsewhere
 #define CONTENT_BG_COLOR 0.f, 0.f, 0.f, 1.f
@@ -51,7 +54,6 @@ static KRR_FONT* font = NULL;
 static KRR_CAM cam;
 
 // double multicolor
-static KRR_DMULTICSHADERPROG2D* multicolor_shader = NULL;
 static GLuint vertex_vbo = 0;
 static GLuint rgby_vbo = 0;
 static GLuint cymw_vbo = 0;
@@ -59,6 +61,329 @@ static GLuint gray_vbo = 0;
 static GLuint ibo = 0;
 static GLuint left_vao = 0;
 static GLuint right_vao = 0;
+
+// -- start of doublemulticolor shader code --
+// -- except the line of define our variable to use it immediately next line after next typedef --
+typedef struct KRR_DMULTICSHADERPROG2D_
+{
+  /// underlying shader program
+  KRR_SHADERPROG* program;
+
+  /// attribute location
+  GLint vertex_pos2d_location;
+  GLint multicolor1_location;
+  GLint multicolor2_location;
+
+  /// uniform location
+  /// (internal use)
+  GLint projection_matrix_location;
+  GLint view_matrix_location;
+  GLint model_matrix_location;
+
+  // matrices
+  mat4 projection_matrix;
+  mat4 view_matrix;
+  mat4 model_matrix;
+
+} KRR_DMULTICSHADERPROG2D;
+static KRR_DMULTICSHADERPROG2D* multicolor_shader = NULL;
+
+///
+/// create a new double multi-color shader program.
+/// it will also create and manage underlying program (KRR_SHADERPROG).
+/// user has no responsibility to free its underlying attribute again.
+///
+/// \return Newly created KRR_DMULTICSHADERPROG2D on heap.
+///
+static KRR_DMULTICSHADERPROG2D* KRR_DMULTICSHADERPROG2D_new(void);
+
+///
+/// Free internals
+///
+/// \param program pointer to KRR_DMULTICSHADERPROG2D
+///
+static void KRR_DMULTICSHADERPROG2D_free_internals(KRR_DMULTICSHADERPROG2D* program);
+
+///
+/// free double multi-color shader program.
+///
+/// \param program pointer to gl_ldouble_multicolor_polygon
+static void KRR_DMULTICSHADERPROG2D_free(KRR_DMULTICSHADERPROG2D* program);
+
+///
+/// load program
+///
+/// \param program pointer to KRR_DMULTICSHADERPROG2D
+///
+static bool KRR_DMULTICSHADERPROG2D_load_program(KRR_DMULTICSHADERPROG2D* program);
+
+///
+/// Enable all vertex attribute pointers
+///
+/// \param program pointer to program
+#define KRR_DMULTICSHADERPROG2D_enable_all_vertex_attrib_pointers(program) KRR_gputil_enable_vertex_attrib_pointers(program->vertex_pos2d_location, program->multicolor1_location, program->multicolor2_location, -1)
+
+///
+/// Disable all vertex attribute pointers
+///
+/// \param program pointer to program
+///
+#define KRR_DMULTICSHADERPROG2D_disable_all_vertex_attrib_pointers(program) KRR_gputil_disable_vertex_attrib_pointers(program->vertex_pos2d_location, program->multicolor1_location, program->multicolor2_location, -1)
+
+/// set vertex pointer (packed version)
+/// it will set stride as 0 as packed format.
+/// if caller intend to use a single VBO combining several vertex data type together then this function is not the one you're looking for.
+/// data - offset pointer to data
+#define KRR_DMULTICSHADERPROG2D_set_attrib_vertex_pos2d_pointer_packed(program, data) glVertexAttribPointer(program->vertex_pos2d_location, 2, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)data)
+
+/// set attrib multicolor either 1 or 2 (packed version)
+/// program - shader program
+/// color - 1 for multicolor-1, 2 for multicolor-2
+/// data - offset pointer to data
+#define KRR_DMULTICSHADERPROG2D_set_attrib_multicolor_pointer_packed(program, color, data) glVertexAttribPointer(color == 1 ? program->multicolor1_location : program->multicolor2_location, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)data)
+
+KRR_DMULTICSHADERPROG2D* KRR_DMULTICSHADERPROG2D_new(void)
+{
+  KRR_DMULTICSHADERPROG2D* out = malloc(sizeof(KRR_DMULTICSHADERPROG2D));
+
+  // init zeros first
+  out->program = NULL;
+  out->vertex_pos2d_location = -1;
+  out->multicolor1_location = -1;
+  out->multicolor2_location = -1;
+  out->projection_matrix_location = -1;
+  out->view_matrix_location = -1;
+  out->model_matrix_location = -1;
+  glm_mat4_identity(out->projection_matrix);
+  glm_mat4_identity(out->view_matrix);
+  glm_mat4_identity(out->model_matrix);
+
+  // init
+  out->program = KRR_SHADERPROG_new();
+
+  return out;
+}
+
+void KRR_DMULTICSHADERPROG2D_free_internals(KRR_DMULTICSHADERPROG2D* program)
+{
+  // free underlying shader program
+  KRR_SHADERPROG_free(program->program);
+
+  program->vertex_pos2d_location = -1;
+  program->multicolor1_location = -1;
+  program->multicolor2_location = -1;
+  program->projection_matrix_location = -1;
+  program->view_matrix_location = -1;
+  program->model_matrix_location = -1;
+
+  glm_mat4_identity(program->projection_matrix);
+  glm_mat4_identity(program->view_matrix);
+  glm_mat4_identity(program->model_matrix);
+}
+
+void KRR_DMULTICSHADERPROG2D_free(KRR_DMULTICSHADERPROG2D* program)
+{
+  // free internals
+  KRR_DMULTICSHADERPROG2D_free_internals(program);
+
+  // free source
+  free(program);
+  program = NULL;
+}
+
+bool KRR_DMULTICSHADERPROG2D_load_program(KRR_DMULTICSHADERPROG2D* program)
+{
+  // create a new program
+  GLuint program_id = glCreateProgram();
+
+  // set shader source
+  const char* vert_shader_lines = "#version 330 core\n\
+                             uniform mat4 projection_matrix;\n\
+                             uniform mat4 view_matrix;\n\
+                             uniform mat4 model_matrix;\n\
+                             \n\
+                             in vec2 vertex_pos2d;\n\
+                             \n\
+                             in vec4 multicolor1;\n\
+                             in vec4 multicolor2;\n\
+                             \n\
+                             out vec4 multicolor;\n\
+                             \n\
+                             void main()\n\
+                             {\n\
+                               multicolor = multicolor1 * multicolor2;\n\
+                               gl_Position = projection_matrix * view_matrix * model_matrix * vec4(vertex_pos2d.xy, 0.0, 1.0);\n\
+                             }";
+  // create shader id for vertex shader
+  GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
+  // replace shader source
+  glShaderSource(vertex_shader_id, 1, &vert_shader_lines, NULL);
+  // compile shader source
+  glCompileShader(vertex_shader_id);
+
+  // check shader for errors
+  GLint shader_compiled = GL_FALSE;
+  glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &shader_compiled);
+  if (shader_compiled != GL_TRUE)
+  {
+    KRR_LOGE("Unable to compile shader %d. Source: %s", vertex_shader_id, vert_shader_lines);
+    KRR_SHADERPROG_print_shader_log(vertex_shader_id);
+
+    // delete program
+    glDeleteProgram(program_id);
+    program_id = 0;
+
+    return 0;
+  }
+
+  // attach vertex shader to shader program
+  glAttachShader(program_id, vertex_shader_id);
+  // check for errors
+  GLenum error = glGetError();
+  if (error != GL_NO_ERROR)
+  {
+    KRR_LOGE("Error attaching vertex shader");
+    KRR_SHADERPROG_print_shader_log(vertex_shader_id);
+
+    // delete shader
+    glDeleteShader(vertex_shader_id);
+    vertex_shader_id = 0;
+
+    // delete program
+    glDeleteProgram(program_id);
+    program_id = 0;
+
+    return false;
+  }
+
+  // load fragment shader
+  //GLuint fragment_shader_id = KRR_SHADERPROG_load_shader_from_file("_/_assets/doublemulticolorpp2d.frag", GL_FRAGMENT_SHADER);
+  const char* frag_shader_lines = "#version 330 core\n\
+                             in vec4 multicolor;\n\
+                             \n\
+                             out vec4 final_color;\n\
+                             \n\
+                             void main()\n\
+                             {\n\
+                               final_color = multicolor;\n\
+                             }";
+  // create shader id for fragment shader
+  GLuint frag_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
+  // replace shader source
+  glShaderSource(frag_shader_id, 1, &frag_shader_lines, NULL);
+  // compile shader source
+  glCompileShader(frag_shader_id);
+
+  // check shader for errors
+  shader_compiled = GL_FALSE;
+  glGetShaderiv(frag_shader_id, GL_COMPILE_STATUS, &shader_compiled);
+  if (shader_compiled != GL_TRUE)
+  {
+    KRR_LOGE("Unable to compile shader %d. Source: %s", frag_shader_id, frag_shader_lines);
+    KRR_SHADERPROG_print_shader_log(frag_shader_id);
+
+    // delete shader
+    glDeleteShader(vertex_shader_id);
+    vertex_shader_id = 0;
+    
+    // delete program
+    glDeleteProgram(program_id);
+    program_id = 0;
+
+    return false;
+  }
+
+  // attach fragment shader to program
+  glAttachShader(program_id, frag_shader_id);
+  // check for errors
+  error = glGetError();
+  if (error != GL_NO_ERROR)
+  {
+    KRR_LOGE("Error attaching fragment shader");
+    KRR_SHADERPROG_print_shader_log(frag_shader_id);
+
+    // delete fragment shader
+    glDeleteShader(frag_shader_id);
+    frag_shader_id = 0;
+
+    // delete vertex shader
+    glDeleteShader(vertex_shader_id);
+    vertex_shader_id = 0;
+
+    // delete program
+    glDeleteProgram(program_id);
+    program_id = 0;
+
+    return false;
+  }
+
+  // link program
+  glLinkProgram(program_id);
+  error = glGetError();
+  if (error != GL_NO_ERROR)
+  {
+    KRR_LOGE("Error linking program");
+    KRR_SHADERPROG_print_program_log(program_id);
+
+    // delete vertex shader
+    glDeleteShader(vertex_shader_id);
+    vertex_shader_id = 0;
+
+    // delete fragment shader
+    glDeleteShader(frag_shader_id);
+    frag_shader_id = 0;
+
+    // delete program
+    glDeleteProgram(program_id);
+    program_id = 0;
+
+    return false;
+  }
+
+  // set result program id to underlying program
+  program->program->program_id = program_id;
+
+  // mark shader for delete
+  glDeleteShader(vertex_shader_id);
+  glDeleteShader(frag_shader_id);
+
+  // get attribute locations
+  program->vertex_pos2d_location = glGetAttribLocation(program_id, "vertex_pos2d");
+  if (program->vertex_pos2d_location == -1)
+  {
+    KRR_LOGW("Warning: cannot get location of vertex_pos2d");
+  }
+  program->multicolor1_location = glGetAttribLocation(program_id, "multicolor1");
+  if (program->multicolor1_location == -1)
+  {
+    KRR_LOGW("Warning: cannot get location of multicolor1");
+  }
+  program->multicolor2_location = glGetAttribLocation(program_id, "multicolor2");
+  if (program->multicolor2_location == -1)
+  {
+    KRR_LOGW("Warning: cannot get location of multicolor2");
+  }
+
+  // get uniform locations
+  program->projection_matrix_location = glGetUniformLocation(program_id, "projection_matrix");
+  if (program->projection_matrix_location == -1)
+  {
+    KRR_LOGW("Warning: cannot get location of projection_matrix");
+  }
+  program->view_matrix_location = glGetUniformLocation(program_id, "view_matrix");
+  if (program->view_matrix_location == -1)
+  {
+    KRR_LOGW("Warning: cannot get location of view_matrix");
+  }
+  program->model_matrix_location = glGetUniformLocation(program_id, "model_matrix");
+  if (program->model_matrix_location == -1)
+  {
+    KRR_LOGW("Warning: cannot get location of model_matrix");
+  }
+
+  return true;
+}
+// -- end of doublemulticolor shader code --
 
 void usercode_app_went_windowed_mode()
 {
@@ -68,8 +393,11 @@ void usercode_app_went_windowed_mode()
     glm_mat4_copy(g_ui_projection_matrix, multicolor_shader->projection_matrix);
     KRR_gputil_update_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
 
-    glm_mat4_copy(g_base_model_matrix, multicolor_shader->modelview_matrix);
-    KRR_gputil_update_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
+    glm_mat4_copy(g_base_model_matrix, multicolor_shader->view_matrix);
+    KRR_gputil_update_matrix(multicolor_shader->view_matrix_location, multicolor_shader->view_matrix);
+
+    glm_mat4_copy(g_base_model_matrix, multicolor_shader->model_matrix);
+    KRR_gputil_update_matrix(multicolor_shader->model_matrix_location, multicolor_shader->model_matrix);
 
   // use macros to help out
   SU_BEGIN(texture_shader)
@@ -86,8 +414,11 @@ void usercode_app_went_fullscreen()
     glm_mat4_copy(g_ui_projection_matrix, multicolor_shader->projection_matrix);
     KRR_gputil_update_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
 
-    glm_mat4_copy(g_base_model_matrix, multicolor_shader->modelview_matrix);
-    KRR_gputil_update_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
+    glm_mat4_copy(g_base_model_matrix, multicolor_shader->view_matrix);
+    KRR_gputil_update_matrix(multicolor_shader->view_matrix_location, multicolor_shader->view_matrix);
+
+    glm_mat4_copy(g_base_model_matrix, multicolor_shader->model_matrix);
+    KRR_gputil_update_matrix(multicolor_shader->model_matrix_location, multicolor_shader->model_matrix);
 
   SU_BEGIN(texture_shader)
     SU_TEXSHADERPROG2D(texture_shader)
@@ -119,7 +450,10 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   glm_mat4_identity(g_view_matrix);
 	// calculate base model matrix (to reduce some of operations cost)
 	glm_mat4_identity(g_base_model_matrix);
-	glm_scale(g_base_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
+
+  // calculate base model for ui model matrix, and scale it
+  glm_mat4_identity(g_base_ui_model_matrix);
+	glm_scale(g_base_ui_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
 
   // initialize the viewport
   // define the area where to render, for now full screen
@@ -205,10 +539,12 @@ bool usercode_loadmedia()
   KRR_SHADERPROG_bind(multicolor_shader->program);
     // set matrices
     glm_mat4_copy(g_ui_projection_matrix, multicolor_shader->projection_matrix);
-    glm_mat4_copy(g_base_model_matrix, multicolor_shader->modelview_matrix);
+    glm_mat4_copy(g_view_matrix, multicolor_shader->view_matrix);
+    glm_mat4_copy(g_base_model_matrix, multicolor_shader->model_matrix);
     // issue update matrices to gpu
     KRR_gputil_update_matrix(multicolor_shader->projection_matrix_location, multicolor_shader->projection_matrix);
-    KRR_gputil_update_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
+    KRR_gputil_update_matrix(multicolor_shader->view_matrix_location, multicolor_shader->view_matrix);
+    KRR_gputil_update_matrix(multicolor_shader->model_matrix_location, multicolor_shader->model_matrix);
 
   // initially update all related matrices and related graphics stuf for both shaders
   SU_BEGIN(texture_shader)
@@ -357,7 +693,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 
 				// re-calculate base model matrix
 				// no need to scale as it's uniform 1.0 now
-				glm_mat4_identity(g_base_model_matrix);
+				glm_mat4_identity(g_base_ui_model_matrix);
 
 				// signal that app went windowed mode
 				usercode_app_went_windowed_mode();
@@ -380,9 +716,9 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         glm_perspective(GLM_PI_4f, g_ri_view_width * 1.0f / g_ri_view_height, 0.01f, 100.0f, g_projection_matrix);
 
 				// re-calculate base model matrix
-				glm_mat4_identity(g_base_model_matrix);
+				glm_mat4_identity(g_base_ui_model_matrix);
 				// also scale
-				glm_scale(g_base_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
+				glm_scale(g_base_ui_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
 
 				// signal that app went fullscreen mode
 				usercode_app_went_fullscreen();
@@ -396,6 +732,11 @@ void update_camera(float delta_time)
   vec3 cam_target;
   glm_vec3_add(cam.pos, cam.forward, cam_target);
   glm_lookat(cam.pos, cam_target, cam.up, g_view_matrix);
+
+  // double color (custom shader)
+  KRR_SHADERPROG_bind(multicolor_shader->program);
+  glm_mat4_copy(g_base_model_matrix, multicolor_shader->view_matrix);
+  KRR_gputil_update_matrix(multicolor_shader->view_matrix_location, multicolor_shader->view_matrix);
 
   // texture 2d
   KRR_SHADERPROG_bind(texture_shader->program);
@@ -433,12 +774,13 @@ void usercode_render()
     // bind shader
     KRR_SHADERPROG_bind(multicolor_shader->program);
 
-    // start fresh with modelview matrix
-    glm_mat4_copy(g_base_model_matrix, multicolor_shader->modelview_matrix);
+    // start fresh with model matrix
+    // note: see why we use ui-model matrix at the top-most comment
+    glm_mat4_copy(g_base_ui_model_matrix, multicolor_shader->model_matrix);
 
     // transform matrix for left quad
-    glm_translate(multicolor_shader->modelview_matrix, (vec3){g_logical_width * 1.f / 4.f, g_logical_height / 2.f, 0.f});
-    KRR_gputil_update_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
+    glm_translate(multicolor_shader->model_matrix, (vec3){g_logical_width * 1.f / 4.f, g_logical_height / 2.f, 0.f});
+    KRR_gputil_update_matrix(multicolor_shader->model_matrix_location, multicolor_shader->model_matrix);
 
     // render left quad
     glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
@@ -446,10 +788,10 @@ void usercode_render()
   // bind right vao
   glBindVertexArray(right_vao);
     // start fresh
-    glm_mat4_copy(g_base_model_matrix, multicolor_shader->modelview_matrix);
+    glm_mat4_copy(g_base_ui_model_matrix, multicolor_shader->model_matrix);
     // transform matrix for right quad
-    glm_translate(multicolor_shader->modelview_matrix, (vec3){g_logical_width * 3.f / 4.f, g_logical_height / 2.f, 0.f});
-    KRR_gputil_update_matrix(multicolor_shader->modelview_matrix_location, multicolor_shader->modelview_matrix);
+    glm_translate(multicolor_shader->model_matrix, (vec3){g_logical_width * 3.f / 4.f, g_logical_height / 2.f, 0.f});
+    KRR_gputil_update_matrix(multicolor_shader->model_matrix_location, multicolor_shader->model_matrix);
 
     // render right quad
     glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
@@ -478,7 +820,7 @@ void usercode_render_fps(int avg_fps)
   // use shared font shader
   KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
     // start with clean state of model matrix
-    glm_mat4_copy(g_base_model_matrix, shared_font_shaderprogram->model_matrix);
+    glm_mat4_copy(g_base_ui_model_matrix, shared_font_shaderprogram->model_matrix);
     KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
 
     // render text on top right
