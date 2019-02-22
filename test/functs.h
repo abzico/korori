@@ -45,6 +45,7 @@ enum USERCODE_SHADERTYPE
 extern mat4 g_ui_projection_matrix;
 extern mat4 g_projection_matrix;
 extern mat4 g_view_matrix;
+extern mat4 g_base_ui_model_matrix;
 extern mat4 g_base_model_matrix;
 
 ///

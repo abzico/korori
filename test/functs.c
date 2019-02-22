@@ -8,6 +8,7 @@
 mat4 g_ui_projection_matrix;
 mat4 g_projection_matrix;
 mat4 g_view_matrix;
+mat4 g_base_ui_model_matrix;
 mat4 g_base_model_matrix;
 
 void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_program, void* program)
@@ -77,7 +78,7 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
     if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
     {
       KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
-      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
+      glm_mat4_copy(g_base_ui_model_matrix, shader_ptr->model_matrix);
       KRR_TEXSHADERPROG2D_update_model_matrix(shader_ptr);
     }
     // texture 3d shader
@@ -98,7 +99,7 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
     else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
     {
       KRR_FONTSHADERPROG2D* shader_ptr = (KRR_FONTSHADERPROG2D*)program;
-      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
+      glm_mat4_copy(g_base_ui_model_matrix, shader_ptr->model_matrix);
       KRR_FONTSHADERPROG2D_update_model_matrix(shader_ptr);
     }
   }
