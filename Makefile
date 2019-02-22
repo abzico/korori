@@ -29,14 +29,13 @@ TARGETS := \
 	  $(GPDIR)/spritesheet.o \
 	  $(GPDIR)/font.o \
 	  $(GPDIR)/shaderprog.o \
-	  $(GPDIR)/plainpp2d.o \
-	  $(GPDIR)/multicolorpp2d.o \
 	  $(GPDIR)/texturedpp2d.o \
 	  $(GPDIR)/texturedpp3d.o \
 	  $(GPDIR)/fontpp2d.o \
-	  $(GPDIR)/doublemulticolorpp2d.o \
 	  $(GPDIR)/objloader.o \
-	  $(GPDIR)/model.o
+	  $(GPDIR)/model.o	\
+	  $(GPDIR)/terrain_shader3d.o	\
+	  $(GPDIR)/terrain.o	\
 
 .PHONY: all clean
 
@@ -83,12 +82,6 @@ $(GPDIR)/font.o: $(GPDIR)/font.c $(GPDIR)/font.h $(GPDIR)/font_internals.h
 $(GPDIR)/shaderprog.o: $(GPDIR)/shaderprog.c $(GPDIR)/shaderprog.h $(GPDIR)/shaderprog_internals.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GPDIR)/plainpp2d.o: $(GPDIR)/plainpp2d.c $(GPDIR)/plainpp2d.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(GPDIR)/multicolorpp2d.o: $(GPDIR)/multicolorpp2d.c $(GPDIR)/multicolorpp2d.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
 $(GPDIR)/texturedpp2d.o: $(GPDIR)/texturedpp2d.c $(GPDIR)/texturedpp2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -98,13 +91,16 @@ $(GPDIR)/texturedpp3d.o: $(GPDIR)/texturedpp3d.c $(GPDIR)/texturedpp3d.h
 $(GPDIR)/fontpp2d.o: $(GPDIR)/fontpp2d.c $(GPDIR)/fontpp2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(GPDIR)/gl_ldouble_multicolor_polygon_program2d.o: $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.c $(GPDIR)/gl_ldouble_multicolor_polygon_program2d.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
 $(GPDIR)/objloader.o: $(GPDIR)/objloader.c $(GPDIR)/objloader.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(GPDIR)/model.o: $(GPDIR)/model.c $(GPDIR)/model.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(GPDIR)/terrain_shader3d.o: $(GPDIR)/terrain_shader3d.c $(GPDIR)/terrain_shader3d.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(GPDIR)/terrain.o: $(GPDIR)/terrain.c $(GPDIR)/terrain.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(PROGRAM).o: $(PROGRAM).c

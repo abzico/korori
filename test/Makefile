@@ -23,17 +23,22 @@ TARGETS = \
 	  readobjfile_manual	\
 	  readobjfile	\
 	  headless	\
-	  advanced_model
+	  advanced_model	\
+	  terrain
 
 DEPS = \
        usercode.h	\
        libkrr.a		\
        main.o		\
+       functs.o		\
        copyresfiles
 
-all: libkrr.a main.o $(TARGETS) copyresfiles
+all: libkrr.a main.o functs.o $(TARGETS) copyresfiles
 
 main.o: $(srcdir)/main.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+functs.o: $(srcdir)/functs.c $(srcdir)/functs.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 main-headless.o: $(srcdir)/main.c
@@ -46,42 +51,47 @@ libkrr.a:
 template: $(srcdir)/template.c $(DEPS)
 	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
-	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+	$(CC) $@.o main.o functs.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
-doublemulticolorshader: $(srcdir)/doublemulticolorshader.c usercode.h libkrr.a main.o copyresfiles
+doublemulticolorshader: $(srcdir)/doublemulticolorshader.c usercode.h libkrr.a main.o functs.o copyresfiles
 	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
-	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+	$(CC) $@.o main.o functs.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
-rotatingplane: $(srcdir)/rotatingplane.c usercode.h libkrr.a main.o copyresfiles
+rotatingplane: $(srcdir)/rotatingplane.c usercode.h libkrr.a main.o functs.o copyresfiles
 	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
-	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+	$(CC) $@.o main.o functs.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
-rotatingcube: $(srcdir)/rotatingcube.c usercode.h libkrr.a main.o copyresfiles
+rotatingcube: $(srcdir)/rotatingcube.c usercode.h libkrr.a main.o functs.o copyresfiles
 	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
-	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+	$(CC) $@.o main.o functs.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
-readobjfile_manual: $(srcdir)/readobjfile_manual.c usercode.h libkrr.a main.o copyresfiles
+readobjfile_manual: $(srcdir)/readobjfile_manual.c usercode.h libkrr.a main.o functs.o copyresfiles
 	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
-	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+	$(CC) $@.o main.o functs.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
-readobjfile: $(srcdir)/readobjfile.c usercode.h libkrr.a main.o copyresfiles
+readobjfile: $(srcdir)/readobjfile.c usercode.h libkrr.a main.o functs.o copyresfiles
 	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
-	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+	$(CC) $@.o main.o functs.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
-headless: $(srcdir)/headless.c usercode.h libkrr.a main-headless.o copyresfiles
+headless: $(srcdir)/headless.c usercode.h libkrr.a main-headless.o functs.o copyresfiles
 	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -DSDL_HEADLESS -o $@.o
-	$(CC) $@.o main-headless.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+	$(CC) $@.o main-headless.o functs.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
-advanced_model: $(srcdir)/advanced_model.c usercode.h libkrr.a main.o copyresfiles
+advanced_model: $(srcdir)/advanced_model.c usercode.h libkrr.a main.o functs.o copyresfiles
 	@echo "\nbuilding $@"
 	$(CC) -c $< $(CFLAGS) -o $@.o
-	$(CC) $@.o main.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+	$(CC) $@.o main.o functs.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
+
+terrain: $(srcdir)/terrain.c usercode.h libkrr.a main.o functs.o copyresfiles
+	@echo "\nbuilding $@"
+	$(CC) -c $< $(CFLAGS) -o $@.o
+	$(CC) $@.o main.o functs.o $(LIBKRR_FLAGS) -o $@ $(LFLAGS)
 
 copyresfiles:
 	cp -pR ../res ./

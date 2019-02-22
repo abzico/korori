@@ -4,6 +4,7 @@
 uniform mat4 projection_matrix;
 uniform mat4 view_matrix;
 uniform mat4 model_matrix;
+uniform vec3 light_position;
 
 // vertex position attribute
 in vec3 vertex_pos3d;
@@ -14,8 +15,8 @@ in vec3 normal;
 
 out vec2 outin_texcoord;
 out vec3 surface_normal;
-out vec3 frag_pos;
 out vec3 tocam_dir;
+out vec3 tolight_dir;
 
 void main()
 {
@@ -25,11 +26,10 @@ void main()
   outin_texcoord = texcoord;
   surface_normal = (model_matrix * vec4(normal, 0.0)).xyz;
 
-  frag_pos = world_position.xyz;
+  tolight_dir = light_position - world_position.xyz;
 
   // calculate direction to camera
-  mat4 inv_vm = inverse(view_matrix);
-  tocam_dir = normalize(vec3(inv_vm[0][3], inv_vm[1][3], inv_vm[2][3]) - frag_pos);
+  tocam_dir = (inverse(view_matrix) * vec4(0.0, 0.0, 0.0, 1.0)).xyz - world_position.xyz;
 
   // process vertex
   gl_Position = projection_matrix * view_matrix * world_position;
