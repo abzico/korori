@@ -43,7 +43,6 @@ void render(float deltaTime);
 void close();
 
 static void on_window_focus_gained(Uint32 window_id);
-
 static void on_window_focus_lost(Uint32 window_id);
 
 // opengl context
