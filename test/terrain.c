@@ -1,6 +1,7 @@
 // terrain sample
 
 #include "usercode.h"
+#include "functs.h"
 #include "foundation/common.h"
 #include "foundation/window.h"
 #include "foundation/util.h"
@@ -43,40 +44,12 @@ static int g_ri_view_width;
 static int g_ri_view_height;
 
 static bool g_need_clipping = false;
-
-static mat4 g_ui_projection_matrix;
-static mat4 g_projection_matrix;
-static mat4 g_view_matrix;
-// base model matrix to reduce some of mathematics operation initially
-static mat4 g_base_model_matrix;
 // -- section of variables for maintaining aspect ratio -- //
 
 // -- section of function signatures -- //
 static void usercode_app_went_windowed_mode();
 static void usercode_app_went_fullscreen();
 
-enum USERCODE_MATRIXTYPE
-{
-  USERCODE_MATRIXTYPE_PROJECTION_MATRIX,
-  USERCODE_MATRIXTYPE_VIEW_MATRIX,
-  USERCODE_MATRIXTYPE_MODEL_MATRIX
-};
-enum USERCODE_SHADERTYPE
-{
-  USERCODE_SHADERTYPE_TEXTURE_SHADER,
-  USERCODE_SHADERTYPE_TEXTURE3D_SHADER,
-  USERCODE_SHADERTYPE_TERRAIN_SHADER,
-  USERCODE_SHADERTYPE_FONT_SHADER
-};
-///
-/// set matrix then update to shader
-/// required user to bind the shader before calling this function.
-///
-/// \param matrix_type type of matrix to copy to dst. Value is enum USERCODE_MATRIXTYPE.
-/// \param shader_type type of shader. Value is enum USERCODE_SHADERTYPE.
-/// \param program pointer to shader program.
-///
-static void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_type, void* program);
 // -- end of section of function signatures -- //
 
 // basic shaders and font
@@ -96,154 +69,30 @@ static float roty = 0.0f;
 
 static bool is_leftmouse_click = false;
 
-void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_program, void* program)
-{
-  // projection matrix
-  if (matrix_type == USERCODE_MATRIXTYPE_PROJECTION_MATRIX)
-  {
-    // texture shader
-    if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
-    {
-      // convert to right type of program shader
-      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
-
-      // copy calculated projection matrix to shader's then update to shader
-      glm_mat4_copy(g_ui_projection_matrix, shader_ptr->projection_matrix);
-
-      KRR_TEXSHADERPROG2D_update_projection_matrix(shader_ptr);
-    }
-    // texture3d shader
-    else if (shader_program == USERCODE_SHADERTYPE_TEXTURE3D_SHADER)
-    {
-      KRR_TEXSHADERPROG3D* shader_ptr = (KRR_TEXSHADERPROG3D*)program;
-      glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
-      KRR_TEXSHADERPROG3D_update_projection_matrix(shader_ptr);
-      KRR_LOGI("update projection matrix for texture3d");
-    }
-    // terrain shader
-    else if (shader_program == USERCODE_SHADERTYPE_TERRAIN_SHADER)
-    {
-      KRR_TERRAINSHADERPROG3D* shader_ptr = (KRR_TERRAINSHADERPROG3D*)program;
-      glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
-      KRR_TERRAINSHADERPROG3D_update_projection_matrix(shader_ptr);
-    }
-    // font shader
-    else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
-    {
-      KRR_FONTSHADERPROG2D* shader_ptr = (KRR_FONTSHADERPROG2D*)program;
-      glm_mat4_copy(g_ui_projection_matrix, shader_ptr->projection_matrix);
-      KRR_FONTSHADERPROG2D_update_projection_matrix(shader_ptr);
-    }
-  }
-  // view matrix
-  else if (matrix_type == USERCODE_MATRIXTYPE_VIEW_MATRIX)
-  {
-    // texture shader
-    if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
-    {
-      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
-      glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
-      KRR_TEXSHADERPROG2D_update_view_matrix(shader_ptr);
-    }
-    // texture3d shader
-    else if (shader_program == USERCODE_SHADERTYPE_TEXTURE3D_SHADER)
-    {
-      KRR_TEXSHADERPROG3D* shader_ptr = (KRR_TEXSHADERPROG3D*)program;
-      glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
-      KRR_TEXSHADERPROG3D_update_view_matrix(shader_ptr);
-    }
-    // terrain shader
-    else if (shader_program == USERCODE_SHADERTYPE_TERRAIN_SHADER)
-    {
-      KRR_TERRAINSHADERPROG3D* shader_ptr = (KRR_TERRAINSHADERPROG3D*)program;
-      glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
-      KRR_TERRAINSHADERPROG3D_update_view_matrix(shader_ptr);
-    }
-  }
-  // model matrix
-  else if (matrix_type == USERCODE_MATRIXTYPE_MODEL_MATRIX)
-  {
-    // texture shader
-    if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
-    {
-      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
-      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
-
-      KRR_TEXSHADERPROG2D_update_model_matrix(shader_ptr);
-    }
-    // texture3d shader
-    else if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
-    {
-      KRR_TERRAINSHADERPROG3D* shader_ptr = (KRR_TERRAINSHADERPROG3D*)program;
-      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
-
-      KRR_TERRAINSHADERPROG3D_update_model_matrix(shader_ptr);
-    }
-    // font shader
-    else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
-    {
-      KRR_FONTSHADERPROG2D* shader_ptr = (KRR_FONTSHADERPROG2D*)program;
-      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
-
-      KRR_FONTSHADERPROG2D_update_model_matrix(shader_ptr);
-    }
-  }
-}
-
 void usercode_app_went_windowed_mode()
 {
-	// set projection, view and model matrix to both of basic shaders
-  // texture 2d
-  KRR_SHADERPROG_bind(texture_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-
-  // texture 3d
-  KRR_SHADERPROG_bind(texture3d_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
-
-  // terrain 3d
-  KRR_SHADERPROG_bind(terrain3d_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-
-  // font
-  KRR_SHADERPROG_bind(font_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  KRR_SHADERPROG_unbind(font_shader->program);
+  SU_BEGIN(texture_shader)
+    SU_TEXSHADERPROG2D(texture_shader)
+  SU_BEGIN(texture3d_shader)
+    SU_TEXSHADERPROG3D(texture3d_shader)
+  SU_BEGIN(terrain3d_shader)
+    SU_TERRAINSHADER(terrain3d_shader)
+  SU_BEGIN(font_shader)
+    SU_FONTSHADER(font_shader)
+  SU_END(font_shader)
 }
 
 void usercode_app_went_fullscreen()
 {
-	// set projection, view and model matrix to both of basic shaders
-  // texture 2d
-  KRR_SHADERPROG_bind(texture_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-
-  // texture 3d
-  KRR_SHADERPROG_bind(texture3d_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
-
-  // terrain 3d
-  KRR_SHADERPROG_bind(terrain3d_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-
-  // font
-  KRR_SHADERPROG_bind(font_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  KRR_SHADERPROG_unbind(font_shader->program);
+  SU_BEGIN(texture_shader)
+    SU_TEXSHADERPROG2D(texture_shader)
+  SU_BEGIN(texture3d_shader)
+    SU_TEXSHADERPROG3D(texture3d_shader)
+  SU_BEGIN(terrain3d_shader)
+    SU_TERRAINSHADER(terrain3d_shader)
+  SU_BEGIN(font_shader)
+    SU_FONTSHADER(font_shader)
+  SU_END(font_shader)
 }
 
 bool usercode_init(int screen_width, int screen_height, int logical_width, int logical_height)
@@ -382,40 +231,37 @@ bool usercode_loadmedia()
   }
 
   // initially update all related matrices and related graphics stuff for both basic shaders
-  KRR_SHADERPROG_bind(texture_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  KRR_TEXSHADERPROG2D_set_texture_sampler(texture_shader, 0);
+  SU_BEGIN(texture_shader)
+    SU_TEXSHADERPROG2D(texture_shader)
+    // set texture unit
+    KRR_TEXSHADERPROG2D_set_texture_sampler(texture_shader, 0);
 
-  KRR_SHADERPROG_bind(texture3d_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
-  KRR_TEXSHADERPROG3D_set_texture_sampler(texture3d_shader, 0);
-  texture3d_shader->shine_damper = 10.0f;
-  texture3d_shader->reflectivity = 0.2f;
-  KRR_TEXSHADERPROG3D_update_shininess(texture3d_shader);
+  SU_BEGIN(texture3d_shader)
+    SU_TEXSHADERPROG3D(texture3d_shader)
+    // set texture unit
+    KRR_TEXSHADERPROG3D_set_texture_sampler(texture3d_shader, 0);
+    // set specular lighting
+    texture3d_shader->shine_damper = 10.0f;
+    texture3d_shader->reflectivity = 0.2f;
+    KRR_TEXSHADERPROG3D_update_shininess(texture3d_shader);
 
-  KRR_SHADERPROG_bind(terrain3d_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-  KRR_TERRAINSHADERPROG3D_set_texture_sampler(terrain3d_shader, 0);
+  SU_BEGIN(terrain3d_shader)
+    SU_TERRAINSHADER(terrain3d_shader)
+    // set texture unit
+    KRR_TERRAINSHADERPROG3D_set_texture_sampler(terrain3d_shader, 0);
+    // set specular lighting
+    terrain3d_shader->shine_damper = 10.0f;
+    terrain3d_shader->reflectivity = 0.35f;
+    KRR_TERRAINSHADERPROG3D_update_shininess(terrain3d_shader);
+    // set repeatness over texture coord
+    terrain3d_shader->texcoord_repeat = 10.0f;
+    KRR_TERRAINSHADERPROG3D_update_texcoord_repeat(terrain3d_shader);
 
-  terrain3d_shader->shine_damper = 10.0f;
-  terrain3d_shader->reflectivity = 0.35f;
-  KRR_TERRAINSHADERPROG3D_update_shininess(terrain3d_shader);
-
-  terrain3d_shader->texcoord_repeat = 10.0f;
-  KRR_TERRAINSHADERPROG3D_update_texcoord_repeat(terrain3d_shader);
-
-  KRR_SHADERPROG_bind(font_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  KRR_FONTSHADERPROG2D_set_texture_sampler(font_shader, 0);
-  KRR_SHADERPROG_unbind(font_shader->program);
+  SU_BEGIN(font_shader)
+    SU_FONTSHADER(font_shader)
+    // set texture unit
+    KRR_FONTSHADERPROG2D_set_texture_sampler(font_shader, 0);
+  SU_END(font_shader)
 
   // load .obj model
   sm = SIMPLEMODEL_new();
@@ -805,6 +651,17 @@ void usercode_close()
   {
     KRR_TERRAINSHADERPROG3D_free(terrain3d_shader);
     terrain3d_shader = NULL;
+  }
+
+  if (texture != NULL)
+  {
+    KRR_TEXTURE_free(texture);
+    texture = NULL;
+  }
+  if (texture2 != NULL)
+  {
+    KRR_TEXTURE_free(texture2);
+    texture2 = NULL;
   }
 
   if (sm != NULL)
