@@ -105,7 +105,10 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   glm_mat4_identity(g_view_matrix);
 	// calculate base model matrix (to reduce some of operations cost)
 	glm_mat4_identity(g_base_model_matrix);
-	glm_scale(g_base_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
+
+  // calculate base model for ui model matrix, and scale it
+  glm_mat4_identity(g_base_ui_model_matrix);
+	glm_scale(g_base_ui_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
 
   // initialize the viewport
   // define the area where to render, for now full screen
@@ -275,10 +278,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 
 				// re-calculate base model matrix
 				// no need to scale as it's uniform 1.0 now
-				glm_mat4_identity(g_base_model_matrix);
-  
-        // change position adhering to windowed mode
-        glm_vec3_copy((vec3){0.0f, 1.0f, 20.0f}, cam.pos);
+				glm_mat4_identity(g_base_ui_model_matrix);
 
 				// signal that app went windowed mode
 				usercode_app_went_windowed_mode();
@@ -301,12 +301,9 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         glm_perspective(GLM_PI_4f, g_ri_view_width * 1.0f / g_ri_view_height, 0.01f, 10000.0f, g_projection_matrix);
 
 				// re-calculate base model matrix
-				glm_mat4_identity(g_base_model_matrix);
+				glm_mat4_identity(g_base_ui_model_matrix);
 				// also scale
-				glm_scale(g_base_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
-
-        // change camera's position
-        glm_vec3_copy((vec3){0.0f, 1.0f, 50.0f}, cam.pos);
+				glm_scale(g_base_ui_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
 
 				// signal that app went fullscreen mode
 				usercode_app_went_fullscreen();
@@ -404,7 +401,7 @@ void usercode_render_fps(int avg_fps)
   // use shared font shader
   KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
     // start with clean state of model matrix
-    glm_mat4_copy(g_base_model_matrix, shared_font_shaderprogram->model_matrix);
+    glm_mat4_copy(g_base_ui_model_matrix, shared_font_shaderprogram->model_matrix);
     KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
 
     // render text on top right
