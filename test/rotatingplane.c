@@ -6,6 +6,7 @@
 
 
 #include "usercode.h"
+#include "functs.h"
 #include "foundation/common.h"
 #include "foundation/window.h"
 #include "foundation/util.h"
@@ -45,37 +46,11 @@ static int g_ri_view_width;
 static int g_ri_view_height;
 
 static bool g_need_clipping = false;
-
-static mat4 g_projection_matrix;
-static mat4 g_view_matrix;
-// base modelview matrix to reduce some of mathematics operation initially
-static mat4 g_base_model_matrix;
 // -- section of variables for maintaining aspect ratio -- //
 
 // -- section of function signatures -- //
 static void usercode_app_went_windowed_mode();
 static void usercode_app_went_fullscreen();
-
-enum USERCODE_MATRIXTYPE
-{
-  USERCODE_MATRIXTYPE_PROJECTION_MATRIX,
-  USERCODE_MATRIXTYPE_VIEW_MATRIX,
-  USERCODE_MATRIXTYPE_MODEL_MATRIX
-};
-enum USERCODE_SHADERTYPE
-{
-  USERCODE_SHADERTYPE_TEXTURE_SHADER,
-  USERCODE_SHADERTYPE_FONT_SHADER
-};
-///
-/// set matrix then update to shader
-/// required user to bind the shader before calling this function.
-///
-/// \param matrix_type type of matrix to copy to dst. Value is enum USERCODE_MATRIXTYPE.
-/// \param shader_type type of shader. Value is enum USERCODE_SHADERTYPE.
-/// \param program pointer to shader program.
-///
-static void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_type, void* program);
 // -- end of section of function signatures -- //
 
 // basic shaders and font
@@ -91,92 +66,22 @@ static KRR_TEXTURE* texture = NULL;
 static KRR_TEXTURE* texture_clipped = NULL;
 static KRR_CAM cam;
 
-void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_program, void* program)
-{
-  // projection matrix
-  if (matrix_type == USERCODE_MATRIXTYPE_PROJECTION_MATRIX)
-  {
-    // texture shader
-    if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
-    {
-      // convert to right type of program shader
-      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
-
-      // copy calculated projection matrix to shader's then update to shader
-      glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
-
-      KRR_TEXSHADERPROG2D_update_projection_matrix(shader_ptr);
-    }
-    // font shader
-    else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
-    {
-      KRR_FONTSHADERPROG2D* shader_ptr = (KRR_FONTSHADERPROG2D*)program;
-      glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
-
-      KRR_FONTSHADERPROG2D_update_projection_matrix(shader_ptr);
-    }
-  }
-  // view matrix
-  else if (matrix_type == USERCODE_MATRIXTYPE_VIEW_MATRIX)
-  {
-    // texture shader
-    if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
-    {
-      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
-      glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
-
-      KRR_TEXSHADERPROG2D_update_view_matrix(shader_ptr);
-    }
-  }
-  // model matrix
-  else if (matrix_type == USERCODE_MATRIXTYPE_MODEL_MATRIX)
-  {
-    // texture shader
-    if (shader_program == USERCODE_SHADERTYPE_TEXTURE_SHADER)
-    {
-      KRR_TEXSHADERPROG2D* shader_ptr = (KRR_TEXSHADERPROG2D*)program;
-      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
-
-      KRR_TEXSHADERPROG2D_update_model_matrix(shader_ptr);
-    }
-    // font shader
-    else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
-    {
-      KRR_FONTSHADERPROG2D* shader_ptr = (KRR_FONTSHADERPROG2D*)program;
-      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
-
-      KRR_FONTSHADERPROG2D_update_model_matrix(shader_ptr);
-    }
-  }
-}
-
 void usercode_app_went_windowed_mode()
 {
-	// set projection and modelview matrix to both of basic shaders
-  KRR_SHADERPROG_bind(texture_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  // no need to unbind as we will bind a new one soon
-
-  KRR_SHADERPROG_bind(font_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  KRR_SHADERPROG_unbind(font_shader->program);
+  SU_BEGIN(texture_shader)
+    SU_TEXSHADERPROG2D(texture_shader)
+  SU_BEGIN(font_shader)
+    SU_FONTSHADER(font_shader)
+  SU_END(font_shader)
 }
 
 void usercode_app_went_fullscreen()
 {
-	// set projection and modelview matrix to both of basic shaders
-  KRR_SHADERPROG_bind(texture_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-
-  KRR_SHADERPROG_bind(font_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  KRR_SHADERPROG_unbind(font_shader->program);
+  SU_BEGIN(texture_shader)
+    SU_TEXSHADERPROG2D(texture_shader)
+  SU_BEGIN(font_shader)
+    SU_FONTSHADER(font_shader)
+  SU_END(font_shader)
 }
 
 bool usercode_init(int screen_width, int screen_height, int logical_width, int logical_height)
@@ -196,12 +101,16 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 
   // calculate orthographic projection matrix
   // make sure near and far plane value are large enough to support rendering the scene
-	glm_ortho(0.0, g_screen_width, g_screen_height, 0.0, -300, 600.0, g_projection_matrix);
+	glm_ortho(0.0, g_screen_width, g_screen_height, 0.0, -300, 600.0, g_ui_projection_matrix);
+  glm_perspective(GLM_PI_4f, g_screen_width * 1.0f / g_screen_height, 0.01f, 10000.0f, g_projection_matrix);
   // calculate view matrix
   glm_mat4_identity(g_view_matrix);
 	// calculate base modelview matrix (to reduce some of operations cost)
 	glm_mat4_identity(g_base_model_matrix);
-	glm_scale(g_base_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
+
+  // calculate base model for ui model matrix, and scale it
+  glm_mat4_identity(g_base_ui_model_matrix);
+	glm_scale(g_base_ui_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
 
   // initialize the viewport
   // define the area where to render, for now full screen
@@ -216,6 +125,11 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   
   // enable depth testing
   glEnable(GL_DEPTH_TEST);
+
+  // initially start user's camera looking at -z, and up with +y
+  glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, cam.forward);
+  glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, cam.up);
+  glm_vec3_copy((vec3){0.0f, 1.0f, 20.0f}, cam.pos);
 
   // check for errors
   GLenum error = glGetError();
@@ -291,17 +205,15 @@ bool usercode_loadmedia()
 	// END OF TODO
 
   // initially update all related matrices and related graphics stuff for both basic shaders
-  KRR_SHADERPROG_bind(texture_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_TEXTURE_SHADER, texture_shader);
-  KRR_TEXSHADERPROG2D_set_texture_sampler(texture_shader, 0);
-
-  KRR_SHADERPROG_bind(font_shader->program);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_PROJECTION_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_MODEL_MATRIX, USERCODE_SHADERTYPE_FONT_SHADER, font_shader);
-  KRR_FONTSHADERPROG2D_set_texture_sampler(font_shader, 0);
-  KRR_SHADERPROG_unbind(font_shader->program);
+  SU_BEGIN(texture_shader)
+    SU_TEXSHADERPROG2D(texture_shader)
+    // set texture unit
+    KRR_TEXSHADERPROG2D_set_texture_sampler(texture_shader, 0);
+  SU_BEGIN(font_shader)
+    SU_FONTSHADER(font_shader)
+    // set texture unit
+    KRR_FONTSHADERPROG2D_set_texture_sampler(font_shader, 0);
+  SU_END(font_shader)
 
   return true;
 }
@@ -337,11 +249,12 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         g_need_clipping = false;
 				
 				// re-calculate orthographic projection matrix
-				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0, 600.0, g_projection_matrix);
+				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0, 600.0, g_ui_projection_matrix);
+        glm_perspective(GLM_PI_4f, g_ri_view_width * 1.0f / g_ri_view_height, 0.01f, 10000.0f, g_projection_matrix);
 
 				// re-calculate base model matrix
 				// no need to scale as it's uniform 1.0 now
-				glm_mat4_identity(g_base_model_matrix);
+				glm_mat4_identity(g_base_ui_model_matrix);
 
 				// signal that app went windowed mode
 				usercode_app_went_windowed_mode();
@@ -360,12 +273,13 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         g_need_clipping = true;
 
 				// re-calculate orthographic projection matrix
-				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0, 600.0, g_projection_matrix);
+				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0, 600.0, g_ui_projection_matrix);
+        glm_perspective(GLM_PI_4f, g_ri_view_width * 1.0f / g_ri_view_height, 0.01f, 10000.0f, g_projection_matrix);
 
 				// re-calculate base model matrix
-				glm_mat4_identity(g_base_model_matrix);
+				glm_mat4_identity(g_base_ui_model_matrix);
 				// also scale
-				glm_scale(g_base_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
+				glm_scale(g_base_ui_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
 
 				// signal that app went fullscreen mode
 				usercode_app_went_fullscreen();
@@ -453,9 +367,6 @@ void usercode_render()
     glClear(GL_COLOR_BUFFER_BIT);
   }
 
-  // note: set viewport via glViewport accordingly, you should start at g_offset_x, and g_offset_y
-  // note2: glViewport coordinate still in world coordinate, but for individual object (vertices) to be drawn, it's local coordinate
-
   // TODO: render code goes here...
   // bind vao
   KRR_TEXTURE_bind_vao(texture);
@@ -463,7 +374,7 @@ void usercode_render()
     KRR_SHADERPROG_bind(texture_shader->program);
 
     // render normal texture
-    glm_mat4_copy(g_base_model_matrix, texture_shader->model_matrix);
+    glm_mat4_copy(g_base_ui_model_matrix, texture_shader->model_matrix);
     glm_translate(texture_shader->model_matrix, (vec3){g_logical_width*1.f/4.f, g_logical_height/2.f, 0.f});
     glm_scale_uni(texture_shader->model_matrix, scale);
     glm_rotate(texture_shader->model_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
@@ -481,7 +392,7 @@ void usercode_render()
     KRR_SHADERPROG_bind(texture_shader->program);
 
     // render clipped texture
-    glm_mat4_copy(g_base_model_matrix, texture_shader->model_matrix);
+    glm_mat4_copy(g_base_ui_model_matrix, texture_shader->model_matrix);
     glm_translate(texture_shader->model_matrix, (vec3){g_logical_width*3.f/4.f, g_logical_height/2.f, 0.f});
     glm_scale_uni(texture_shader->model_matrix, scale);
     glm_rotate(texture_shader->model_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
@@ -516,7 +427,7 @@ void usercode_render_fps(int avg_fps)
   KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
 
     // start with clean state of modelview matrix
-    glm_mat4_copy(g_base_model_matrix, shared_font_shaderprogram->model_matrix);
+    glm_mat4_copy(g_base_ui_model_matrix, shared_font_shaderprogram->model_matrix);
     KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
 
     // render text on top right
