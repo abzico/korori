@@ -40,6 +40,10 @@ typedef struct KRR_TEXSHADERPROG3D_
   GLfloat shine_damper;
   GLfloat reflectivity;
 
+  // ambient
+  GLint ambient_color_location;
+  vec3 ambient_color;
+
 } KRR_TEXSHADERPROG3D;
 
 // shared textured 3d shader-program
@@ -107,6 +111,14 @@ extern void KRR_TEXSHADERPROG3D_update_shininess(KRR_TEXSHADERPROG3D* program);
 ///
 /// \param program poitner to 
 extern void KRR_TEXSHADERPROG3D_update_light(KRR_TEXSHADERPROG3D* program);
+
+///
+/// update ambient color
+/// set ambient color first (see header) then call this function to update to GPU
+///
+/// \param program pointer to KRR_TEXSHADERPROG3D
+///
+extern void KRR_TEXSHADERPROG3D_update_ambient_color(KRR_TEXSHADERPROG3D* program);
 
 ///
 /// set vertex pointer

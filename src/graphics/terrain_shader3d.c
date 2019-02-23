@@ -32,6 +32,8 @@ KRR_TERRAINSHADERPROG3D* KRR_TERRAINSHADERPROG3D_new(void)
   out->reflectivity = 0.0f;
   out->texcoord_repeat_location = -1;
   out->texcoord_repeat = 20.0f;
+  out->ambient_color_location = -1;
+  glm_vec3_one(out->ambient_color);
 
   // create underlying shader program
   out->program = KRR_SHADERPROG_new();
@@ -178,6 +180,11 @@ bool KRR_TERRAINSHADERPROG3D_load_program(KRR_TERRAINSHADERPROG3D* program)
   {
     KRR_LOGW("Warning: texcoord_repeat is invalid glsl variable name");
   }
+  program->ambient_color_location = glGetUniformLocation(uprog->program_id, "ambient_color");
+  if (program->ambient_color_location == -1)
+  {
+    KRR_LOGW("Warning: ambient_color is invalid glsl variable name");
+  }
 
   return true;
 }
@@ -206,6 +213,11 @@ void KRR_TERRAINSHADERPROG3D_update_light(KRR_TERRAINSHADERPROG3D* program)
 void KRR_TERRAINSHADERPROG3D_update_texcoord_repeat(KRR_TERRAINSHADERPROG3D* program)
 {
   glUniform1f(program->texcoord_repeat_location, program->texcoord_repeat);
+}
+
+void KRR_TERRAINSHADERPROG3D_update_ambient_color(KRR_TERRAINSHADERPROG3D* program)
+{
+  glUniform3fv(program->ambient_color_location, 1, program->ambient_color);
 }
 
 void KRR_TERRAINSHADERPROG3D_update_shininess(KRR_TERRAINSHADERPROG3D* program)

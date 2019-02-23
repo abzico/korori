@@ -30,6 +30,8 @@ KRR_TEXSHADERPROG3D* KRR_TEXSHADERPROG3D_new(void)
   out->light.color.b = 1.0f;
   out->shine_damper = 1.0f;
   out->reflectivity = 0.0f;
+  out->ambient_color_location = -1;
+  glm_vec3_one(out->ambient_color);
 
   // create underlying shader program
   out->program = KRR_SHADERPROG_new();
@@ -171,6 +173,11 @@ bool KRR_TEXSHADERPROG3D_load_program(KRR_TEXSHADERPROG3D* program)
   {
     KRR_LOGW("Warning: reflectivity is invalid glsl variable name");
   }
+  program->ambient_color_location = glGetUniformLocation(uprog->program_id, "ambient_color");
+  if (program->ambient_color_location == -1)
+  {
+    KRR_LOGW("Warning: ambient color is invalid glsl variable name");
+  }
 
   return true;
 }
@@ -194,6 +201,11 @@ void KRR_TEXSHADERPROG3D_update_light(KRR_TEXSHADERPROG3D* program)
 {
   glUniform3fv(program->light_position_location, 1, &program->light.pos.x);
   glUniform3fv(program->light_color_location, 1, &program->light.color.r);
+}
+
+void KRR_TEXSHADERPROG3D_update_ambient_color(KRR_TEXSHADERPROG3D* program)
+{
+  glUniform3fv(program->ambient_color_location, 1, program->ambient_color);
 }
 
 void KRR_TEXSHADERPROG3D_update_shininess(KRR_TEXSHADERPROG3D* program)

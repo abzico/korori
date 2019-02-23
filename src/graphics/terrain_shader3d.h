@@ -44,6 +44,10 @@ typedef struct KRR_TERRAINSHADERPROG3D_
   GLint texcoord_repeat_location;
   float texcoord_repeat;
 
+  // ambient color
+  GLint ambient_color_location;
+  vec3 ambient_color;
+
 } KRR_TERRAINSHADERPROG3D;
 
 // shared terrain 3d shader-program
@@ -120,6 +124,14 @@ extern void KRR_TERRAINSHADERPROG3D_update_light(KRR_TERRAINSHADERPROG3D* progra
 /// \param program pointer to KRR_TERRAINSHADERPROG3D
 ///
 extern void KRR_TERRAINSHADERPROG3D_update_texcoord_repeat(KRR_TERRAINSHADERPROG3D* program);
+
+///
+/// update ambient color
+/// set ambient color first (see header) then call this function to update to GPU
+///
+/// \param program pointer to KRR_TERRAINSHADERPROG3D
+///
+extern void KRR_TERRAINSHADERPROG3D_update_ambient_color(KRR_TERRAINSHADERPROG3D* program);
 
 ///
 /// set vertex pointer

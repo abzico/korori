@@ -5,6 +5,7 @@ uniform sampler2D texture_sampler;
 uniform vec3 light_color;
 uniform float shine_damper;
 uniform float reflectivity;
+uniform vec3 ambient_color;
 
 // texture coordinate
 in vec2 outin_texcoord;
@@ -20,9 +21,9 @@ void main()
   vec3 unit_normal = normalize(surface_normal);
   vec3 light_dir = normalize(tolight_dir);
 
-  // calculate light intensity
   float brightness = max(dot(unit_normal, light_dir), 0.0);
-  vec3 diffuse = brightness * light_color;
+  vec3 diffuse = brightness * light_color + ambient_color;
+  diffuse = clamp(diffuse, 0.0f, 1.0f);
 
   // calculate specular
   // note: normalize tocam_dir here as there's no guaruntee it will be unit vector after interpolation resulting from vertex shader
