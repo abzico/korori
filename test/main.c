@@ -79,7 +79,9 @@ void on_window_focus_lost(Uint32 window_id)
 
 bool init() {
   // initialize sdl
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+  // also init SDL_INIT_JOYSTICK to prevent frame from taken too long than should, see
+  // https://discourse.libsdl.org/t/unstable-frame-rate-unexpectedly/25783
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
     KRR_LOGE("SDL could not initialize! SDL_Error: %s", SDL_GetError());
     return false;
   }
