@@ -383,7 +383,6 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
   if (is_leftmouse_click && e->type == SDL_MOUSEMOTION)
   {
     SDL_MouseMotionEvent motion = e->motion;
-    //KRR_LOGI("xrel = %d, yrel = %d", motion.xrel, motion.yrel);
 
     bool need_update = false;
 
@@ -425,7 +424,6 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, forward);
       glm_vec3_rotate(forward, glm_rad(cam.rot[1]), GLM_XUP);
       glm_vec3_normalize(forward);
-      //glm_vec3_copy(forward, cam.forward);
 
       // 2. rotate forward vector affected from change in x-direction of mouse movement
       glm_vec3_rotate(forward, glm_rad(cam.rot[0]), GLM_YUP);
@@ -528,9 +526,6 @@ void usercode_render()
     glClear(GL_COLOR_BUFFER_BIT);
   }
 
-  // note: set viewport via glViewport accordingly, you should start at g_offset_x, and g_offset_y
-  // note2: glViewport coordinate still in world coordinate, but for individual object (vertices) to be drawn, it's local coordinate
-
   // TODO: render code goes here...
   // render terrain
   glBindVertexArray(tr->vao_id);
@@ -542,7 +537,6 @@ void usercode_render()
     // wrap texture
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
 
     // transform model matrix
     glm_mat4_copy(g_base_model_matrix, terrain3d_shader->model_matrix);
