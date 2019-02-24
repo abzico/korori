@@ -18,28 +18,20 @@ out vec4 final_color;
 
 void main()
 {
-  vec4 texcolor = texture(texture_sampler, outin_texcoord);
-  if (texcolor.a <= 0.15)
-  {
-    discard;
-  }
-  else
-  {
-    vec3 unit_normal = normalize(surface_normal);
-    vec3 light_dir = normalize(tolight_dir);
+  vec3 unit_normal = normalize(surface_normal);
+  vec3 light_dir = normalize(tolight_dir);
 
-    float brightness = max(dot(unit_normal, light_dir), 0.0);
-    vec3 diffuse = brightness * light_color + ambient_color;
-    diffuse = clamp(diffuse, 0.0f, 1.0f);
+  float brightness = max(dot(unit_normal, light_dir), 0.0);
+  vec3 diffuse = brightness * light_color + ambient_color;
+  diffuse = clamp(diffuse, 0.0f, 1.0f);
 
-    // calculate specular
-    // note: normalize tocam_dir here as there's no guaruntee it will be unit vector after interpolation resulting from vertex shader
-    vec3 fromlight_dir = -light_dir;
-    vec3 reflected_light_dir = reflect(fromlight_dir, unit_normal);
-    float specular_factor = max(dot(reflected_light_dir, normalize(tocam_dir)), 0.0);
-    float damped_factor = pow(specular_factor, shine_damper);
-    vec3 final_specular = damped_factor * light_color * reflectivity;
+  // calculate specular
+  // note: normalize tocam_dir here as there's no guaruntee it will be unit vector after interpolation resulting from vertex shader
+  vec3 fromlight_dir = -light_dir;
+  vec3 reflected_light_dir = reflect(fromlight_dir, unit_normal);
+  float specular_factor = max(dot(reflected_light_dir, normalize(tocam_dir)), 0.0);
+  float damped_factor = pow(specular_factor, shine_damper);
+  vec3 final_specular = damped_factor * light_color * reflectivity;
 
-    final_color = vec4(diffuse, 1.0) * texcolor + vec4(final_specular, 1.0);
-  }
+  final_color = vec4(diffuse, 1.0) * texture(texture_sampler, outin_texcoord) + vec4(final_specular, 1.0);
 }

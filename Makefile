@@ -31,11 +31,12 @@ TARGETS := \
 	  $(GPDIR)/shaderprog.o \
 	  $(GPDIR)/texturedpp2d.o \
 	  $(GPDIR)/texturedpp3d.o \
+	  $(GPDIR)/texturedalphapp3d.o \
 	  $(GPDIR)/fontpp2d.o \
 	  $(GPDIR)/objloader.o \
 	  $(GPDIR)/model.o	\
 	  $(GPDIR)/terrain_shader3d.o	\
-	  $(GPDIR)/terrain.o	\
+	  $(GPDIR)/terrain.o
 
 .PHONY: all clean
 
@@ -86,6 +87,9 @@ $(GPDIR)/texturedpp2d.o: $(GPDIR)/texturedpp2d.c $(GPDIR)/texturedpp2d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(GPDIR)/texturedpp3d.o: $(GPDIR)/texturedpp3d.c $(GPDIR)/texturedpp3d.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(GPDIR)/texturedalphapp3d.o: $(GPDIR)/texturedalphapp3d.c $(GPDIR)/texturedalphapp3d.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(GPDIR)/fontpp2d.o: $(GPDIR)/fontpp2d.c $(GPDIR)/fontpp2d.h
