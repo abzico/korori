@@ -60,12 +60,22 @@ static KRR_FONTSHADERPROG2D* font_shader = NULL;
 static KRR_FONT* font = NULL;
 
 // TODO: define variables here
-static KRR_TEXTURE* texture = NULL;
+static KRR_TEXTURE* terrain_texture = NULL;
+static KRR_TEXTURE* grass_texture = NULL;
 static KRR_TEXTURE* texture2 = NULL;
 static SIMPLEMODEL* sm = NULL;
+static SIMPLEMODEL* grass = NULL;
 static TERRAIN* tr = NULL;
 static KRR_CAM cam;
 static float roty = 0.0f;
+
+#define NUM_GRASS_UNIT 10
+#define GRASS_RANDOM_SIZE 30
+static vec3 randomized_grass_pos[NUM_GRASS_UNIT];
+
+#define TERRAIN_GRID_WIDTH 10
+#define TERRAIN_GRID_HEIGHT 10
+#define TERRAIN_SLOT_SIZE 200
 
 static bool is_leftmouse_click = false;
 
@@ -129,9 +139,6 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // initialize clear color
   glClearColor(0.f, 0.f, 0.f, 1.f);
 
-  // enable blending with default blend function
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // enable face culling
   glEnable(GL_CULL_FACE);
@@ -143,6 +150,10 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, cam.forward);
   glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, cam.up);
   glm_vec3_copy((vec3){0.0f, 1.0f, 3.0f}, cam.pos);
+
+  // seed random function with current time
+  // we gonna use some random functions in this sample
+  KRR_math_rand_seed_time();
 
   // check for errors
   GLenum error = glGetError();
@@ -218,11 +229,18 @@ bool usercode_loadmedia()
     return false;
   }
 
-  // texture
-  texture = KRR_TEXTURE_new();
-  if (!KRR_TEXTURE_load_texture_from_file(texture, "res/decor.png"))
+  // terrain texture
+  terrain_texture = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(terrain_texture, "res/models/grass.png"))
   {
-    KRR_LOGE("Error loading model's texture");
+    KRR_LOGE("Error loading terrain's texture");
+    return false;
+  }
+  // grass texture
+  grass_texture = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(grass_texture, "res/models/grassTexture.png"))
+  {
+    KRR_LOGE("Error loading grass's texture");
     return false;
   }
   // texture 2
@@ -233,6 +251,14 @@ bool usercode_loadmedia()
     return false;
   }
 
+  // random all position of grass unit to show on terrain
+  // **note: we have problem re-export grasssModel thus we need
+  // to use original one which -y is UP
+  for (int i=0; i<NUM_GRASS_UNIT; ++i)
+  {
+    glm_vec3_copy((vec3){KRR_math_rand_float2(-GRASS_RANDOM_SIZE, GRASS_RANDOM_SIZE), -1.0f, KRR_math_rand_float2(-GRASS_RANDOM_SIZE, GRASS_RANDOM_SIZE)}, randomized_grass_pos[i]);
+  }
+
   // initially update all related matrices and related graphics stuff for both basic shaders
   SU_BEGIN(texture_shader)
     SU_TEXSHADERPROG2D(texture_shader)
@@ -241,6 +267,9 @@ bool usercode_loadmedia()
 
   SU_BEGIN(texture3d_shader)
     SU_TEXSHADERPROG3D(texture3d_shader)
+    // update ambient color
+    glm_vec3_copy((vec3){0.1f, 0.1f, 0.1f}, texture3d_shader->ambient_color);
+    KRR_TEXSHADERPROG3D_update_ambient_color(texture3d_shader);
     // set texture unit
     KRR_TEXSHADERPROG3D_set_texture_sampler(texture3d_shader, 0);
     // set specular lighting
@@ -248,7 +277,7 @@ bool usercode_loadmedia()
     texture3d_shader->reflectivity = 0.2f;
     KRR_TEXSHADERPROG3D_update_shininess(texture3d_shader);
     // set light info
-    vec3 light_pos = {100.0f, 10.0f, 50.0f};
+    vec3 light_pos = {30.0f, 30.0f, 30.0f};
     vec3 light_color = {1.0f, 1.f, 1.f};
     memcpy(&texture3d_shader->light.pos, &light_pos, sizeof(light_pos));
     memcpy(&texture3d_shader->light.color, &light_color, sizeof(light_color));
@@ -256,6 +285,9 @@ bool usercode_loadmedia()
 
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
+    // set ambient color
+    glm_vec3_copy((vec3){0.7f, 0.7f, 0.7f}, terrain3d_shader->ambient_color);
+    KRR_TERRAINSHADERPROG3D_update_ambient_color(terrain3d_shader);
     // set texture unit
     KRR_TERRAINSHADERPROG3D_set_texture_sampler(terrain3d_shader, 0);
     // set specular lighting
@@ -263,7 +295,7 @@ bool usercode_loadmedia()
     terrain3d_shader->reflectivity = 0.35f;
     KRR_TERRAINSHADERPROG3D_update_shininess(terrain3d_shader);
     // set repeatness over texture coord
-    terrain3d_shader->texcoord_repeat = 10.0f;
+    terrain3d_shader->texcoord_repeat = 30.0f;
     KRR_TERRAINSHADERPROG3D_update_texcoord_repeat(terrain3d_shader);
     // set light info
     memcpy(&terrain3d_shader->light.pos, &light_pos, sizeof(light_pos));
@@ -280,13 +312,21 @@ bool usercode_loadmedia()
   sm = SIMPLEMODEL_new();
   if (!SIMPLEMODEL_load_objfile(sm, "res/models/stall.obj"))
   {
-    KRR_LOGE("Error loading .obj file");
+    KRR_LOGE("Error loading stall model file");
+    return false;
+  }
+
+  // load grass model
+  grass = SIMPLEMODEL_new();
+  if (!SIMPLEMODEL_load_objfile(grass, "res/models/grassModel.obj"))
+  {
+    KRR_LOGE("Error loading grass model file");
     return false;
   }
   
   // load from generation of terrain
   tr = KRR_TERRAIN_new();
-  if (!KRR_TERRAIN_load_from_generation(tr, 1, 1, 200))
+  if (!KRR_TERRAIN_load_from_generation(tr, TERRAIN_GRID_WIDTH, TERRAIN_GRID_HEIGHT, TERRAIN_SLOT_SIZE))
   {
     KRR_LOGE("Error loading terrain from generation");
     return false;
@@ -527,36 +567,14 @@ void usercode_render()
   }
 
   // TODO: render code goes here...
-  // render terrain
-  glBindVertexArray(tr->vao_id);
-    // bind shader
-    KRR_SHADERPROG_bind(terrain3d_shader->program);
+
+  // bind shader
+  KRR_SHADERPROG_bind(texture3d_shader->program);
+  // render stall
+  glBindVertexArray(sm->vao_id);
 
     // bind texture
-    glBindTexture(GL_TEXTURE_2D, texture->texture_id);
-    // wrap texture
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    // transform model matrix
-    glm_mat4_copy(g_base_model_matrix, terrain3d_shader->model_matrix);
-    // rotate around itself
-    glm_rotate(terrain3d_shader->model_matrix, glm_rad(roty), (vec3){0.f, 1.f, 0.f});
-    glm_translate(terrain3d_shader->model_matrix, (vec3){-200.0f/2, 0.0f, -200.0f/2});
-    //update model matrix
-    KRR_TERRAINSHADERPROG3D_update_model_matrix(terrain3d_shader);
-
-    // render
-    KRR_TERRAIN_render(tr);
-
-    // unbind shader
-    KRR_SHADERPROG_unbind(terrain3d_shader->program);
-
-  glBindVertexArray(sm->vao_id);
-    KRR_SHADERPROG_bind(texture3d_shader->program);
     glBindTexture(GL_TEXTURE_2D, texture2->texture_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     // transform model matrix
     glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
@@ -566,14 +584,70 @@ void usercode_render()
 
     // render
     SIMPLEMODEL_render(sm);
+  // unbind shader
+  KRR_SHADERPROG_unbind(texture3d_shader->program);
 
-    // unbind shader
-    KRR_SHADERPROG_unbind(texture3d_shader->program);
+  // bind shader
+  KRR_SHADERPROG_bind(terrain3d_shader->program);
+  // render terrain
+  glBindVertexArray(tr->vao_id);
 
-  glBindVertexArray(0);
-  
-  // unbind vao
+    // bind texture
+    glBindTexture(GL_TEXTURE_2D, terrain_texture->texture_id);
+    // wrap texture
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
+    // transform model matrix
+    glm_mat4_copy(g_base_model_matrix, terrain3d_shader->model_matrix);
+    // rotate around itself
+    //glm_rotate(terrain3d_shader->model_matrix, glm_rad(roty), GLM_YUP);
+    glm_translate(terrain3d_shader->model_matrix, (vec3){-TERRAIN_GRID_WIDTH*TERRAIN_SLOT_SIZE/2, 0.0f, -TERRAIN_GRID_HEIGHT*TERRAIN_SLOT_SIZE/2});
+    //update model matrix
+    KRR_TERRAINSHADERPROG3D_update_model_matrix(terrain3d_shader);
+
+    // render
+    KRR_TERRAIN_render(tr);
+  // unbind shader
   KRR_SHADERPROG_unbind(terrain3d_shader->program);
+
+  // bind shader
+  KRR_SHADERPROG_bind(texture3d_shader->program);
+  // render grass
+  glBindVertexArray(grass->vao_id);
+    // bind texture
+    glBindTexture(GL_TEXTURE_2D, grass_texture->texture_id);
+    // clamp texture
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+    // disable backface culling as grass made up of crossing polygon
+    glDisable(GL_CULL_FACE);
+    // enable blending with default blend function
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    for (int i=0; i<NUM_GRASS_UNIT; ++i)
+    {
+      // transform
+      // **note: we have problem re-export grasssModel thus we need
+      // to use original one which -y is UP
+      glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
+      glm_rotate(texture3d_shader->model_matrix, GLM_PI, GLM_ZUP);
+      glm_translate(texture3d_shader->model_matrix, randomized_grass_pos[i]);
+      KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
+
+      SIMPLEMODEL_render(grass);
+    }
+
+    // diable blending
+    glDisable(GL_BLEND);
+    // enable backface culling again
+    glEnable(GL_CULL_FACE);
+  // unbind vao
+  glBindVertexArray(0);
+  // unbind shader
+  KRR_SHADERPROG_unbind(texture3d_shader->program);
 
   // disable scissor (if needed)
   if (g_need_clipping)
@@ -593,6 +667,11 @@ void usercode_render_fps(int avg_fps)
 
   // use shared font shader
   KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
+
+    // enable blending with default blend function
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     // start with clean state of model matrix
     glm_mat4_copy(g_base_ui_model_matrix, shared_font_shaderprogram->model_matrix);
     KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
@@ -600,6 +679,9 @@ void usercode_render_fps(int avg_fps)
     // render text on top right
     KRR_FONT_render_textex(fps_font, fps_text, 0.f, 4.f, &(SIZE){g_logical_width, g_logical_height}, KRR_FONT_TEXTALIGNMENT_RIGHT | KRR_FONT_TEXTALIGNMENT_TOP);
   KRR_SHADERPROG_unbind(shared_font_shaderprogram->program);
+
+    // disable blending
+    glDisable(GL_BLEND);
 
   // unbind fps-vao
   KRR_FONT_unbind_vao(fps_font);
@@ -641,10 +723,15 @@ void usercode_close()
     terrain3d_shader = NULL;
   }
 
-  if (texture != NULL)
+  if (terrain_texture != NULL)
   {
-    KRR_TEXTURE_free(texture);
-    texture = NULL;
+    KRR_TEXTURE_free(terrain_texture);
+    terrain_texture = NULL;
+  }
+  if (grass_texture != NULL)
+  {
+    KRR_TEXTURE_free(grass_texture);
+    grass_texture = NULL;
   }
   if (texture2 != NULL)
   {
@@ -656,6 +743,11 @@ void usercode_close()
   {
     SIMPLEMODEL_free(sm);
     sm = NULL;
+  }
+  if (grass != NULL)
+  {
+    SIMPLEMODEL_free(grass);
+    grass = NULL;
   }
   if (tr != NULL)
   {
