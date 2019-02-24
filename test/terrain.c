@@ -10,6 +10,7 @@
 #include "graphics/util.h"
 #include "graphics/texturedpp2d.h"
 #include "graphics/texturedpp3d.h"
+#include "graphics/texturedalphapp3d.h"
 #include "graphics/terrain_shader3d.h"
 #include "graphics/terrain.h"
 #include "graphics/model.h"
@@ -55,6 +56,7 @@ static void usercode_app_went_fullscreen();
 // basic shaders and font
 static KRR_TEXSHADERPROG2D* texture_shader = NULL;
 static KRR_TEXSHADERPROG3D* texture3d_shader = NULL;
+static KRR_TEXALPHASHADERPROG3D* texturealpha3d_shader = NULL;
 static KRR_TERRAINSHADERPROG3D* terrain3d_shader = NULL;
 static KRR_FONTSHADERPROG2D* font_shader = NULL;
 static KRR_FONT* font = NULL;
@@ -91,6 +93,8 @@ void usercode_app_went_windowed_mode()
     SU_TEXSHADERPROG2D(texture_shader)
   SU_BEGIN(texture3d_shader)
     SU_TEXSHADERPROG3D(texture3d_shader)
+  SU_BEGIN(texturealpha3d_shader)
+    SU_TEXALPHASHADERPROG3D(texturealpha3d_shader)
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
   SU_BEGIN(font_shader)
@@ -104,6 +108,8 @@ void usercode_app_went_fullscreen()
     SU_TEXSHADERPROG2D(texture_shader)
   SU_BEGIN(texture3d_shader)
     SU_TEXSHADERPROG3D(texture3d_shader)
+  SU_BEGIN(texturealpha3d_shader)
+    SU_TEXALPHASHADERPROG3D(texturealpha3d_shader)
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
   SU_BEGIN(font_shader)
@@ -194,6 +200,16 @@ bool usercode_loadmedia()
   }
   // set texture shader
   shared_textured3d_shaderprogram = texture3d_shader;
+
+  // load texture alpha 3d shader
+  texturealpha3d_shader = KRR_TEXALPHASHADERPROG3D_new();
+  if (!KRR_TEXALPHASHADERPROG3D_load_program(texturealpha3d_shader))
+  {
+    KRR_LOGE("Error loading texturealpha3d shader");
+    return false;
+  }
+  // set texture alpha 3d shader
+  shared_texturedalpha3d_shaderprogram = texturealpha3d_shader;
 
   // load terrain3d shader
   terrain3d_shader = KRR_TERRAINSHADERPROG3D_new();
@@ -300,6 +316,22 @@ bool usercode_loadmedia()
     memcpy(&texture3d_shader->light.pos, &light_pos, sizeof(light_pos));
     memcpy(&texture3d_shader->light.color, &light_color, sizeof(light_color));
     KRR_TEXSHADERPROG3D_update_light(texture3d_shader);
+
+  SU_BEGIN(texturealpha3d_shader)
+    SU_TEXALPHASHADERPROG3D(texturealpha3d_shader)
+    // update ambient color
+    glm_vec3_copy((vec3){0.1f, 0.1f, 0.1f}, texturealpha3d_shader->ambient_color);
+    KRR_TEXALPHASHADERPROG3D_update_ambient_color(texturealpha3d_shader);
+    // set texture unit
+    KRR_TEXALPHASHADERPROG3D_set_texture_sampler(texturealpha3d_shader, 0);
+    // set specular lighting
+    texturealpha3d_shader->shine_damper = 10.0f;
+    texturealpha3d_shader->reflectivity = 0.2f;
+    KRR_TEXALPHASHADERPROG3D_update_shininess(texturealpha3d_shader);
+    // set light info
+    memcpy(&texturealpha3d_shader->light.pos, &light_pos, sizeof(light_pos));
+    memcpy(&texturealpha3d_shader->light.color, &light_color, sizeof(light_color));
+    KRR_TEXALPHASHADERPROG3D_update_light(texturealpha3d_shader);
 
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
@@ -556,6 +588,10 @@ void update_camera(float delta_time)
   KRR_SHADERPROG_bind(texture3d_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTURE3D_SHADER, texture3d_shader);
 
+  // texture alpha 3d
+  KRR_SHADERPROG_bind(texturealpha3d_shader->program);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TEXTUREALPHA3D_SHADER, texturealpha3d_shader);
+
   // terrain 3d
   KRR_SHADERPROG_bind(terrain3d_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
@@ -654,7 +690,7 @@ void usercode_render()
   KRR_SHADERPROG_unbind(terrain3d_shader->program);
 
   // bind shader
-  KRR_SHADERPROG_bind(texture3d_shader->program);
+  KRR_SHADERPROG_bind(texturealpha3d_shader->program);
   // render grass
   glBindVertexArray(grass->vao_id);
     // bind texture
@@ -674,10 +710,10 @@ void usercode_render()
       // transform
       // **note: we have problem re-export grasssModel thus we need
       // to use original one which -y is UP
-      glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
-      glm_rotate(texture3d_shader->model_matrix, GLM_PI, GLM_ZUP);
-      glm_translate(texture3d_shader->model_matrix, randomized_grass_pos[i]);
-      KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
+      glm_mat4_copy(g_base_model_matrix, texturealpha3d_shader->model_matrix);
+      glm_rotate(texturealpha3d_shader->model_matrix, GLM_PI, GLM_ZUP);
+      glm_translate(texturealpha3d_shader->model_matrix, randomized_grass_pos[i]);
+      KRR_TEXALPHASHADERPROG3D_update_model_matrix(texturealpha3d_shader);
 
       SIMPLEMODEL_render(grass);
     }
@@ -689,7 +725,7 @@ void usercode_render()
   // unbind vao
   glBindVertexArray(0);
   // unbind shader
-  KRR_SHADERPROG_unbind(texture3d_shader->program);
+  KRR_SHADERPROG_unbind(texturealpha3d_shader->program);
 
   // disable scissor (if needed)
   if (g_need_clipping)
@@ -758,6 +794,11 @@ void usercode_close()
   {
     KRR_TEXSHADERPROG3D_free(texture3d_shader);
     texture3d_shader = NULL;
+  }
+  if (texturealpha3d_shader != NULL)
+  {
+    KRR_TEXALPHASHADERPROG3D_free(texturealpha3d_shader);
+    texturealpha3d_shader = NULL;
   }
   if (terrain3d_shader != NULL)
   {

@@ -1,6 +1,7 @@
 #include "functs.h"
 #include "graphics/texturedpp2d.h"
 #include "graphics/texturedpp3d.h"
+#include "graphics/texturedalphapp3d.h"
 #include "graphics/terrain_shader3d.h"
 #include "graphics/fontpp2d.h"
 #include "foundation/log.h"
@@ -29,6 +30,13 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
       KRR_TEXSHADERPROG3D* shader_ptr = (KRR_TEXSHADERPROG3D*)program;
       glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
       KRR_TEXSHADERPROG3D_update_projection_matrix(shader_ptr);
+    }
+    // texture alpha 3d shader
+    else if (shader_program == USERCODE_SHADERTYPE_TEXTUREALPHA3D_SHADER)
+    {
+      KRR_TEXALPHASHADERPROG3D* shader_ptr = (KRR_TEXALPHASHADERPROG3D*)program;
+      glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
+      KRR_TEXALPHASHADERPROG3D_update_projection_matrix(shader_ptr);
     }
     // terrain shader
     else if (shader_program == USERCODE_SHADERTYPE_TERRAIN_SHADER)
@@ -62,6 +70,13 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
       glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
       KRR_TEXSHADERPROG3D_update_view_matrix(shader_ptr);
     }
+    // texture alpha 3d shader
+    else if (shader_program == USERCODE_SHADERTYPE_TEXTUREALPHA3D_SHADER)
+    {
+      KRR_TEXALPHASHADERPROG3D* shader_ptr = (KRR_TEXALPHASHADERPROG3D*)program;
+      glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
+      KRR_TEXALPHASHADERPROG3D_update_view_matrix(shader_ptr);
+    }
     // terrain shader
     else if (shader_program == USERCODE_SHADERTYPE_TERRAIN_SHADER)
     {
@@ -87,6 +102,13 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
       KRR_TEXSHADERPROG3D* shader_ptr = (KRR_TEXSHADERPROG3D*)program;
       glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
       KRR_TEXSHADERPROG3D_update_model_matrix(shader_ptr);
+    }
+    // texture alpha 3d shader
+    else if (shader_program == USERCODE_SHADERTYPE_TEXTUREALPHA3D_SHADER)
+    {
+      KRR_TEXALPHASHADERPROG3D* shader_ptr = (KRR_TEXALPHASHADERPROG3D*)program;
+      glm_mat4_copy(g_base_model_matrix, shader_ptr->model_matrix);
+      KRR_TEXALPHASHADERPROG3D_update_model_matrix(shader_ptr);
     }
     // terrain shader
     else if (shader_program == USERCODE_SHADERTYPE_TERRAIN_SHADER)
