@@ -1,4 +1,9 @@
 // terrain sample
+// demonstrate switching and wrapping rendering code properly with objects which are in different type (transparent, opaque)
+//
+// stall, and tree model uses the same (texture 3d) shader
+// terrain uses terrain shader
+// grass uses texture alpha 3d shader
 
 #include "usercode.h"
 #include "functs.h"
