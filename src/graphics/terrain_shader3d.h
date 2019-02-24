@@ -48,6 +48,14 @@ typedef struct KRR_TERRAINSHADERPROG3D_
   GLint ambient_color_location;
   vec3 ambient_color;
 
+  // fog
+  GLint fog_enabled_location;
+  bool fog_enabled; // default to false
+  
+  // sky color
+  GLint sky_color_location;
+  vec3 sky_color; // default to (0.5, 0.5, 0.5)
+
 } KRR_TERRAINSHADERPROG3D;
 
 // shared terrain 3d shader-program
@@ -132,6 +140,22 @@ extern void KRR_TERRAINSHADERPROG3D_update_texcoord_repeat(KRR_TERRAINSHADERPROG
 /// \param program pointer to KRR_TERRAINSHADERPROG3D
 ///
 extern void KRR_TERRAINSHADERPROG3D_update_ambient_color(KRR_TERRAINSHADERPROG3D* program);
+
+///
+/// update fog enabled
+/// set fog enabled first (see header) then call this function to update to GPU
+///
+/// \param program pointer to KRR_TEXSHADERPROG3D
+///
+extern void KRR_TERRAINSHADERPROG3D_update_fog_enabled(KRR_TERRAINSHADERPROG3D* program);
+
+///
+/// update sky color
+/// set sky color first (see header) then call this function to update to GPU
+///
+/// \param program pointer to KRR_TEXSHADERPROG3D
+///
+extern void KRR_TERRAINSHADERPROG3D_update_sky_color(KRR_TERRAINSHADERPROG3D* program);
 
 ///
 /// set vertex pointer

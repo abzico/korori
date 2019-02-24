@@ -1,15 +1,12 @@
 #version 330 core
 
-// transformation matrices
 uniform mat4 projection_matrix;
 uniform mat4 view_matrix;
 uniform mat4 model_matrix;
 uniform vec3 light_position;
+uniform float fog_enabled;
 
-// vertex position attribute
 in vec3 vertex_pos3d;
-
-// texture coordinate attributes
 in vec2 texcoord;
 in vec3 normal;
 
@@ -17,6 +14,11 @@ out vec2 outin_texcoord;
 out vec3 surface_normal;
 out vec3 tocam_dir;
 out vec3 tolight_dir;
+out float visibility;
+
+// configurations for fog (hardcoded for now)
+const float fog_density = 0.007;
+const float fog_gradient = 1.5;
 
 void main()
 {
@@ -30,6 +32,15 @@ void main()
 
   // calculate direction to camera
   tocam_dir = (inverse(view_matrix) * vec4(0.0, 0.0, 0.0, 1.0)).xyz - world_position.xyz;
+
+  // calculate fog
+  // from eqaution e^(-((distance*density)^gradient)) 
+  if (fog_enabled == 1.0)
+  {
+    vec4 position_rel_to_cam = view_matrix * world_position;
+    float dst = length(position_rel_to_cam.xyz);
+    visibility = exp(-pow(dst*fog_density, fog_gradient));
+  }
 
   // process vertex
   gl_Position = projection_matrix * view_matrix * world_position;

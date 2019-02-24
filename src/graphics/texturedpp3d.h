@@ -42,7 +42,15 @@ typedef struct KRR_TEXSHADERPROG3D_
 
   // ambient
   GLint ambient_color_location;
-  vec3 ambient_color;
+  vec3 ambient_color; 
+
+  // fog
+  GLint fog_enabled_location;
+  bool fog_enabled; // default to false
+  
+  // sky color
+  GLint sky_color_location;
+  vec3 sky_color; // default to (0.5, 0.5, 0.5)
 
 } KRR_TEXSHADERPROG3D;
 
@@ -119,6 +127,22 @@ extern void KRR_TEXSHADERPROG3D_update_light(KRR_TEXSHADERPROG3D* program);
 /// \param program pointer to KRR_TEXSHADERPROG3D
 ///
 extern void KRR_TEXSHADERPROG3D_update_ambient_color(KRR_TEXSHADERPROG3D* program);
+
+///
+/// update fog enabled
+/// set fog enabled first (see header) then call this function to update to GPU
+///
+/// \param program pointer to KRR_TEXSHADERPROG3D
+///
+extern void KRR_TEXSHADERPROG3D_update_fog_enabled(KRR_TEXSHADERPROG3D* program);
+
+///
+/// update sky color
+/// set sky color first (see header) then call this function to update to GPU
+///
+/// \param program pointer to KRR_TEXSHADERPROG3D
+///
+extern void KRR_TEXSHADERPROG3D_update_sky_color(KRR_TEXSHADERPROG3D* program);
 
 ///
 /// set vertex pointer

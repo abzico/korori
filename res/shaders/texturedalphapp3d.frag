@@ -6,12 +6,15 @@ uniform vec3 light_color;
 uniform float shine_damper;
 uniform float reflectivity;
 uniform vec3 ambient_color;
+uniform vec3 sky_color;
+uniform float fog_enabled;
 
 // texture coordinate
 in vec2 outin_texcoord;
 in vec3 surface_normal;
 in vec3 tocam_dir;
 in vec3 tolight_dir;
+in float visibility;
 
 // final color
 out vec4 final_color;
@@ -41,5 +44,9 @@ void main()
     vec3 final_specular = damped_factor * light_color * reflectivity;
 
     final_color = vec4(diffuse, 1.0) * texcolor + vec4(final_specular, 1.0);
+    if (fog_enabled == 1.0)
+    {
+      final_color = mix(vec4(sky_color,1.0), final_color, visibility);
+    }
   }
 }

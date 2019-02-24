@@ -34,6 +34,10 @@ KRR_TERRAINSHADERPROG3D* KRR_TERRAINSHADERPROG3D_new(void)
   out->texcoord_repeat = 20.0f;
   out->ambient_color_location = -1;
   glm_vec3_one(out->ambient_color);
+  out->sky_color_location = -1;
+  glm_vec3_copy((vec3){0.5f, 0.5f, 0.5f}, out->sky_color);
+  out->fog_enabled_location = -1;
+  out->fog_enabled = false;
 
   // create underlying shader program
   out->program = KRR_SHADERPROG_new();
@@ -185,6 +189,16 @@ bool KRR_TERRAINSHADERPROG3D_load_program(KRR_TERRAINSHADERPROG3D* program)
   {
     KRR_LOGW("Warning: ambient_color is invalid glsl variable name");
   }
+  program->sky_color_location = glGetUniformLocation(uprog->program_id, "sky_color");
+  if (program->sky_color_location == -1)
+  {
+    KRR_LOGW("Warning: sky_color is invalid glsl variable name");
+  }
+  program->fog_enabled_location = glGetUniformLocation(uprog->program_id, "fog_enabled");
+  if (program->fog_enabled_location == -1)
+  {
+    KRR_LOGW("Warning: fog_enabled is invalid glsl variable name");
+  }
 
   return true;
 }
@@ -218,6 +232,18 @@ void KRR_TERRAINSHADERPROG3D_update_texcoord_repeat(KRR_TERRAINSHADERPROG3D* pro
 void KRR_TERRAINSHADERPROG3D_update_ambient_color(KRR_TERRAINSHADERPROG3D* program)
 {
   glUniform3fv(program->ambient_color_location, 1, program->ambient_color);
+}
+
+void KRR_TERRAINSHADERPROG3D_update_fog_enabled(KRR_TERRAINSHADERPROG3D* program)
+{
+  // avoid using boolean type as it's not guarunteed to be supported by graphics card
+  // see https://stackoverflow.com/a/33690786/571227
+  glUniform1f(program->fog_enabled_location, program->fog_enabled ? 1.0f : 0.0f);
+}
+
+void KRR_TERRAINSHADERPROG3D_update_sky_color(KRR_TERRAINSHADERPROG3D* program)
+{
+  glUniform3fv(program->sky_color_location, 1, program->sky_color);
 }
 
 void KRR_TERRAINSHADERPROG3D_update_shininess(KRR_TERRAINSHADERPROG3D* program)
