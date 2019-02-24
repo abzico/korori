@@ -19,7 +19,7 @@ out vec4 final_color;
 void main()
 {
   vec4 texcolor = texture(texture_sampler, outin_texcoord);
-  if (texcolor.a <= 0.0)
+  if (texcolor.a <= 0.15)
   {
     discard;
   }
