@@ -1,9 +1,10 @@
-// terrain sample
-// demonstrate switching and wrapping rendering code properly with objects which are in different type (transparent, opaque)
-//
-// stall, and tree model uses the same (texture 3d) shader
-// terrain uses terrain shader
-// grass uses texture alpha 3d shader
+/* terrain sample
+ demonstrate switching and wrapping rendering code properly with objects which are in different type (transparent, opaque)
+
+ stall, and tree model uses the same (texture 3d) shader
+ terrain uses terrain shader
+ grass uses texture alpha 3d shader
+*/
 
 #include "usercode.h"
 #include "functs.h"
@@ -23,8 +24,9 @@
 #include "graphics/fontpp2d.h"
 #include <math.h>
 
-// don't use this elsewhere
-#define CONTENT_BG_COLOR 0.f, 0.f, 0.f, 1.f
+// set the content background color which is in turn our sky color as well
+// if fog is enabled in shader, this color should be aligned with what is set in shader code
+#define CONTENT_BG_COLOR 0.5f, 0.5f, 0.5f, 1.f
 
 #ifndef DISABLE_FPS_CALC
 #define FPS_BUFFER 7+1
@@ -321,6 +323,12 @@ bool usercode_loadmedia()
     memcpy(&texture3d_shader->light.pos, &light_pos, sizeof(light_pos));
     memcpy(&texture3d_shader->light.color, &light_color, sizeof(light_color));
     KRR_TEXSHADERPROG3D_update_light(texture3d_shader);
+    // sky color (affect to fog)
+    KRR_TEXSHADERPROG3D_update_sky_color(texture3d_shader);
+    // enable fog
+    texture3d_shader->fog_enabled = true;
+    KRR_TEXSHADERPROG3D_update_fog_enabled(texture3d_shader);
+
 
   SU_BEGIN(texturealpha3d_shader)
     SU_TEXALPHASHADERPROG3D(texturealpha3d_shader)
@@ -337,6 +345,11 @@ bool usercode_loadmedia()
     memcpy(&texturealpha3d_shader->light.pos, &light_pos, sizeof(light_pos));
     memcpy(&texturealpha3d_shader->light.color, &light_color, sizeof(light_color));
     KRR_TEXALPHASHADERPROG3D_update_light(texturealpha3d_shader);
+    // sky color (affect to fog)
+    KRR_TEXALPHASHADERPROG3D_update_sky_color(texturealpha3d_shader);
+    // enable fog
+    texturealpha3d_shader->fog_enabled = true;
+    KRR_TEXALPHASHADERPROG3D_update_fog_enabled(texturealpha3d_shader);
 
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
@@ -356,6 +369,11 @@ bool usercode_loadmedia()
     memcpy(&terrain3d_shader->light.pos, &light_pos, sizeof(light_pos));
     memcpy(&terrain3d_shader->light.color, &light_color, sizeof(light_color));
     KRR_TERRAINSHADERPROG3D_update_light(terrain3d_shader);
+    // sky color (affect to fog)
+    KRR_TERRAINSHADERPROG3D_update_sky_color(terrain3d_shader);
+    // enable fog
+    terrain3d_shader->fog_enabled = true;
+    KRR_TERRAINSHADERPROG3D_update_fog_enabled(terrain3d_shader);
 
   SU_BEGIN(font_shader)
     SU_FONTSHADER(font_shader)
