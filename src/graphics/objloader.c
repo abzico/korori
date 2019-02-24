@@ -206,6 +206,8 @@ int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* 
         // set number of elements for final vertices as well
         // differentiate from v_count to give us info later how many actual 'v ' is
         final_vertices_count = vertices_i;
+        // initially set latest vertices used for duplicated vertex item later used in handle_f_v
+        latest_used_vertices_index = final_vertices_count;
 
         // allocate memory space
         // allocate vertices enough space initially
@@ -255,11 +257,13 @@ int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* 
   free_dups(&v_set_table, static_vertices_count);
 
   // shrink dowm memory of out_vertices, and out_indices
-  out_vertices = realloc(out_vertices, sizeof(VERTEXTEXNORM3D) * (latest_used_vertices_index+1));
+  int total_real_vertices_count = static_vertices_count + (latest_used_vertices_index - static_vertices_count);
+  out_vertices = realloc(out_vertices, sizeof(VERTEXTEXNORM3D) * total_real_vertices_count);
   out_indices = realloc(out_indices, sizeof(GLuint) * (i_i+1));
+  KRR_LOGI("final shrink vertices output down to = %d", total_real_vertices_count);
 
-  KRR_LOGI("total vertices: %d, texcoords: %d, normals: %d, final vertices: %d, indices count: %d", vertices_i, texcoords_i, normals_i, latest_used_vertices_index+1, i_i+1);
-  KRR_LOGI("calculated vertices count: %d, calculated indices count: %d", final_vertices_count, final_indices_count);
+  KRR_LOGI("total vertices: %d, texcoords: %d, normals: %d, final vertices: %d, indices count: %d", vertices_i, texcoords_i, normals_i, total_real_vertices_count, i_i+1);
+  KRR_LOGI("calculated (as expanded) vertices count: %d, calculated indices count: %d", final_vertices_count, final_indices_count);
 
   // set results
   if (dst_vertices != NULL)
@@ -268,7 +272,7 @@ int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* 
   }
   if (vertices_count != NULL)
   {
-    *vertices_count = latest_used_vertices_index+1;
+    *vertices_count = total_real_vertices_count;
   }
   if (dst_indices != NULL)
   {
@@ -301,7 +305,6 @@ void handle_f_v(int v_index, int vt_index, int vn_index, int* final_vertices_cou
     {
       *final_indices_count = *final_indices_count + *final_indices_count * INCREASE_ELEM_FACTOR;
       *out_indices = realloc(out_indices_v, sizeof(GLuint) * *final_indices_count);
-      KRR_LOGI("realloc new size %ld", sizeof(GLuint) * *final_indices_count);
       // update out_indices_v pointer
       out_indices_v = *out_indices;
     }
@@ -315,11 +318,11 @@ void handle_f_v(int v_index, int vt_index, int vn_index, int* final_vertices_cou
   {
     // early check against root if it matches or not
     // so later we can skip checking aginst root
-    if (out_vertices_v[v_index].texcoord.s == texcoords[vt_index].s &&
-        out_vertices_v[v_index].texcoord.t == texcoords[vt_index].t &&
-        out_vertices_v[v_index].normal.x == normals[vn_index].x &&
-        out_vertices_v[v_index].normal.y == normals[vn_index].y &&
-        out_vertices_v[v_index].normal.z == normals[vn_index].z)
+    if (fabs(out_vertices_v[v_index].texcoord.s - texcoords[vt_index].s) < 1.0e-5 &&
+        fabs(out_vertices_v[v_index].texcoord.t - texcoords[vt_index].t) < 1.0e-5 &&
+        fabs(out_vertices_v[v_index].normal.x - normals[vn_index].x) < 1.0e-5 &&
+        fabs(out_vertices_v[v_index].normal.y - normals[vn_index].y) < 1.0e-5 &&
+        fabs(out_vertices_v[v_index].normal.z - normals[vn_index].z) < 1.0e-5)
     {
       // expand memory space for indices (if need)
       if (*indices_index >= *final_indices_count)
@@ -339,12 +342,9 @@ void handle_f_v(int v_index, int vt_index, int vn_index, int* final_vertices_cou
       if (dup_table[v_index].dup == NULL)
       {
         // expand memory space for vertices (if need)
-        if (*latest_used_vertices_index == -1 ||
-            *latest_used_vertices_index >= *final_vertices_count)
+        // note: always expand for the first time check
+        if (*latest_used_vertices_index >= *final_vertices_count)
         {
-          // set proper index
-          *latest_used_vertices_index = *final_vertices_count;
-
           // update vertices count
           *final_vertices_count = *final_vertices_count + *final_vertices_count * INCREASE_ELEM_FACTOR;
           *out_vertices = realloc(out_vertices_v, sizeof(VERTEXTEXNORM3D) * *final_vertices_count);
@@ -389,11 +389,11 @@ void handle_f_v(int v_index, int vt_index, int vn_index, int* final_vertices_cou
         {
           VERTEXTEXNORM3D v = dup->v;
           // check for duplicate to finish the job earlier
-          if (v.texcoord.s == texcoords[vt_index].s &&
-              v.texcoord.t == texcoords[vt_index].t &&
-              v.normal.x == normals[vn_index].x &&
-              v.normal.y == normals[vn_index].y &&
-              v.normal.z == normals[vn_index].z)
+          if (fabs(v.texcoord.s - texcoords[vt_index].s) < 1.0e-5 &&
+              fabs(v.texcoord.t - texcoords[vt_index].t) < 1.0e-5 &&
+              fabs(v.normal.x - normals[vn_index].x) < 1.0e-5 &&
+              fabs(v.normal.y - normals[vn_index].y) < 1.0e-5 &&
+              fabs(v.normal.z - normals[vn_index].z) < 1.0e-5)
           {
             unique = false;
 
@@ -422,12 +422,9 @@ void handle_f_v(int v_index, int vt_index, int vn_index, int* final_vertices_cou
         if (unique)
         {
           // expand memory space for vertices (if need)
-          if (*latest_used_vertices_index == -1 ||
-              *latest_used_vertices_index >= *final_vertices_count)
+          // note: always expand for the first time check
+          if (*latest_used_vertices_index >= *final_vertices_count)
           {
-            // set proper index
-            *latest_used_vertices_index = *final_vertices_count;
-
             // update vertices count
             *final_vertices_count = *final_vertices_count + *final_vertices_count * INCREASE_ELEM_FACTOR;
             *out_vertices = realloc(out_vertices_v, sizeof(VERTEXTEXNORM3D) * *final_vertices_count);
