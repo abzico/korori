@@ -62,9 +62,11 @@ static KRR_FONT* font = NULL;
 // TODO: define variables here
 static KRR_TEXTURE* terrain_texture = NULL;
 static KRR_TEXTURE* grass_texture = NULL;
-static KRR_TEXTURE* texture2 = NULL;
-static SIMPLEMODEL* sm = NULL;
+static KRR_TEXTURE* stall_texture = NULL;
+static KRR_TEXTURE* tree_texture = NULL;
+static SIMPLEMODEL* stall = NULL;
 static SIMPLEMODEL* grass = NULL;
+static SIMPLEMODEL* tree = NULL;
 static TERRAIN* tr = NULL;
 static KRR_CAM cam;
 static float roty = 0.0f;
@@ -72,6 +74,10 @@ static float roty = 0.0f;
 #define NUM_GRASS_UNIT 10
 #define GRASS_RANDOM_SIZE 30
 static vec3 randomized_grass_pos[NUM_GRASS_UNIT];
+
+#define NUM_TREE 3
+#define TREE_RANDOM_SIZE 50
+static vec3 randomized_tree_pos[NUM_TREE];
 
 #define TERRAIN_GRID_WIDTH 10
 #define TERRAIN_GRID_HEIGHT 10
@@ -243,11 +249,18 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading grass's texture");
     return false;
   }
-  // texture 2
-  texture2 = KRR_TEXTURE_new();
-  if (!KRR_TEXTURE_load_texture_from_file(texture2, "res/models/stallTexture.png"))
+  // stall texture
+  stall_texture = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(stall_texture, "res/models/stallTexture.png"))
   {
     KRR_LOGE("Error loading white texture");
+    return false;
+  }
+  // tree texture
+  tree_texture = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(tree_texture, "res/models/lowPolyTree.png"))
+  {
+    KRR_LOG("Error loading tree texture");
     return false;
   }
 
@@ -257,6 +270,11 @@ bool usercode_loadmedia()
   for (int i=0; i<NUM_GRASS_UNIT; ++i)
   {
     glm_vec3_copy((vec3){KRR_math_rand_float2(-GRASS_RANDOM_SIZE, GRASS_RANDOM_SIZE), -1.0f, KRR_math_rand_float2(-GRASS_RANDOM_SIZE, GRASS_RANDOM_SIZE)}, randomized_grass_pos[i]);
+  }
+
+  for (int i=0; i<NUM_TREE; ++i)
+  {
+    glm_vec3_copy((vec3){KRR_math_rand_float2(-TREE_RANDOM_SIZE, TREE_RANDOM_SIZE), -1.0f, KRR_math_rand_float2(-TREE_RANDOM_SIZE, TREE_RANDOM_SIZE)}, randomized_tree_pos[i]);
   }
 
   // initially update all related matrices and related graphics stuff for both basic shaders
@@ -309,8 +327,8 @@ bool usercode_loadmedia()
   SU_END(font_shader)
 
   // load .obj model
-  sm = SIMPLEMODEL_new();
-  if (!SIMPLEMODEL_load_objfile(sm, "res/models/stall.obj"))
+  stall = SIMPLEMODEL_new();
+  if (!SIMPLEMODEL_load_objfile(stall, "res/models/stall.obj"))
   {
     KRR_LOGE("Error loading stall model file");
     return false;
@@ -321,6 +339,14 @@ bool usercode_loadmedia()
   if (!SIMPLEMODEL_load_objfile(grass, "res/models/grassModel.obj"))
   {
     KRR_LOGE("Error loading grass model file");
+    return false;
+  }
+
+  // load tree mode
+  tree = SIMPLEMODEL_new();
+  if (!SIMPLEMODEL_load_objfile(tree, "res/models/lowPolyTree.obj"))
+  {
+    KRR_LOGE("Error loading tree model file");
     return false;
   }
   
@@ -571,10 +597,9 @@ void usercode_render()
   // bind shader
   KRR_SHADERPROG_bind(texture3d_shader->program);
   // render stall
-  glBindVertexArray(sm->vao_id);
-
+  glBindVertexArray(stall->vao_id);
     // bind texture
-    glBindTexture(GL_TEXTURE_2D, texture2->texture_id);
+    glBindTexture(GL_TEXTURE_2D, stall_texture->texture_id);
 
     // transform model matrix
     glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
@@ -583,7 +608,25 @@ void usercode_render()
     KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
 
     // render
-    SIMPLEMODEL_render(sm);
+    SIMPLEMODEL_render(stall);
+
+  // render tree
+  glBindVertexArray(tree->vao_id);
+    // bind texture
+    glBindTexture(GL_TEXTURE_2D, tree_texture->texture_id);
+
+    for (int i=0; i<NUM_TREE; ++i)
+    {
+      // transform model matrix
+      glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
+      glm_translate(texture3d_shader->model_matrix, randomized_tree_pos[i]);
+      // update model matrix
+      KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
+
+      // render
+      SIMPLEMODEL_render(tree);
+    }
+
   // unbind shader
   KRR_SHADERPROG_unbind(texture3d_shader->program);
 
@@ -591,7 +634,6 @@ void usercode_render()
   KRR_SHADERPROG_bind(terrain3d_shader->program);
   // render terrain
   glBindVertexArray(tr->vao_id);
-
     // bind texture
     glBindTexture(GL_TEXTURE_2D, terrain_texture->texture_id);
     // wrap texture
@@ -733,21 +775,31 @@ void usercode_close()
     KRR_TEXTURE_free(grass_texture);
     grass_texture = NULL;
   }
-  if (texture2 != NULL)
+  if (stall_texture != NULL)
   {
-    KRR_TEXTURE_free(texture2);
-    texture2 = NULL;
+    KRR_TEXTURE_free(stall_texture);
+    stall_texture = NULL;
+  }
+  if (tree_texture != NULL)
+  {
+    KRR_TEXTURE_free(tree_texture);
+    tree_texture = NULL;
   }
 
-  if (sm != NULL)
+  if (stall != NULL)
   {
-    SIMPLEMODEL_free(sm);
-    sm = NULL;
+    SIMPLEMODEL_free(stall);
+    stall = NULL;
   }
   if (grass != NULL)
   {
     SIMPLEMODEL_free(grass);
     grass = NULL;
+  }
+  if (tree != NULL)
+  {
+    SIMPLEMODEL_free(tree);
+    tree = NULL;
   }
   if (tr != NULL)
   {
