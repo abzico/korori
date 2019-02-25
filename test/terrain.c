@@ -24,9 +24,9 @@
 #include "graphics/fontpp2d.h"
 #include <math.h>
 
-// set the content background color which is in turn our sky color as well
-// if fog is enabled in shader, this color should be aligned with what is set in shader code
-#define CONTENT_BG_COLOR 0.5f, 0.5f, 0.5f, 1.f
+#define CONTENT_BG_COLOR 0.5f, 0.5f, 0.5f, 1.0f
+// the color should be the same as content bg color
+#define SKY_COLOR_INIT (vec3){0.5f, 0.5f, 0.5f}
 
 #ifndef DISABLE_FPS_CALC
 #define FPS_BUFFER 7+1
@@ -358,10 +358,16 @@ bool usercode_loadmedia()
     memcpy(&texture3d_shader->light.color, &light_color, sizeof(light_color));
     KRR_TEXSHADERPROG3D_update_light(texture3d_shader);
     // sky color (affect to fog)
+    glm_vec3_copy(SKY_COLOR_INIT, texture3d_shader->sky_color);
     KRR_TEXSHADERPROG3D_update_sky_color(texture3d_shader);
     // enable fog
     texture3d_shader->fog_enabled = true;
     KRR_TEXSHADERPROG3D_update_fog_enabled(texture3d_shader);
+    // configure fog
+    texture3d_shader->fog_density = 0.0055f;
+    texture3d_shader->fog_gradient = 1.5f;
+    KRR_TEXSHADERPROG3D_update_fog_density(texture3d_shader);
+    KRR_TEXSHADERPROG3D_update_fog_gradient(texture3d_shader);
 
   SU_BEGIN(texturealpha3d_shader)
     SU_TEXALPHASHADERPROG3D(texturealpha3d_shader)
@@ -379,10 +385,16 @@ bool usercode_loadmedia()
     memcpy(&texturealpha3d_shader->light.color, &light_color, sizeof(light_color));
     KRR_TEXALPHASHADERPROG3D_update_light(texturealpha3d_shader);
     // sky color (affect to fog)
+    glm_vec3_copy(SKY_COLOR_INIT, texturealpha3d_shader->sky_color);
     KRR_TEXALPHASHADERPROG3D_update_sky_color(texturealpha3d_shader);
     // enable fog
     texturealpha3d_shader->fog_enabled = true;
     KRR_TEXALPHASHADERPROG3D_update_fog_enabled(texturealpha3d_shader);
+    // configure fog
+    texturealpha3d_shader->fog_density = 0.0055f;
+    texturealpha3d_shader->fog_gradient = 1.5f;
+    KRR_TEXALPHASHADERPROG3D_update_fog_density(texturealpha3d_shader);
+    KRR_TEXALPHASHADERPROG3D_update_fog_gradient(texturealpha3d_shader);
 
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
@@ -411,10 +423,16 @@ bool usercode_loadmedia()
     memcpy(&terrain3d_shader->light.color, &light_color, sizeof(light_color));
     KRR_TERRAINSHADERPROG3D_update_light(terrain3d_shader);
     // sky color (affect to fog)
+    glm_vec3_copy(SKY_COLOR_INIT, terrain3d_shader->sky_color);
     KRR_TERRAINSHADERPROG3D_update_sky_color(terrain3d_shader);
     // enable fog
     terrain3d_shader->fog_enabled = true;
     KRR_TERRAINSHADERPROG3D_update_fog_enabled(terrain3d_shader);
+    // configure fog
+    terrain3d_shader->fog_density = 0.0055f;
+    terrain3d_shader->fog_gradient = 1.5f;
+    KRR_TERRAINSHADERPROG3D_update_fog_density(terrain3d_shader);
+    KRR_TERRAINSHADERPROG3D_update_fog_gradient(terrain3d_shader);
 
   SU_BEGIN(font_shader)
     SU_FONTSHADER(font_shader)
