@@ -73,6 +73,12 @@ static KRR_TEXTURE* terrain_texture = NULL;
 static KRR_TEXTURE* grass_texture = NULL;
 static KRR_TEXTURE* stall_texture = NULL;
 static KRR_TEXTURE* tree_texture = NULL;
+
+static KRR_TEXTURE* mt_r_texture = NULL;
+static KRR_TEXTURE* mt_g_texture = NULL;
+static KRR_TEXTURE* mt_b_texture = NULL;
+static KRR_TEXTURE* mt_blendmap = NULL;
+
 static SIMPLEMODEL* stall = NULL;
 static SIMPLEMODEL* grass = NULL;
 static SIMPLEMODEL* tree = NULL;
@@ -286,6 +292,34 @@ bool usercode_loadmedia()
     KRR_LOG("Error loading tree texture");
     return false;
   }
+  // multitexture r
+  mt_r_texture = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(mt_r_texture, "res/models/mud.png"))
+  {
+    KRR_LOG("Error loading multitexture r texture");
+    return false;
+  }
+  // multitexture g
+  mt_g_texture = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(mt_g_texture, "res/models/grassFlowers.png"))
+  {
+    KRR_LOG("Error loading multitexture g texture");
+    return false;
+  }
+  // multitexture b
+  mt_b_texture = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(mt_b_texture, "res/models/path.png"))
+  {
+    KRR_LOG("Error loading multitexture b texture");
+    return false;
+  }
+  // multitexture blendmap
+  mt_blendmap = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(mt_blendmap, "res/models/blendMap.png"))
+  {
+    KRR_LOG("Error loading multitexture blendmap");
+    return false;
+  }
 
   // random all position of grass unit to show on terrain
   // **note: we have problem re-export grasssModel thus we need
@@ -329,7 +363,6 @@ bool usercode_loadmedia()
     texture3d_shader->fog_enabled = true;
     KRR_TEXSHADERPROG3D_update_fog_enabled(texture3d_shader);
 
-
   SU_BEGIN(texturealpha3d_shader)
     SU_TEXALPHASHADERPROG3D(texturealpha3d_shader)
     // update ambient color
@@ -356,8 +389,16 @@ bool usercode_loadmedia()
     // set ambient color
     glm_vec3_copy((vec3){0.7f, 0.7f, 0.7f}, terrain3d_shader->ambient_color);
     KRR_TERRAINSHADERPROG3D_update_ambient_color(terrain3d_shader);
-    // set texture unit
+    // set texture unit (at the same time this is multiteture background texture)
     KRR_TERRAINSHADERPROG3D_set_texture_sampler(terrain3d_shader, 0);
+    // enabled multitexture
+    terrain3d_shader->multitexture_enabled = true;
+    KRR_TERRAINSHADERPROG3D_update_multitexture_enabled(terrain3d_shader);
+    // set multitextures' texture unit
+    KRR_TERRAINSHADERPROG3D_set_multitexture_texture_r_sampler(terrain3d_shader, 1);
+    KRR_TERRAINSHADERPROG3D_set_multitexture_texture_g_sampler(terrain3d_shader, 2);
+    KRR_TERRAINSHADERPROG3D_set_multitexture_texture_b_sampler(terrain3d_shader, 3);
+    KRR_TERRAINSHADERPROG3D_set_multitexture_blendmap_sampler(terrain3d_shader, 4);
     // set specular lighting
     terrain3d_shader->shine_damper = 10.0f;
     terrain3d_shader->reflectivity = 0.35f;
@@ -653,7 +694,7 @@ void usercode_render()
 
   // TODO: render code goes here...
 
-  // bind shader
+  // STALL & TREE
   KRR_SHADERPROG_bind(texture3d_shader->program);
   // render stall
   glBindVertexArray(stall->vao_id);
@@ -689,15 +730,32 @@ void usercode_render()
   // unbind shader
   KRR_SHADERPROG_unbind(texture3d_shader->program);
 
-  // bind shader
+  // TERRAIN
   KRR_SHADERPROG_bind(terrain3d_shader->program);
   // render terrain
   glBindVertexArray(tr->vao_id);
-    // bind texture
+    // bind background texture
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, terrain_texture->texture_id);
     // wrap texture
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
+    // multitexture r
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, mt_r_texture->texture_id);
+
+    // multitexture g
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, mt_g_texture->texture_id);
+
+    // multitexture b
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, mt_b_texture->texture_id);
+
+    // blendmap
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, mt_blendmap->texture_id);
 
     // transform model matrix
     glm_mat4_copy(g_base_model_matrix, terrain3d_shader->model_matrix);
@@ -709,14 +767,18 @@ void usercode_render()
 
     // render
     KRR_TERRAIN_render(tr);
+
+    // set back to default texture
+    glActiveTexture(GL_TEXTURE0);
   // unbind shader
   KRR_SHADERPROG_unbind(terrain3d_shader->program);
 
-  // bind shader
+  // TEXTURE ALPHA
   KRR_SHADERPROG_bind(texturealpha3d_shader->program);
   // render grass
   glBindVertexArray(grass->vao_id);
     // bind texture
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, grass_texture->texture_id);
     // clamp texture
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -848,6 +910,26 @@ void usercode_close()
   {
     KRR_TEXTURE_free(tree_texture);
     tree_texture = NULL;
+  }
+  if (mt_r_texture != NULL)
+  {
+    KRR_TEXTURE_free(mt_r_texture);
+    mt_r_texture = NULL;
+  }
+  if (mt_g_texture != NULL)
+  {
+    KRR_TEXTURE_free(mt_g_texture);
+    mt_g_texture = NULL;
+  }
+  if (mt_b_texture != NULL)
+  {
+    KRR_TEXTURE_free(mt_b_texture);
+    mt_b_texture = NULL;
+  }
+  if (mt_blendmap != NULL)
+  {
+    KRR_TEXTURE_free(mt_blendmap);
+    mt_blendmap = NULL;
   }
 
   if (stall != NULL)

@@ -17,6 +17,16 @@ typedef struct KRR_TERRAINSHADERPROG3D_
   // uniform texture
   GLint texture_sampler_location;
 
+  // multitexture
+  GLint multitexture_enabled_location;
+  bool multitexture_enabled;
+
+  // textures only used when multitexturing is enabled via multitexture_enabled
+  GLint multitexture_texture_r_location;
+  GLint multitexture_texture_g_location;
+  GLint multitexture_texture_b_location;
+  GLint multitexture_blendmap_location;
+
   // projection matrix
   mat4 projection_matrix;
   GLint projection_matrix_location;
@@ -191,6 +201,46 @@ extern void KRR_TERRAINSHADERPROG3D_set_normal_pointer(KRR_TERRAINSHADERPROG3D* 
 /// \param sampler texture sampler name
 ///
 extern void KRR_TERRAINSHADERPROG3D_set_texture_sampler(KRR_TERRAINSHADERPROG3D* program, GLuint sampler);
+
+///
+/// update multitexture enabled
+/// set multitexture enabled first (see header) then call this function to update to GPU
+///
+/// \param program pointer to KRR_TERRAINSHADERPROG3D
+///
+extern void KRR_TERRAINSHADERPROG3D_update_multitexture_enabled(KRR_TERRAINSHADERPROG3D* program);
+
+///
+/// set multitexture texture r to shader
+///
+/// \param program pointer to KRR_TERRAINSHADERPROG3D
+/// \param sampler texture sampler name
+///
+extern void KRR_TERRAINSHADERPROG3D_set_multitexture_texture_r_sampler(KRR_TERRAINSHADERPROG3D* program, GLuint sampler);
+
+///
+/// set multitexture texture g to shader
+///
+/// \param program pointer to KRR_TERRAINSHADERPROG3D
+/// \param sampler texture sampler name
+///
+extern void KRR_TERRAINSHADERPROG3D_set_multitexture_texture_g_sampler(KRR_TERRAINSHADERPROG3D* program, GLuint sampler);
+
+///
+/// set multitexture texture b to shader
+///
+/// \param program pointer to KRR_TERRAINSHADERPROG3D
+/// \param sampler texture sampler name
+///
+extern void KRR_TERRAINSHADERPROG3D_set_multitexture_texture_b_sampler(KRR_TERRAINSHADERPROG3D* program, GLuint sampler);
+
+///
+/// set multitexture blendmap to shader
+///
+/// \param program pointer to KRR_TERRAINSHADERPROG3D
+/// \param sampler texture sampler name
+///
+extern void KRR_TERRAINSHADERPROG3D_set_multitexture_blendmap_sampler(KRR_TERRAINSHADERPROG3D* program, GLuint sampler);
 
 ///
 /// enable all attribute pointers
