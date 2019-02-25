@@ -6,6 +6,8 @@ uniform mat4 model_matrix;
 uniform vec3 light_position;
 uniform float texcoord_repeat;
 uniform float fog_enabled;
+uniform float fog_density;
+uniform float fog_gradient;
 
 in vec3 vertex_pos3d;
 in vec2 texcoord;
@@ -17,10 +19,6 @@ out vec3 surface_normal;
 out vec3 tocam_dir;
 out vec3 tolight_dir;
 out float visibility;
-
-// configurations for fog (hardcoded for now)
-const float fog_density = 0.007f;
-const float fog_gradient = 1.5f;
 
 void main()
 {

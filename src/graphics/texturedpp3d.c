@@ -36,6 +36,10 @@ KRR_TEXSHADERPROG3D* KRR_TEXSHADERPROG3D_new(void)
   glm_vec3_copy((vec3){0.5f, 0.5f, 0.5f}, out->sky_color);
   out->fog_enabled_location = -1;
   out->fog_enabled = false;
+  out->fog_density_location = -1;
+  out->fog_gradient_location = -1;
+  out->fog_density = 0.0055;
+  out->fog_gradient = 1.5;
 
   // create underlying shader program
   out->program = KRR_SHADERPROG_new();
@@ -192,6 +196,16 @@ bool KRR_TEXSHADERPROG3D_load_program(KRR_TEXSHADERPROG3D* program)
   {
     KRR_LOGW("Warning: fog_enabled is invalid glsl variable name");
   }
+  program->fog_density_location = glGetUniformLocation(uprog->program_id, "fog_density");
+  if (program->fog_density_location == -1)
+  {
+    KRR_LOGW("Warning: fog_density is invalid glsl variable name");
+  }
+  program->fog_gradient_location = glGetUniformLocation(uprog->program_id, "fog_gradient");
+  if (program->fog_gradient_location == -1)
+  {
+    KRR_LOGW("Warning: fog_gradient is invalid glsl variable name");
+  }
 
   return true;
 }
@@ -227,6 +241,16 @@ void KRR_TEXSHADERPROG3D_update_fog_enabled(KRR_TEXSHADERPROG3D* program)
   // avoid using boolean type as it's not guarunteed to be supported by graphics card
   // see https://stackoverflow.com/a/33690786/571227
   glUniform1f(program->fog_enabled_location, program->fog_enabled ? 1.0f : 0.0f);
+}
+
+void KRR_TEXSHADERPROG3D_update_fog_density(KRR_TEXSHADERPROG3D* program)
+{
+  glUniform1f(program->fog_density_location, program->fog_density);
+}
+
+void KRR_TEXSHADERPROG3D_update_fog_gradient(KRR_TEXSHADERPROG3D* program)
+{
+  glUniform1f(program->fog_gradient_location, program->fog_gradient);
 }
 
 void KRR_TEXSHADERPROG3D_update_sky_color(KRR_TEXSHADERPROG3D* program)

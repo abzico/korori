@@ -47,6 +47,10 @@ typedef struct KRR_TEXALPHASHADERPROG3D_
   // fog
   GLint fog_enabled_location;
   bool fog_enabled; // default to false
+  GLint fog_density_location;
+  GLint fog_gradient_location;
+  float fog_density;
+  float fog_gradient;
   
   // sky color
   GLint sky_color_location;
@@ -135,6 +139,22 @@ extern void KRR_TEXALPHASHADERPROG3D_update_ambient_color(KRR_TEXALPHASHADERPROG
 /// \param program pointer to KRR_TEXALPHASHADERPROG3D
 ///
 extern void KRR_TEXALPHASHADERPROG3D_update_fog_enabled(KRR_TEXALPHASHADERPROG3D* program);
+
+///
+/// update fog density
+/// set fog density first (see header) then call this function to update to GPU
+///
+/// \param program pointer to KRR_TEXALPHASHADERPROG3D
+///
+extern void KRR_TEXALPHASHADERPROG3D_update_fog_density(KRR_TEXALPHASHADERPROG3D* program);
+
+///
+/// update fog gradient
+/// set fog gradient first (see header) then call this function to update to GPU
+///
+/// \param program poitner to KRR_TEXALPHASHADERPROG3D
+///
+extern void KRR_TEXALPHASHADERPROG3D_update_fog_gradient(KRR_TEXALPHASHADERPROG3D* program);
 
 ///
 /// update sky color
