@@ -24,9 +24,9 @@
 #include "graphics/fontpp2d.h"
 #include <math.h>
 
-#define CONTENT_BG_COLOR 0.5f, 0.5f, 0.5f, 1.0f
+#define CONTENT_BG_COLOR 155.0f/255.0f, 202.0f/255.0f, 192.0f/255.0f, 1.0f
 // the color should be the same as content bg color
-#define SKY_COLOR_INIT (vec3){0.5f, 0.5f, 0.5f}
+#define SKY_COLOR_INIT (vec3){155.0f/255.0f, 202.0f/255.0f, 192.0f/255.0f}
 
 #ifndef DISABLE_FPS_CALC
 #define FPS_BUFFER 7+1
