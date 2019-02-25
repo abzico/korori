@@ -16,6 +16,12 @@ KRR_TERRAINSHADERPROG3D* KRR_TERRAINSHADERPROG3D_new(void)
   out->texcoord_location = -1;
   out->normal_location = -1;
   out->texture_sampler_location = -1;
+  out->multitexture_enabled_location = -1;
+  out->multitexture_enabled = false;
+  out->multitexture_texture_r_location = -1;
+  out->multitexture_texture_g_location = -1;
+  out->multitexture_texture_b_location = -1;
+  out->multitexture_blendmap_location = -1;
   glm_mat4_identity(out->projection_matrix);
   out->projection_matrix_location = -1;
   glm_mat4_identity(out->view_matrix);
@@ -159,6 +165,31 @@ bool KRR_TERRAINSHADERPROG3D_load_program(KRR_TERRAINSHADERPROG3D* program)
   {
     KRR_LOGW("Warning: texture_sampler is invalid glsl variable name");
   }
+  program->multitexture_enabled_location = glGetUniformLocation(uprog->program_id, "multitexture_enabled");
+  if (program->multitexture_enabled_location == -1)
+  {
+    KRR_LOGW("Warning: multitexture_enabled is invalid glsl variable name");
+  }
+  program->multitexture_texture_r_location = glGetUniformLocation(uprog->program_id, "multitexture_texture_r");
+  if (program->multitexture_texture_r_location == -1)
+  {
+    KRR_LOGW("Warning: multitexture_texture_r is invalid glsl variable name");
+  }
+  program->multitexture_texture_g_location = glGetUniformLocation(uprog->program_id, "multitexture_texture_g");
+  if (program->multitexture_texture_g_location == -1)
+  {
+    KRR_LOGW("Warning: multitexture_texture_g is invalid glsl variable name");
+  }
+  program->multitexture_texture_b_location = glGetUniformLocation(uprog->program_id, "multitexture_texture_b");
+  if (program->multitexture_texture_b_location == -1)
+  {
+    KRR_LOGW("Warning: multitexture_texture_b is invalid glsl variable name");
+  }
+  program->multitexture_blendmap_location = glGetUniformLocation(uprog->program_id, "multitexture_blendmap");
+  if (program->multitexture_blendmap_location == -1)
+  {
+    KRR_LOGW("Warning: multitexture_blendmap is invalid glsl variable name");
+  }
   program->light_position_location = glGetUniformLocation(uprog->program_id, "light_position");
   if (program->light_position_location == -1)
   {
@@ -270,6 +301,31 @@ void KRR_TERRAINSHADERPROG3D_set_normal_pointer(KRR_TERRAINSHADERPROG3D* program
 void KRR_TERRAINSHADERPROG3D_set_texture_sampler(KRR_TERRAINSHADERPROG3D* program, GLuint sampler)
 {
   glUniform1i(program->texture_sampler_location, sampler);
+}
+
+void KRR_TERRAINSHADERPROG3D_update_multitexture_enabled(KRR_TERRAINSHADERPROG3D* program)
+{
+  glUniform1f(program->multitexture_enabled_location, program->multitexture_enabled ? 1.0f : 0.0f);
+}
+
+void KRR_TERRAINSHADERPROG3D_set_multitexture_texture_r_sampler(KRR_TERRAINSHADERPROG3D* program, GLuint sampler)
+{
+  glUniform1i(program->multitexture_texture_r_location, sampler);
+}
+
+void KRR_TERRAINSHADERPROG3D_set_multitexture_texture_g_sampler(KRR_TERRAINSHADERPROG3D* program, GLuint sampler)
+{
+  glUniform1i(program->multitexture_texture_g_location, sampler);
+}
+
+void KRR_TERRAINSHADERPROG3D_set_multitexture_texture_b_sampler(KRR_TERRAINSHADERPROG3D* program, GLuint sampler)
+{
+  glUniform1i(program->multitexture_texture_b_location, sampler);
+}
+
+void KRR_TERRAINSHADERPROG3D_set_multitexture_blendmap_sampler(KRR_TERRAINSHADERPROG3D* program, GLuint sampler)
+{
+  glUniform1i(program->multitexture_blendmap_location, sampler);
 }
 
 void KRR_TERRAINSHADERPROG3D_enable_attrib_pointers(KRR_TERRAINSHADERPROG3D* program)
