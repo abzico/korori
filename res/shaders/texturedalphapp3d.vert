@@ -17,25 +17,25 @@ out vec3 tolight_dir;
 out float visibility;
 
 // configurations for fog (hardcoded for now)
-const float fog_density = 0.007;
-const float fog_gradient = 1.5;
+const float fog_density = 0.007f;
+const float fog_gradient = 1.5f;
 
 void main()
 {
-  vec4 world_position = model_matrix * vec4(vertex_pos3d, 1.0);
+  vec4 world_position = model_matrix * vec4(vertex_pos3d, 1.0f);
 
   // process texcoord
   outin_texcoord = texcoord;
-  surface_normal = (model_matrix * vec4(normal, 0.0)).xyz;
+  surface_normal = (model_matrix * vec4(normal, 0.0f)).xyz;
 
   tolight_dir = light_position - world_position.xyz;
 
   // calculate direction to camera
-  tocam_dir = (inverse(view_matrix) * vec4(0.0, 0.0, 0.0, 1.0)).xyz - world_position.xyz;
+  tocam_dir = (inverse(view_matrix) * vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz - world_position.xyz;
 
   // calculate fog
   // from eqaution e^(-((distance*density)^gradient)) 
-  if (fog_enabled == 1.0)
+  if (fog_enabled == 1.0f)
   {
     vec4 position_rel_to_cam = view_matrix * world_position;
     float dst = length(position_rel_to_cam.xyz);

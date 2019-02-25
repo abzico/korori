@@ -1,7 +1,7 @@
 #version 330
 
 // texture color
-uniform vec4 text_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform vec4 text_color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 uniform sampler2D texture_sampler;
 
 // texture coordinate
@@ -15,5 +15,5 @@ void main()
   float red = texture(texture_sampler, outin_texcoord).r;
 
   // set alpha fragment
-  final_color = vec4(1.0, 1.0, 1.0, red) * text_color;
+  final_color = vec4(1.0f, 1.0f, 1.0f, red) * text_color;
 }

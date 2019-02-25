@@ -17,5 +17,5 @@ void main()
   outin_texcoord = texcoord;
 
   // process vertex
-  gl_Position = projection_matrix * model_matrix * vec4(vertex_pos2d.x, vertex_pos2d.y, 0.0, 1.0);
+  gl_Position = projection_matrix * model_matrix * vec4(vertex_pos2d.x, vertex_pos2d.y, 0.0f, 1.0f);
 }
