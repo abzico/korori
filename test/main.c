@@ -39,7 +39,7 @@ bool init();
 bool setup();
 void handleEvent(SDL_Event *e, float deltaTime);
 void update(float deltaTime);
-void render(float deltaTime);
+void render();
 void close();
 
 static void on_window_focus_gained(Uint32 window_id);
@@ -208,7 +208,7 @@ void update(float deltaTime)
   usercode_update(deltaTime);
 }
 
-void render(float deltaTime)
+void render()
 {
   if (!gWindow->is_minimized)
   {
@@ -276,30 +276,35 @@ int main(int argc, char* args[])
           common_frameCount++;
 
           // check to reset frame time
-          if (common_frameAccumTime >= 1.0f)
+          if (common_frameAccumTime >= 1.0)
           {
             common_avgFPS = common_frameCount / common_frameAccumTime;
             common_frameCount = 0;
-            common_frameAccumTime -= 1.0f;
+            common_frameAccumTime = 0.0;
           }
 #endif
 
-          // handle events on queue
-          // if it's 0, then it has no pending event
-          // we keep polling all event in each game loop until there is no more pending one left
-          while (SDL_PollEvent(&e) != 0)
+          // catch up updating time
+          while ( common_frameTime >= active_updaterate )
           {
-            // handle window's events
-            KRR_WINDOW_handle_event(gWindow, &e, common_frameTime);
-            // update user's handleEvent()
-            handleEvent(&e, common_frameTime);
+            // handle events on queue
+            // if it's 0, then it has no pending event
+            // we keep polling all event in each game loop until there is no more pending one left
+            while (SDL_PollEvent(&e) != 0)
+            {
+              // handle window's events
+              KRR_WINDOW_handle_event(gWindow, &e, common_frameTime);
+              // update user's handleEvent()
+              handleEvent(&e, common_frameTime);
+            }
+
+            update(active_updaterate);
+
+            // left over will be carried on to the next frame
+            common_frameTime -= active_updaterate;
           }
 
-          update(common_frameTime);
-          render(common_frameTime);
-
-          // reset frametime
-          common_frameTime -= active_updaterate;
+          render();
 
           // update screen
           SDL_GL_SwapWindow(gWindow->window);
