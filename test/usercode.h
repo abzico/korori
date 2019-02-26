@@ -50,6 +50,11 @@ extern void usercode_update(float delta_time);
 extern void usercode_render(void);
 
 ///
+/// Render ui text
+///
+extern void usercode_render_ui_text(void);
+
+///
 /// Render average frame per second
 ///
 /// \param avg_fps average frame per second

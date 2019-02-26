@@ -214,6 +214,7 @@ void render(float deltaTime)
   {
     // relay call to user's code in separate file
     usercode_render();
+    usercode_render_ui_text();
 
 #ifndef DISABLE_FPS_CALC
     // render fps
