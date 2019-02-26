@@ -106,6 +106,8 @@ static float roty = 0.0f;
 static bool is_freelook_mode_enabled = false;
 static bool is_leftmouse_click = false;
 static bool is_show_debugging_text = true;
+static vec3 player_position;
+static float player_forward_rotation = 0.0f;
 
 #define NUM_GRASS_UNIT 10
 #define GRASS_RANDOM_SIZE 30
@@ -198,6 +200,9 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, cam.forward);
   glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, cam.up);
   glm_vec3_copy((vec3){0.0f, 30.0f, 30.0f}, cam.pos);
+
+  // initially set position to player
+  glm_vec3_copy((vec3){0.0f, 0.0f, -15.0f}, player_position);
 
   // seed random function with current time
   // we gonna use some random functions in this sample
@@ -684,52 +689,6 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
     }
   }
 
-  // handle multiple key presses at once
-  const Uint8* key_state = SDL_GetKeyboardState(NULL);
-
-  // move speed is distance per second
-  #define MOVE_SPEED 0.25f
-
-  if (key_state[SDL_SCANCODE_A])
-  {
-    vec3 side;
-    glm_vec3_cross(cam.forward, cam.up, side);
-    vec3 temp;
-    glm_vec3_scale(side, -MOVE_SPEED * delta_time, temp);
-    glm_vec3_add(cam.pos, temp, cam.pos);
-  }
-  if (key_state[SDL_SCANCODE_D])
-  {
-    vec3 side;
-    glm_vec3_cross(cam.forward, cam.up, side);
-    vec3 temp;
-    glm_vec3_scale(side, MOVE_SPEED * delta_time, temp);
-    glm_vec3_add(cam.pos, temp, cam.pos);
-  }
-  if (key_state[SDL_SCANCODE_W])
-  {
-    vec3 temp;
-    glm_vec3_scale(cam.forward, MOVE_SPEED * delta_time, temp);
-    glm_vec3_add(cam.pos, temp, cam.pos);
-  }
-  if (key_state[SDL_SCANCODE_S])
-  {
-    vec3 temp;
-    glm_vec3_scale(cam.forward, -MOVE_SPEED * delta_time, temp);
-    glm_vec3_add(cam.pos, temp, cam.pos);
-  }
-  if (key_state[SDL_SCANCODE_E])
-  {
-    vec3 temp;
-    glm_vec3_scale(cam.up, MOVE_SPEED * delta_time, temp);
-    glm_vec3_add(cam.pos, temp, cam.pos);
-  }
-  if (key_state[SDL_SCANCODE_Q])
-  {
-    vec3 temp;
-    glm_vec3_scale(cam.up, -MOVE_SPEED * delta_time, temp);
-    glm_vec3_add(cam.pos, temp, cam.pos);
-  }
 }
 
 void update_camera(float delta_time)
@@ -761,6 +720,105 @@ void update_camera(float delta_time)
 
 void usercode_update(float delta_time)
 {
+  // note: update key press without relying on event should be put here
+  // handle multiple key presses at once
+  const Uint8* key_state = SDL_GetKeyboardState(NULL);
+
+  // move speed is distance per second
+#define MOVE_SPEED 60.f
+
+#define PLAYER_SPEED 30.f
+#define PLAYER_TURN_SPEED 150.f
+
+  if (key_state[SDL_SCANCODE_A])
+  {
+    if (is_freelook_mode_enabled)
+    {
+      vec3 side;
+      glm_vec3_cross(cam.forward, cam.up, side);
+      vec3 temp;
+      glm_vec3_scale(side, -MOVE_SPEED * delta_time, temp);
+      glm_vec3_add(cam.pos, temp, cam.pos);
+    }
+    else
+    {
+      player_forward_rotation += PLAYER_TURN_SPEED * delta_time;
+      player_forward_rotation = lroundf(player_forward_rotation) % 360;
+    }
+  }
+  if (key_state[SDL_SCANCODE_D])
+  {
+    if (is_freelook_mode_enabled)
+    {
+      vec3 side;
+      glm_vec3_cross(cam.forward, cam.up, side);
+      vec3 temp;
+      glm_vec3_scale(side, MOVE_SPEED * delta_time, temp);
+      glm_vec3_add(cam.pos, temp, cam.pos);
+    }
+    else
+    {
+      player_forward_rotation -= PLAYER_TURN_SPEED * delta_time;
+      player_forward_rotation = lroundf(player_forward_rotation) % 360;
+    }
+  }
+  if (key_state[SDL_SCANCODE_W])
+  {
+    if (is_freelook_mode_enabled)
+    {
+      vec3 temp;
+      glm_vec3_scale(cam.forward, MOVE_SPEED * delta_time, temp);
+      glm_vec3_add(cam.pos, temp, cam.pos);
+    }
+    else
+    {
+      // TODO: migrate this to be global approach later, for now only with this mode
+      float distance = PLAYER_SPEED * delta_time;
+      float rot_rad = glm_rad(player_forward_rotation);
+      float dx = distance * sinf(rot_rad);
+      float dz = distance * cosf(rot_rad);
+
+      glm_vec3_add((vec3){dx, 0.0f, dz}, player_position, player_position);
+    }
+  }
+  if (key_state[SDL_SCANCODE_S])
+  {
+    if (is_freelook_mode_enabled)
+    {
+      vec3 temp;
+      glm_vec3_scale(cam.forward, -MOVE_SPEED * delta_time, temp);
+      glm_vec3_add(cam.pos, temp, cam.pos);
+    }
+    else
+    {
+      float distance = PLAYER_SPEED * delta_time;
+      
+      float rot_rad = glm_rad(player_forward_rotation);
+      float dx = distance * sinf(GLM_PI + rot_rad);
+      float dz = distance * cosf(GLM_PI + rot_rad);
+
+      glm_vec3_add((vec3){dx, 0.0f, dz}, player_position, player_position);
+    }
+  }
+  if (key_state[SDL_SCANCODE_E])
+  {
+    if (is_freelook_mode_enabled)
+    {
+      vec3 temp;
+      glm_vec3_scale(cam.up, MOVE_SPEED * delta_time, temp);
+      glm_vec3_add(cam.pos, temp, cam.pos);
+    }
+  }
+  if (key_state[SDL_SCANCODE_Q])
+  {
+    if (is_freelook_mode_enabled)
+    {
+      vec3 temp;
+      glm_vec3_scale(cam.up, -MOVE_SPEED * delta_time, temp);
+      glm_vec3_add(cam.pos, temp, cam.pos);
+    }
+  }
+
   update_camera(delta_time);
 
   roty += 0.3f;
@@ -791,7 +849,7 @@ void usercode_render(void)
 
   // TODO: render code goes here...
 
-  // STALL & TREE
+  // STALL & TREE & PLAYER
   KRR_SHADERPROG_bind(texture3d_shader->program);
   // render stall
   glBindVertexArray(stall->vao_id);
@@ -831,7 +889,8 @@ void usercode_render(void)
 
     // transform
     glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
-    glm_translate(texture3d_shader->model_matrix, (vec3){0.0f, 0.0f, -15.0f});
+    glm_translate(texture3d_shader->model_matrix, player_position);
+    glm_rotate(texture3d_shader->model_matrix, glm_rad(player_forward_rotation), GLM_YUP);
     // update model matrix
     KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
 
