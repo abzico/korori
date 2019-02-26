@@ -1,5 +1,13 @@
 /* terrain sample
- demonstrate switching and wrapping rendering code properly with objects which are in different type (transparent, opaque)
+ - demonstrate switching and wrapping rendering code properly with objects which are in different type (transparent, opaque)
+ - rendering ui text with font
+ - camera movement and manipulation
+ 
+ Key Control
+ - TAB - to show/hide debugging text on the left
+ - z - to switch between fixed moselook and freelook mode
+ - w/s/a/d and q/e to move foward/backward/strafe-left/strafe-right and move-down/move-up
+ - enter switch between fullscreen and windowed mode
 
  stall, and tree model uses the same (texture 3d) shader
  terrain uses terrain shader
@@ -27,6 +35,11 @@
 #define CONTENT_BG_COLOR 155.0f/255.0f, 202.0f/255.0f, 192.0f/255.0f, 1.0f
 // the color should be the same as content bg color
 #define SKY_COLOR_INIT (vec3){155.0f/255.0f, 202.0f/255.0f, 192.0f/255.0f}
+
+#define TARGET_POS_LOOKAT_INIT (vec3){0.0f, 2.0f, -40.0f}
+
+#define TEXT_RES_FREELOOK_DISABLED "Freelook mode: disabled"
+#define TEXT_RES_FREELOOK_ENABLED "Freelook mode: enabled"
 
 #ifndef DISABLE_FPS_CALC
 #define FPS_BUFFER 7+1
@@ -74,6 +87,7 @@ static KRR_TEXTURE* grass_texture = NULL;
 static KRR_TEXTURE* stall_texture = NULL;
 static KRR_TEXTURE* tree_texture = NULL;
 static KRR_TEXTURE* fern_texture = NULL;
+static KRR_TEXTURE* player_texture = NULL;
 
 static KRR_TEXTURE* mt_r_texture = NULL;
 static KRR_TEXTURE* mt_g_texture = NULL;
@@ -84,9 +98,14 @@ static SIMPLEMODEL* stall = NULL;
 static SIMPLEMODEL* grass = NULL;
 static SIMPLEMODEL* tree = NULL;
 static SIMPLEMODEL* fern = NULL;
+static SIMPLEMODEL* player = NULL;
 static TERRAIN* tr = NULL;
+
 static KRR_CAM cam;
 static float roty = 0.0f;
+static bool is_freelook_mode_enabled = false;
+static bool is_leftmouse_click = false;
+static bool is_show_debugging_text = true;
 
 #define NUM_GRASS_UNIT 10
 #define GRASS_RANDOM_SIZE 30
@@ -103,8 +122,6 @@ static vec3 randomized_fern_pos[NUM_FERN];
 #define TERRAIN_GRID_WIDTH 10
 #define TERRAIN_GRID_HEIGHT 10
 #define TERRAIN_SLOT_SIZE 200
-
-static bool is_leftmouse_click = false;
 
 void usercode_app_went_windowed_mode()
 {
@@ -180,7 +197,7 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // initially start user's camera looking at -z, and up with +y
   glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, cam.forward);
   glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, cam.up);
-  glm_vec3_copy((vec3){0.0f, 1.0f, 3.0f}, cam.pos);
+  glm_vec3_copy((vec3){0.0f, 30.0f, 30.0f}, cam.pos);
 
   // seed random function with current time
   // we gonna use some random functions in this sample
@@ -264,7 +281,7 @@ bool usercode_loadmedia()
   
   // create font
   font = KRR_FONT_new();
-  if (!KRR_FONT_load_freetype(font, "res/fonts/Minecraft.ttf", 40))
+  if (!KRR_FONT_load_freetype(font, "res/fonts/Minecraft.ttf", 14))
   {
     KRR_LOGE("Error to load font");
     return false;
@@ -295,42 +312,49 @@ bool usercode_loadmedia()
   tree_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(tree_texture, "res/models/lowPolyTree.png"))
   {
-    KRR_LOG("Error loading tree texture");
+    KRR_LOGE("Error loading tree texture");
     return false;
   }
   // fern texture
   fern_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(fern_texture, "res/models/fern.png"))
   {
-    KRR_LOG("Error loading fern texture");
+    KRR_LOGE("Error loading fern texture");
+    return false;
+  }
+  // player texture
+  player_texture = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(player_texture, "res/models/playerTexture-flip.png"))
+  {
+    KRR_LOGE("Error loading player texture");
     return false;
   }
   // multitexture r
   mt_r_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(mt_r_texture, "res/models/mud.png"))
   {
-    KRR_LOG("Error loading multitexture r texture");
+    KRR_LOGE("Error loading multitexture r texture");
     return false;
   }
   // multitexture g
   mt_g_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(mt_g_texture, "res/models/grassFlowers.png"))
   {
-    KRR_LOG("Error loading multitexture g texture");
+    KRR_LOGE("Error loading multitexture g texture");
     return false;
   }
   // multitexture b
   mt_b_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(mt_b_texture, "res/models/path.png"))
   {
-    KRR_LOG("Error loading multitexture b texture");
+    KRR_LOGE("Error loading multitexture b texture");
     return false;
   }
   // multitexture blendmap
   mt_blendmap = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(mt_blendmap, "res/models/blendMap.png"))
   {
-    KRR_LOG("Error loading multitexture blendmap");
+    KRR_LOGE("Error loading multitexture blendmap");
     return false;
   }
 
@@ -489,6 +513,14 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading fern model");
     return false;
   }
+
+  // load player model
+  player = SIMPLEMODEL_new();
+  if (!SIMPLEMODEL_load_objfile(player, "res/models/person.obj"))
+  {
+    KRR_LOGE("Error loading player model");
+    return false;
+  }
   
   // load from generation of terrain
   tr = KRR_TERRAIN_new();
@@ -568,25 +600,39 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 				usercode_app_went_fullscreen();
       }
     }
+    else if (k == SDLK_TAB)
+    {
+      is_show_debugging_text = !is_show_debugging_text;
+    }
+    else if (k == SDLK_z)
+    {
+      is_freelook_mode_enabled = !is_freelook_mode_enabled;
+    }
   }
   else if (e->type == SDL_MOUSEBUTTONDOWN)
   {
     if (e->button.button == SDL_BUTTON_LEFT)
     {
-      // allow to change forward, and up vector of user
-      is_leftmouse_click = true;
+      if (is_freelook_mode_enabled)
+      {
+        // allow to change forward, and up vector of user
+        is_leftmouse_click = true;
+      }
     }
   }
   else if (e->type == SDL_MOUSEBUTTONUP)
   {
     if (e->button.button == SDL_BUTTON_LEFT)
     {
-      // disable allowance to chagne direction of user's vectors
-      is_leftmouse_click = false;
+      if (is_freelook_mode_enabled)
+      {
+        // disable allowance to chagne direction of user's vectors
+        is_leftmouse_click = false;
+      }
     }
   }
 
-  if (is_leftmouse_click && e->type == SDL_MOUSEMOTION)
+  if (is_leftmouse_click && is_freelook_mode_enabled && e->type == SDL_MOUSEMOTION)
   {
     SDL_MouseMotionEvent motion = e->motion;
 
@@ -688,9 +734,16 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 
 void update_camera(float delta_time)
 {
-  vec3 cam_target;
-  glm_vec3_add(cam.pos, cam.forward, cam_target);
-  glm_lookat(cam.pos, cam_target, cam.up, g_view_matrix);
+  if (is_freelook_mode_enabled)
+  {
+    vec3 cam_target;
+    glm_vec3_add(cam.pos, cam.forward, cam_target);
+    glm_lookat(cam.pos, cam_target, cam.up, g_view_matrix);
+  }
+  else
+  {
+    glm_lookat(cam.pos, TARGET_POS_LOOKAT_INIT, cam.up, g_view_matrix);
+  }
 
   // texture 3d
   KRR_SHADERPROG_bind(texture3d_shader->program);
@@ -717,7 +770,7 @@ void usercode_update(float delta_time)
   }
 }
 
-void usercode_render()
+void usercode_render(void)
 {
   // clear color buffer
   if (g_need_clipping)
@@ -770,6 +823,20 @@ void usercode_render()
       // render
       SIMPLEMODEL_render(tree);
     }
+
+  // render player
+  glBindVertexArray(player->vao_id);
+    // bind texture
+    glBindTexture(GL_TEXTURE_2D, player_texture->texture_id);
+
+    // transform
+    glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
+    glm_translate(texture3d_shader->model_matrix, (vec3){0.0f, 0.0f, -15.0f});
+    // update model matrix
+    KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
+
+    // render
+    SIMPLEMODEL_render(player);
 
   // unbind shader
   KRR_SHADERPROG_unbind(texture3d_shader->program);
@@ -868,17 +935,42 @@ void usercode_render()
   }
 }
 
+void usercode_render_ui_text(void)
+{
+  if (is_show_debugging_text)
+  {
+    KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
+    KRR_FONT_bind_vao(font);
+    
+      // enable blending with default blend function
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+      // transform
+      glm_mat4_copy(g_base_ui_model_matrix, shared_font_shaderprogram->model_matrix);
+      KRR_FONTSHADERPROG2D_update_model_matrix(shared_font_shaderprogram);
+
+      // render starting at top left corner
+      KRR_FONT_render_textex(font, is_freelook_mode_enabled ? TEXT_RES_FREELOOK_ENABLED : TEXT_RES_FREELOOK_DISABLED, 4.f, 4.0f, &(SIZE){g_logical_width, g_logical_height}, KRR_FONT_TEXTALIGNMENT_LEFT | KRR_FONT_TEXTALIGNMENT_TOP);
+
+      // disable blending
+      glDisable(GL_BLEND);
+      
+    KRR_FONT_unbind_vao(font);
+    KRR_SHADERPROG_unbind(shared_font_shaderprogram->program);
+  }
+}
+
 void usercode_render_fps(int avg_fps)
 {
 #ifndef DISABLE_FPS_CALC
   // form framerate string to render
   snprintf(fps_text, FPS_BUFFER-1, "%d", avg_fps);
 
-  // bind fps-vao
-  KRR_FONT_bind_vao(fps_font);
-
   // use shared font shader
   KRR_SHADERPROG_bind(shared_font_shaderprogram->program);
+  // bind fps-vao
+  KRR_FONT_bind_vao(fps_font);
 
     // enable blending with default blend function
     glEnable(GL_BLEND);
@@ -890,13 +982,13 @@ void usercode_render_fps(int avg_fps)
 
     // render text on top right
     KRR_FONT_render_textex(fps_font, fps_text, 0.f, 4.f, &(SIZE){g_logical_width, g_logical_height}, KRR_FONT_TEXTALIGNMENT_RIGHT | KRR_FONT_TEXTALIGNMENT_TOP);
-  KRR_SHADERPROG_unbind(shared_font_shaderprogram->program);
 
     // disable blending
     glDisable(GL_BLEND);
 
   // unbind fps-vao
   KRR_FONT_unbind_vao(fps_font);
+  KRR_SHADERPROG_unbind(shared_font_shaderprogram->program);
 #endif 
 }
 
@@ -965,6 +1057,11 @@ void usercode_close()
     KRR_TEXTURE_free(fern_texture);
     fern_texture = NULL;
   }
+  if (player_texture != NULL)
+  {
+    KRR_TEXTURE_free(player_texture);
+    player_texture = NULL;
+  }
   if (mt_r_texture != NULL)
   {
     KRR_TEXTURE_free(mt_r_texture);
@@ -1005,6 +1102,11 @@ void usercode_close()
   {
     SIMPLEMODEL_free(fern);
     fern = NULL;
+  }
+  if (player != NULL)
+  {
+    SIMPLEMODEL_free(player);
+    player = NULL;
   }
   if (tr != NULL)
   {
