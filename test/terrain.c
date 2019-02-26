@@ -108,6 +108,8 @@ static bool is_leftmouse_click = false;
 static bool is_show_debugging_text = true;
 static vec3 player_position;
 static float player_forward_rotation = 0.0f;
+static vec3 player_jump_velocity;
+static bool is_player_inair = false;
 
 #define NUM_GRASS_UNIT 10
 #define GRASS_RANDOM_SIZE 30
@@ -124,6 +126,13 @@ static vec3 randomized_fern_pos[NUM_FERN];
 #define TERRAIN_GRID_WIDTH 10
 #define TERRAIN_GRID_HEIGHT 10
 #define TERRAIN_SLOT_SIZE 200
+
+// all in per second
+#define MOVE_SPEED 60.f
+#define PLAYER_SPEED 30.f
+#define PLAYER_TURN_SPEED 150.f
+#define GRAVITY -5.f
+#define JUMP_POWER 75.0f
 
 void usercode_app_went_windowed_mode()
 {
@@ -613,6 +622,16 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
     {
       is_freelook_mode_enabled = !is_freelook_mode_enabled;
     }
+    else if (k == SDLK_SPACE)
+    {
+      if (!is_player_inair)
+      {
+        // update player's position in game loop
+        is_player_inair = true;
+        // define jump velocity
+        glm_vec3_copy(GLM_YUP, player_jump_velocity);
+      }
+    }
   }
   else if (e->type == SDL_MOUSEBUTTONDOWN)
   {
@@ -688,7 +707,6 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       glm_vec3_copy(forward, cam.forward);
     }
   }
-
 }
 
 void update_camera(float delta_time)
@@ -723,12 +741,6 @@ void usercode_update(float delta_time)
   // note: update key press without relying on event should be put here
   // handle multiple key presses at once
   const Uint8* key_state = SDL_GetKeyboardState(NULL);
-
-  // move speed is distance per second
-#define MOVE_SPEED 60.f
-
-#define PLAYER_SPEED 30.f
-#define PLAYER_TURN_SPEED 150.f
 
   if (key_state[SDL_SCANCODE_A])
   {
@@ -816,6 +828,31 @@ void usercode_update(float delta_time)
       vec3 temp;
       glm_vec3_scale(cam.up, -MOVE_SPEED * delta_time, temp);
       glm_vec3_add(cam.pos, temp, cam.pos);
+    }
+  }
+
+  // update position of user if user jumps
+  if (is_player_inair)
+  {
+    // pos = pos + velocity*dt
+    // velocity = velocity + gravity*dt
+    vec3 velocity;
+    glm_vec3_scale(player_jump_velocity, JUMP_POWER * delta_time, velocity);
+    vec3 gravity;
+    glm_vec3_scale(GLM_YUP, GRAVITY * delta_time, gravity);
+    // update position
+    glm_vec3_add(velocity, player_position, player_position);
+    // update velocity
+    glm_vec3_add(player_jump_velocity, gravity, player_jump_velocity);
+
+    // check if player touches the ground
+    if (player_position[1] < 0.0f)
+    {
+      is_player_inair = false;
+      // set player on the ground
+      player_position[1] = 0.0f;
+      // no more jump velocity
+      glm_vec3_zero(player_jump_velocity);
     }
   }
 
