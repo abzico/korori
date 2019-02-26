@@ -73,6 +73,7 @@ static KRR_TEXTURE* terrain_texture = NULL;
 static KRR_TEXTURE* grass_texture = NULL;
 static KRR_TEXTURE* stall_texture = NULL;
 static KRR_TEXTURE* tree_texture = NULL;
+static KRR_TEXTURE* fern_texture = NULL;
 
 static KRR_TEXTURE* mt_r_texture = NULL;
 static KRR_TEXTURE* mt_g_texture = NULL;
@@ -82,6 +83,7 @@ static KRR_TEXTURE* mt_blendmap = NULL;
 static SIMPLEMODEL* stall = NULL;
 static SIMPLEMODEL* grass = NULL;
 static SIMPLEMODEL* tree = NULL;
+static SIMPLEMODEL* fern = NULL;
 static TERRAIN* tr = NULL;
 static KRR_CAM cam;
 static float roty = 0.0f;
@@ -93,6 +95,10 @@ static vec3 randomized_grass_pos[NUM_GRASS_UNIT];
 #define NUM_TREE 3
 #define TREE_RANDOM_SIZE 50
 static vec3 randomized_tree_pos[NUM_TREE];
+
+#define NUM_FERN 10
+#define FERN_RANDOM_SIZE 50
+static vec3 randomized_fern_pos[NUM_FERN];
 
 #define TERRAIN_GRID_WIDTH 10
 #define TERRAIN_GRID_HEIGHT 10
@@ -292,6 +298,13 @@ bool usercode_loadmedia()
     KRR_LOG("Error loading tree texture");
     return false;
   }
+  // fern texture
+  fern_texture = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(fern_texture, "res/models/fern.png"))
+  {
+    KRR_LOG("Error loading fern texture");
+    return false;
+  }
   // multitexture r
   mt_r_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(mt_r_texture, "res/models/mud.png"))
@@ -332,6 +345,11 @@ bool usercode_loadmedia()
   for (int i=0; i<NUM_TREE; ++i)
   {
     glm_vec3_copy((vec3){KRR_math_rand_float2(-TREE_RANDOM_SIZE, TREE_RANDOM_SIZE), -1.0f, KRR_math_rand_float2(-TREE_RANDOM_SIZE, TREE_RANDOM_SIZE)}, randomized_tree_pos[i]);
+  }
+
+  for (int i=0; i<NUM_FERN; ++i)
+  {
+    glm_vec3_copy((vec3){KRR_math_rand_float2(-FERN_RANDOM_SIZE, FERN_RANDOM_SIZE), -1.0f, KRR_math_rand_float2(-FERN_RANDOM_SIZE, FERN_RANDOM_SIZE)}, randomized_fern_pos[i]);
   }
 
   // initially update all related matrices and related graphics stuff for both basic shaders
@@ -456,11 +474,19 @@ bool usercode_loadmedia()
     return false;
   }
 
-  // load tree mode
+  // load tree model
   tree = SIMPLEMODEL_new();
   if (!SIMPLEMODEL_load_objfile(tree, "res/models/lowPolyTree.obj"))
   {
     KRR_LOGE("Error loading tree model file");
+    return false;
+  }
+  
+  // load fern model
+  fern = SIMPLEMODEL_new();
+  if (!SIMPLEMODEL_load_objfile(fern, "res/models/fern.obj"))
+  {
+    KRR_LOGE("Error loading fern model");
     return false;
   }
   
@@ -791,28 +817,21 @@ void usercode_render()
   // unbind shader
   KRR_SHADERPROG_unbind(terrain3d_shader->program);
 
-  // TEXTURE ALPHA
+  // TEXTURE ALPHA (grass & fern)
   KRR_SHADERPROG_bind(texturealpha3d_shader->program);
+  // disable backface culling as grass made up of crossing polygon
+  glDisable(GL_CULL_FACE);
+
   // render grass
   glBindVertexArray(grass->vao_id);
     // bind texture
-    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, grass_texture->texture_id);
     // clamp texture
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-    // disable backface culling as grass made up of crossing polygon
-    glDisable(GL_CULL_FACE);
-    // enable blending with default blend function
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     for (int i=0; i<NUM_GRASS_UNIT; ++i)
     {
-      // transform
-      // **note: we have problem re-export grasssModel thus we need
-      // to use original one which -y is UP
       glm_mat4_copy(g_base_model_matrix, texturealpha3d_shader->model_matrix);
       glm_rotate(texturealpha3d_shader->model_matrix, GLM_PI, GLM_ZUP);
       glm_translate(texturealpha3d_shader->model_matrix, randomized_grass_pos[i]);
@@ -821,10 +840,22 @@ void usercode_render()
       SIMPLEMODEL_render(grass);
     }
 
-    // diable blending
-    glDisable(GL_BLEND);
-    // enable backface culling again
-    glEnable(GL_CULL_FACE);
+  // render fern
+  glBindVertexArray(fern->vao_id);
+    // bind texture
+    glBindTexture(GL_TEXTURE_2D, fern_texture->texture_id);
+
+    for (int i=0; i<NUM_FERN; ++i)
+    {
+      glm_mat4_copy(g_base_model_matrix, texturealpha3d_shader->model_matrix);
+      glm_translate(texturealpha3d_shader->model_matrix, randomized_fern_pos[i]);
+      KRR_TEXALPHASHADERPROG3D_update_model_matrix(texturealpha3d_shader);
+
+      SIMPLEMODEL_render(fern);
+    }
+
+  // enable backface culling again
+  glEnable(GL_CULL_FACE);
   // unbind vao
   glBindVertexArray(0);
   // unbind shader
@@ -929,6 +960,11 @@ void usercode_close()
     KRR_TEXTURE_free(tree_texture);
     tree_texture = NULL;
   }
+  if (fern_texture != NULL)
+  {
+    KRR_TEXTURE_free(fern_texture);
+    fern_texture = NULL;
+  }
   if (mt_r_texture != NULL)
   {
     KRR_TEXTURE_free(mt_r_texture);
@@ -964,6 +1000,11 @@ void usercode_close()
   {
     SIMPLEMODEL_free(tree);
     tree = NULL;
+  }
+  if (fern != NULL)
+  {
+    SIMPLEMODEL_free(fern);
+    fern = NULL;
   }
   if (tr != NULL)
   {
