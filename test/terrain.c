@@ -673,6 +673,27 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       }
     }
   }
+  else if (e->type == SDL_MOUSEWHEEL)
+  {
+    if (!is_freelook_mode_enabled)
+    {
+      // SDL doesn't keep consistent behavior across the platform
+      // if direction is flipped, then we need to process opposite value
+      int flip = e->wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.0 : 1.0;
+      int sign = e->wheel.y < 0.0 ? -1.0 : 1.0;
+      KRR_LOGI("mousewheel y: %f", e->wheel.y * flip * delta_time * 40.0f);
+
+      float abs_amount = fabsf(e->wheel.y * delta_time * 40.0f);
+      if (abs_amount > 6.0f)
+        abs_amount = 6.0f;
+
+      // update to cam's relative pos for +y and +z axis
+      float real_amount = abs_amount * flip * sign;
+      cam.pos[1] -= real_amount;
+      cam.pos[2] -= real_amount * 2.0f;
+      KRR_LOGI("cam.pos[2] = %f (amount = %f)", cam.pos[2], abs_amount * flip * sign);
+    }
+  }
 
   if (is_leftmouse_click && is_freelook_mode_enabled && e->type == SDL_MOUSEMOTION)
   {
