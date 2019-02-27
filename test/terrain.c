@@ -107,12 +107,19 @@ static float roty = 0.0f;
 static bool is_freelook_mode_enabled = false;   // not 100% freedom
 static bool is_leftmouse_click = false;
 static bool is_show_debugging_text = true;
+
+// player's positining variables
 static CGLM_ALIGN(8) vec3 player_position;
 static float player_forward_rotation = 0.0f;
 static CGLM_ALIGN(8) vec3 player_jump_velocity;
 static bool is_player_inair = false;
+static CGLM_ALIGN(8) vec3 player_cam_distance;
+
+// player's dummy position and rotation used in freelook as a placeholder object
+// for camera to keeps following
 static CGLM_ALIGN(8) vec3 player_dummy_pos;
 static versor player_dummy_object_rot;
+
 static versor cam_rot;
 
 #define NUM_GRASS_UNIT 10
@@ -215,6 +222,9 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 
   // initially set position to player
   glm_vec3_copy((vec3){0.0f, 0.0f, -15.0f}, player_position);
+
+  // initialize cam mode's properties
+  glm_vec3_copy(GLM_VEC3_ZERO, player_cam_distance);
 
   // define dummy object's position and rotation as quaternion
   // camera will follow relatively to dummy object here
@@ -677,6 +687,11 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
   {
     if (!is_freelook_mode_enabled)
     {
+      // compute direction vector to move camera back
+      CGLM_ALIGN(8) vec3 back;
+      glm_vec3_sub(cam.pos, player_position, back);
+      glm_vec3_normalize(back);
+
       // SDL doesn't keep consistent behavior across the platform
       // if direction is flipped, then we need to process opposite value
       int flip = e->wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.0 : 1.0;
@@ -689,9 +704,10 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 
       // update to cam's relative pos for +y and +z axis
       float real_amount = abs_amount * flip * sign;
-      cam.pos[1] -= real_amount;
-      cam.pos[2] -= real_amount * 2.0f;
-      KRR_LOGI("cam.pos[2] = %f (amount = %f)", cam.pos[2], abs_amount * flip * sign);
+      // proceed back along the back direction
+      glm_vec3_scale(back, real_amount, back);
+      glm_vec3_add(player_cam_distance, back, player_cam_distance);
+      KRR_LOGI("amount = %f", abs_amount * flip * sign);
     }
   }
 
@@ -748,15 +764,30 @@ void update_camera(float delta_time)
 
     // transform position to place camera behind
     glm_vec3_rotate_m4(cam_transform, campos, campos);
-    glm_vec3_add(campos, player_dummy_pos, campos);
+    glm_vec3_add(campos, player_dummy_pos, cam.pos);
 
     // compute view matrix (lookat vector)
     // always use +y as UP 
-    glm_lookat(campos, player_dummy_pos, GLM_YUP, g_view_matrix);
+    glm_lookat(cam.pos, player_dummy_pos, GLM_YUP, g_view_matrix);
   }
   else
   {
-    glm_lookat(cam.pos, TARGET_POS_LOOKAT_INIT, cam.up, g_view_matrix);
+    // define relative position to place our camera right behind the dummy object
+    CGLM_ALIGN(8) vec3 campos;
+    glm_vec3_copy((vec3){0.0f, 50.0f, 60.0f}, campos);
+    glm_vec3_add(player_position, campos, cam.pos);
+
+    // cam modes
+    // addition: zoom in/out
+    glm_vec3_add(cam.pos, player_cam_distance, cam.pos);
+
+    // adjust look at position to be at the head of player
+    CGLM_ALIGN(8) vec3 lookat_pos;
+    glm_vec3_copy((vec3){0.0f, 10.0f, 0.0f}, lookat_pos);
+    glm_vec3_add(lookat_pos, player_position, lookat_pos);
+
+    // create view matrix
+    glm_lookat(cam.pos, lookat_pos, GLM_YUP, g_view_matrix);
   }
 
   // texture 3d
