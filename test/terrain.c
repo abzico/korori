@@ -2,6 +2,7 @@
  - demonstrate switching and wrapping rendering code properly with objects which are in different type (transparent, opaque)
  - rendering ui text with font
  - camera movement and manipulation
+ - fps camera implementation via quaternion
  
  Key Control
  - TAB - to show/hide debugging text on the left
@@ -103,7 +104,7 @@ static TERRAIN* tr = NULL;
 
 static KRR_CAM cam;
 static float roty = 0.0f;
-static bool is_freelook_mode_enabled = false;
+static bool is_freelook_mode_enabled = false;   // not 100% freedom
 static bool is_leftmouse_click = false;
 static bool is_show_debugging_text = true;
 static CGLM_ALIGN(8) vec3 player_position;
@@ -218,6 +219,11 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // camera will follow relatively to dummy object here
   glm_vec3_copy(cam.pos, player_dummy_pos);
   glm_quat_identity(player_dummy_object_rot);
+  
+  if (SDL_SetRelativeMouseMode(true) < 0)
+  {
+    KRR_LOGE("Warning: error set relatie mouse mode");
+  }
 
   // seed random function with current time
   // we gonna use some random functions in this sample
@@ -672,7 +678,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
     }
   }
 
-  if (is_leftmouse_click && is_freelook_mode_enabled && e->type == SDL_MOUSEMOTION)
+  if (is_freelook_mode_enabled && e->type == SDL_MOUSEMOTION)
   {
     SDL_MouseMotionEvent motion = e->motion;
 
@@ -724,13 +730,9 @@ void update_camera(float delta_time)
     glm_vec3_rotate_m4(dummy_transform, campos, campos);
     glm_vec3_add(campos, player_dummy_pos, campos);
 
-    // calcaulte up vector (to compute view matrix)
-    CGLM_ALIGN(8) vec3 up;
-    glm_vec3_copy(GLM_YUP, up);
-    glm_vec3_rotate_m4(dummy_transform, up, up);
-
     // compute view matrix (lookat vector)
-    glm_lookat(campos, player_dummy_pos, up, g_view_matrix);
+    // always use +y as UP 
+    glm_lookat(campos, player_dummy_pos, GLM_YUP, g_view_matrix);
   }
   else
   {
@@ -771,6 +773,8 @@ void usercode_update(float delta_time)
       
       // compute final of forward vector
       glm_vec3_rotate_m4(dummy_transform, move, move);
+      move[1] = 0.0f;
+      glm_vec3_normalize(move);
 
       // proceed distance along the line of forward vector
       glm_vec3_scale(move, MOVE_SPEED * delta_time, move);
@@ -796,6 +800,8 @@ void usercode_update(float delta_time)
       
       // compute final of forward vector
       glm_vec3_rotate_m4(dummy_transform, move, move);
+      move[1] = 0.0f;
+      glm_vec3_normalize(move);
 
       // proceed distance along the line of forward vector
       glm_vec3_scale(move, MOVE_SPEED * delta_time, move);
@@ -821,6 +827,8 @@ void usercode_update(float delta_time)
       
       // compute final of forward vector
       glm_vec3_rotate_m4(dummy_transform, forward, forward);
+      forward[1] = 0.0f;
+      glm_vec3_normalize(forward);
 
       // proceed distance along the line of forward vector
       glm_vec3_scale(forward, MOVE_SPEED * delta_time, forward);
@@ -851,6 +859,8 @@ void usercode_update(float delta_time)
       
       // compute final of forward vector
       glm_vec3_rotate_m4(dummy_transform, move, move);
+      move[1] = 0.0f;
+      glm_vec3_normalize(move);
 
       // proceed distance along the line of forward vector
       glm_vec3_scale(move, MOVE_SPEED * delta_time, move);
@@ -881,6 +891,9 @@ void usercode_update(float delta_time)
       
       // compute final of forward vector
       glm_vec3_rotate_m4(dummy_transform, move, move);
+      move[0] = 0.0f;
+      move[2] = 0.0f;
+      glm_vec3_normalize(move);
 
       // proceed distance along the line of forward vector
       glm_vec3_scale(move, MOVE_SPEED * delta_time, move);
@@ -901,6 +914,9 @@ void usercode_update(float delta_time)
       
       // compute final of forward vector
       glm_vec3_rotate_m4(dummy_transform, move, move);
+      move[0] = 0.0f;
+      move[2] = 0.0f;
+      glm_vec3_normalize(move);
 
       // proceed distance along the line of forward vector
       glm_vec3_scale(move, MOVE_SPEED * delta_time, move);
