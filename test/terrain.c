@@ -113,6 +113,7 @@ static CGLM_ALIGN(8) vec3 player_jump_velocity;
 static bool is_player_inair = false;
 static CGLM_ALIGN(8) vec3 player_dummy_pos;
 static versor player_dummy_object_rot;
+static versor cam_rot;
 
 #define NUM_GRASS_UNIT 10
 #define GRASS_RANDOM_SIZE 30
@@ -219,11 +220,6 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // camera will follow relatively to dummy object here
   glm_vec3_copy(cam.pos, player_dummy_pos);
   glm_quat_identity(player_dummy_object_rot);
-  
-  if (SDL_SetRelativeMouseMode(true) < 0)
-  {
-    KRR_LOGE("Warning: error set relatie mouse mode");
-  }
 
   // seed random function with current time
   // we gonna use some random functions in this sample
@@ -678,7 +674,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
     }
   }
 
-  if (is_freelook_mode_enabled && e->type == SDL_MOUSEMOTION)
+  if (is_leftmouse_click && is_freelook_mode_enabled && e->type == SDL_MOUSEMOTION)
   {
     SDL_MouseMotionEvent motion = e->motion;
 
@@ -718,16 +714,19 @@ void update_camera(float delta_time)
 {
   if (is_freelook_mode_enabled)
   {
+    // lerp 10% to target of player's dummy object rotation
+    glm_quat_lerp(cam_rot, player_dummy_object_rot, 0.45f, cam_rot);
+
     // define relative position to place our camera right behind the dummy object
     CGLM_ALIGN(8) vec3 campos;
     glm_vec3_copy((vec3){0.0f, 0.0f, 0.2f}, campos);
 
     // get matrix from quaternion
-    CGLM_ALIGN_MAT mat4 dummy_transform;
-    glm_quat_mat4(player_dummy_object_rot, dummy_transform);
+    CGLM_ALIGN_MAT mat4 cam_transform;
+    glm_quat_mat4(cam_rot, cam_transform);
 
     // transform position to place camera behind
-    glm_vec3_rotate_m4(dummy_transform, campos, campos);
+    glm_vec3_rotate_m4(cam_transform, campos, campos);
     glm_vec3_add(campos, player_dummy_pos, campos);
 
     // compute view matrix (lookat vector)
