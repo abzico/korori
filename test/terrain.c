@@ -106,24 +106,24 @@ static float roty = 0.0f;
 static bool is_freelook_mode_enabled = false;
 static bool is_leftmouse_click = false;
 static bool is_show_debugging_text = true;
-static vec3 player_position;
+static CGLM_ALIGN(8) vec3 player_position;
 static float player_forward_rotation = 0.0f;
-static vec3 player_jump_velocity;
+static CGLM_ALIGN(8) vec3 player_jump_velocity;
 static bool is_player_inair = false;
-static vec3 player_dummy_pos;
+static CGLM_ALIGN(8) vec3 player_dummy_pos;
 static versor player_dummy_object_rot;
 
 #define NUM_GRASS_UNIT 10
 #define GRASS_RANDOM_SIZE 30
-static vec3 randomized_grass_pos[NUM_GRASS_UNIT];
+static CGLM_ALIGN(8) vec3 randomized_grass_pos[NUM_GRASS_UNIT];
 
 #define NUM_TREE 3
 #define TREE_RANDOM_SIZE 50
-static vec3 randomized_tree_pos[NUM_TREE];
+static CGLM_ALIGN(8) vec3 randomized_tree_pos[NUM_TREE];
 
 #define NUM_FERN 10
 #define FERN_RANDOM_SIZE 50
-static vec3 randomized_fern_pos[NUM_FERN];
+static CGLM_ALIGN(8) vec3 randomized_fern_pos[NUM_FERN];
 
 #define TERRAIN_GRID_WIDTH 10
 #define TERRAIN_GRID_HEIGHT 10
@@ -199,7 +199,6 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 
   // initialize clear color
   glClearColor(0.f, 0.f, 0.f, 1.f);
-
 
   // enable face culling
   glEnable(GL_CULL_FACE);
@@ -714,11 +713,11 @@ void update_camera(float delta_time)
   if (is_freelook_mode_enabled)
   {
     // define relative position to place our camera right behind the dummy object
-    vec3 campos;
+    CGLM_ALIGN(8) vec3 campos;
     glm_vec3_copy((vec3){0.0f, 0.0f, 0.2f}, campos);
 
     // get matrix from quaternion
-    mat4 dummy_transform;
+    CGLM_ALIGN_MAT mat4 dummy_transform;
     glm_quat_mat4(player_dummy_object_rot, dummy_transform);
 
     // transform position to place camera behind
@@ -726,7 +725,7 @@ void update_camera(float delta_time)
     glm_vec3_add(campos, player_dummy_pos, campos);
 
     // calcaulte up vector (to compute view matrix)
-    vec3 up;
+    CGLM_ALIGN(8) vec3 up;
     glm_vec3_copy(GLM_YUP, up);
     glm_vec3_rotate_m4(dummy_transform, up, up);
 
@@ -763,11 +762,11 @@ void usercode_update(float delta_time)
     if (is_freelook_mode_enabled)
     {
       // original forward vector
-      vec3 move;
+      CGLM_ALIGN(8) vec3 move;
       glm_vec3_copy((vec3){-1.0f, 0.0f, 0.0f}, move);
 
       // convert quaternion to matrix
-      mat4 dummy_transform;
+      CGLM_ALIGN_MAT mat4 dummy_transform;
       glm_quat_mat4(player_dummy_object_rot, dummy_transform);
       
       // compute final of forward vector
@@ -788,11 +787,11 @@ void usercode_update(float delta_time)
     if (is_freelook_mode_enabled)
     {
       // original forward vector
-      vec3 move;
+      CGLM_ALIGN(8) vec3 move;
       glm_vec3_copy(GLM_XUP, move);
 
       // convert quaternion to matrix
-      mat4 dummy_transform;
+      CGLM_ALIGN_MAT mat4 dummy_transform;
       glm_quat_mat4(player_dummy_object_rot, dummy_transform);
       
       // compute final of forward vector
@@ -813,11 +812,11 @@ void usercode_update(float delta_time)
     if (is_freelook_mode_enabled)
     {
       // original forward vector
-      vec3 forward;
+      CGLM_ALIGN(8) vec3 forward;
       glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, forward);
 
       // convert quaternion to matrix
-      mat4 dummy_transform;
+      CGLM_ALIGN_MAT mat4 dummy_transform;
       glm_quat_mat4(player_dummy_object_rot, dummy_transform);
       
       // compute final of forward vector
@@ -843,11 +842,11 @@ void usercode_update(float delta_time)
     if (is_freelook_mode_enabled)
     {
       // original forward vector
-      vec3 move;
+      CGLM_ALIGN(8) vec3 move;
       glm_vec3_copy(GLM_ZUP, move);
 
       // convert quaternion to matrix
-      mat4 dummy_transform;
+      CGLM_ALIGN_MAT mat4 dummy_transform;
       glm_quat_mat4(player_dummy_object_rot, dummy_transform);
       
       // compute final of forward vector
@@ -873,11 +872,11 @@ void usercode_update(float delta_time)
     if (is_freelook_mode_enabled)
     {
       // original forward vector
-      vec3 move;
+      CGLM_ALIGN(8) vec3 move;
       glm_vec3_copy(GLM_YUP, move);
 
       // convert quaternion to matrix
-      mat4 dummy_transform;
+      CGLM_ALIGN_MAT mat4 dummy_transform;
       glm_quat_mat4(player_dummy_object_rot, dummy_transform);
       
       // compute final of forward vector
@@ -893,11 +892,11 @@ void usercode_update(float delta_time)
     if (is_freelook_mode_enabled)
     {
       // original forward vector
-      vec3 move;
+      CGLM_ALIGN(8) vec3 move;
       glm_vec3_copy((vec3){0.0f, -1.0f, 0.0f}, move);
 
       // convert quaternion to matrix
-      mat4 dummy_transform;
+      CGLM_ALIGN_MAT mat4 dummy_transform;
       glm_quat_mat4(player_dummy_object_rot, dummy_transform);
       
       // compute final of forward vector
@@ -914,9 +913,9 @@ void usercode_update(float delta_time)
   {
     // pos = pos + velocity*dt
     // velocity = velocity + gravity*dt
-    vec3 velocity;
+    CGLM_ALIGN(8) vec3 velocity;
     glm_vec3_scale(player_jump_velocity, JUMP_POWER * delta_time, velocity);
-    vec3 gravity;
+    CGLM_ALIGN(8) vec3 gravity;
     glm_vec3_scale(GLM_YUP, GRAVITY * delta_time, gravity);
     // update position
     glm_vec3_add(velocity, player_position, player_position);
