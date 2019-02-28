@@ -334,6 +334,9 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading terrain's texture");
     return false;
   }
+  glBindTexture(GL_TEXTURE_2D, terrain_texture->texture_id);
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, 0.0f);
+
   // grass texture
   grass_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(grass_texture, "res/models/grassTexture.png"))
@@ -376,6 +379,9 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading multitexture r texture");
     return false;
   }
+  glBindTexture(GL_TEXTURE_2D, mt_r_texture->texture_id);
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, 0.0f);
+
   // multitexture g
   mt_g_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(mt_g_texture, "res/models/grassFlowers.png"))
@@ -383,6 +389,9 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading multitexture g texture");
     return false;
   }
+  glBindTexture(GL_TEXTURE_2D, mt_g_texture->texture_id);
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, 0.0f);
+
   // multitexture b
   mt_b_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(mt_b_texture, "res/models/path.png"))
@@ -390,6 +399,11 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading multitexture b texture");
     return false;
   }
+  // generate mipmap stack for multitexture b
+  // note: bind texture first, then call util function
+  glBindTexture(GL_TEXTURE_2D, mt_b_texture->texture_id);
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1.2f);
+
   // multitexture blendmap
   mt_blendmap = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(mt_blendmap, "res/models/blendMap.png"))
