@@ -106,21 +106,27 @@ static KRR_CAM cam;
 static float roty = 0.0f;
 static bool is_freelook_mode_enabled = false;   // not 100% freedom
 static bool is_leftmouse_click = false;
+static bool is_rightmouse_click = false;
 static bool is_show_debugging_text = true;
+
+#define PLAYER_CAM_MIN_DISTANCE 30.0f
+#define PLAYER_CAM_MAX_DISTANCE 250.0f
 
 // player's positining variables
 static CGLM_ALIGN(8) vec3 player_position;
-static float player_forward_rotation = 0.0f;
+static float player_forward_rotation = 180.0f;
 static CGLM_ALIGN(8) vec3 player_jump_velocity;
 static bool is_player_inair = false;
-static CGLM_ALIGN(8) vec3 player_cam_distance;
+static float player_cam_distance;
+static float player_cam_pitch_angle;  // in degrees
+static float player_cam_yaw_angle;    // in degrees
 
 // player's dummy position and rotation used in freelook as a placeholder object
 // for camera to keeps following
 static CGLM_ALIGN(8) vec3 player_dummy_pos;
-static versor player_dummy_object_rot;
+static CGLM_ALIGN(16) versor player_dummy_object_rot;
 
-static versor cam_rot;
+static CGLM_ALIGN(16) versor cam_rot;
 
 #define NUM_GRASS_UNIT 10
 #define GRASS_RANDOM_SIZE 30
@@ -222,9 +228,11 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
 
   // initially set position to player
   glm_vec3_copy((vec3){0.0f, 0.0f, -15.0f}, player_position);
-
-  // initialize cam mode's properties
-  glm_vec3_copy(GLM_VEC3_ZERO, player_cam_distance);
+  
+  // initialize the distance at the startup
+  player_cam_distance = KRR_math_lerp(PLAYER_CAM_MIN_DISTANCE, PLAYER_CAM_MAX_DISTANCE, 0.2f);
+  player_cam_pitch_angle = 30.0f;
+  player_cam_yaw_angle = 0.0f;
 
   // define dummy object's position and rotation as quaternion
   // camera will follow relatively to dummy object here
@@ -663,12 +671,10 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
     }
     if (e->button.button == SDL_BUTTON_RIGHT)
     {
-      if (is_freelook_mode_enabled)
+      if (!is_freelook_mode_enabled)
       {
-        // reset rotation of player's dummy object
-        // this will stabilize camera's rotation in 3d space
-        // note: just set it to identity, nullify additional rotation calculation done from mouse-move
-        glm_quat_identity(player_dummy_object_rot);
+        // allow to change pitch of player's camera
+        is_rightmouse_click = true;
       }
     }
   }
@@ -682,21 +688,20 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         is_leftmouse_click = false;
       }
     }
+    if (e->button.button == SDL_BUTTON_RIGHT)
+    {
+      // disable allowance to change pitch of camera
+      is_rightmouse_click = false;
+    }
   }
   else if (e->type == SDL_MOUSEWHEEL)
   {
     if (!is_freelook_mode_enabled)
     {
-      // compute direction vector to move camera back
-      CGLM_ALIGN(8) vec3 back;
-      glm_vec3_sub(cam.pos, player_position, back);
-      glm_vec3_normalize(back);
-
       // SDL doesn't keep consistent behavior across the platform
       // if direction is flipped, then we need to process opposite value
       int flip = e->wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.0 : 1.0;
       int sign = e->wheel.y < 0.0 ? -1.0 : 1.0;
-      KRR_LOGI("mousewheel y: %f", e->wheel.y * flip * delta_time * 40.0f);
 
       float abs_amount = fabsf(e->wheel.y * delta_time * 40.0f);
       if (abs_amount > 6.0f)
@@ -704,10 +709,13 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 
       // update to cam's relative pos for +y and +z axis
       float real_amount = abs_amount * flip * sign;
-      // proceed back along the back direction
-      glm_vec3_scale(back, real_amount, back);
-      glm_vec3_add(player_cam_distance, back, player_cam_distance);
-      KRR_LOGI("amount = %f", abs_amount * flip * sign);
+      // update to player's cam distance
+      player_cam_distance += real_amount;
+      // cap player amount
+      if (player_cam_distance < PLAYER_CAM_MIN_DISTANCE)
+        player_cam_distance = PLAYER_CAM_MIN_DISTANCE;
+      else if (player_cam_distance > PLAYER_CAM_MAX_DISTANCE)
+        player_cam_distance = PLAYER_CAM_MAX_DISTANCE;
     }
   }
 
@@ -725,7 +733,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         d_amount = 5;
       
       // re-compute dummy's quaternion
-      versor dummy_additional_rot;
+      CGLM_ALIGN(16) versor dummy_additional_rot;
       glm_quatv(dummy_additional_rot, -glm_rad(sign * d_amount * delta_time * 30.0f), GLM_YUP);
       glm_quat_mul(player_dummy_object_rot, dummy_additional_rot, player_dummy_object_rot);
     }
@@ -740,9 +748,41 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         d_amount = 5;
       
       // re-compute dummy's quaternion
-      versor dummy_additional_rot;
+      CGLM_ALIGN(16) versor dummy_additional_rot;
       glm_quatv(dummy_additional_rot, -glm_rad(sign * d_amount * delta_time * 30.0f), GLM_XUP);
       glm_quat_mul(player_dummy_object_rot, dummy_additional_rot, player_dummy_object_rot);
+    }
+  }
+  else if (is_rightmouse_click && !is_freelook_mode_enabled && e->type == SDL_MOUSEMOTION)
+  {
+    SDL_MouseMotionEvent motion = e->motion;
+
+    // pitch
+    if (motion.yrel != 0)
+    {
+      float sign = motion.yrel > 0 ? 1.0f : -1.0f;
+      int d_amount = abs(motion.yrel);
+      if (d_amount > 5)
+        d_amount = 5;
+
+      float angle_amount = sign * d_amount * delta_time * 30.0f;
+      player_cam_pitch_angle += angle_amount;
+      if (player_cam_pitch_angle < 5.0f)
+        player_cam_pitch_angle = 5.0f;
+      else if (player_cam_pitch_angle > 85.0f)
+        player_cam_pitch_angle = 85.0f;
+    }
+    // yaw
+    if (motion.xrel != 0)
+    {
+      float sign = motion.xrel > 0 ? 1.0f : -1.0f;
+      int d_amount = abs(motion.xrel);
+
+      if (d_amount > 5)
+        d_amount = 5;
+
+      float angle_amount = sign * d_amount * delta_time * 30.0f;
+      player_cam_yaw_angle = (int)(player_cam_yaw_angle + angle_amount) % 360;
     }
   }
 }
@@ -772,14 +812,35 @@ void update_camera(float delta_time)
   }
   else
   {
-    // define relative position to place our camera right behind the dummy object
+    // define relative position to place our camera right behind the player's position
     CGLM_ALIGN(8) vec3 campos;
-    glm_vec3_copy((vec3){0.0f, 50.0f, 60.0f}, campos);
-    glm_vec3_add(player_position, campos, cam.pos);
+    glm_vec3_copy((vec3){0.0f, 0.0f, 1.0f}, campos);
 
     // cam modes
-    // addition: zoom in/out
-    glm_vec3_add(cam.pos, player_cam_distance, cam.pos);
+    // 1: addition: zoom in/out
+    // compute direction vector to move camera back
+    CGLM_ALIGN(8) vec3 back;
+    glm_vec3_sub(cam.pos, player_position, back);
+    // scale * unit(v)
+    glm_vec3_scale_as(back, player_cam_distance, back);
+    glm_vec3_add(cam.pos, back, cam.pos);
+
+    // 2: addition: pitch cam
+    // note: rotate around x-axis
+    float angle_rad = glm_rad(player_cam_pitch_angle);
+    float y_dst = player_cam_distance * sin(angle_rad);
+    float z_dst = player_cam_distance * cos(angle_rad); // used as a distance for yaw rotation
+
+    // transform relative cam position
+    // 3: addition: angle around player
+    // note: rotate around y-axis
+    float angle2_rad = GLM_PI - glm_rad(-player_forward_rotation - player_cam_yaw_angle);
+    float z2_dst = z_dst * cos(angle2_rad);
+    float x2_dst = z_dst * sin(angle2_rad);
+    glm_vec3_add(campos, (vec3){x2_dst, y_dst, z2_dst}, campos);
+
+    // update to cam.pos
+    glm_vec3_add(campos, player_position, cam.pos);
 
     // adjust look at position to be at the head of player
     CGLM_ALIGN(8) vec3 lookat_pos;
