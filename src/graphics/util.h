@@ -89,4 +89,17 @@ extern void KRR_gputil_disable_vertex_attrib_pointers(GLint location, ...);
 ///
 extern void KRR_gputil_create_view_matrix(vec3 trans, vec3 rot, float scale, mat4 dst);
 
+///
+/// Generate mipmaps for the `target`.
+/// This will also set the proper texture filtering to get good balanced result.
+/// This will take into effect for the current active texture unit.
+///
+/// The reason why this function exists is to keep memory usage low, so call this
+/// after loading texture as necessary to generate mipmap stack.
+///
+/// \param target target to generate mipmaps.
+/// \param lod_bias level of detail bias value. This value will be set to GL_TEXTURE_LOD_BIAS. Normal value is 0.0, so if you don't want to configure this value, set it to 0.0.
+///
+extern void KRR_gputil_generate_mipmaps(GLenum target, float lod_bias);
+
 #endif
