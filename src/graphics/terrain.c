@@ -18,6 +18,8 @@ static void init_defaults(TERRAIN* tr)
 
   tr->grid_width = 0;
   tr->grid_height = 0;
+  
+  tr->heights = NULL;
 
   tr->vbo_id = 0;
   tr->ibo_id = 0;
@@ -46,6 +48,15 @@ void KRR_TERRAIN_free_internals(TERRAIN* tr)
     free(tr->indices);
     tr->indices = NULL;
     tr->indices_count = 0;
+  }
+
+  tr->grid_width = 0;
+  tr->grid_height = 0;
+
+  if (tr->heights != NULL)
+  {
+    free(tr->heights);
+    tr->heights = NULL;
   }
 
   if (tr->vbo_id != 0)
@@ -113,7 +124,7 @@ bool KRR_TERRAIN_load_objfile(TERRAIN* tr, const char* filepath)
 bool KRR_TERRAIN_load_from_generation(TERRAIN* tr, const char* heightmap_path, float size, float hfactor)
 {
   // generate terrain's vertices and indices
-  if (!KRR_TERRAIN_generate(heightmap_path, size, hfactor, &tr->vertices, &tr->vertices_count, &tr->indices, &tr->indices_count, &tr->grid_width, &tr->grid_height))
+  if (!KRR_TERRAIN_generate(heightmap_path, size, hfactor, &tr->vertices, &tr->vertices_count, &tr->indices, &tr->indices_count, &tr->grid_width, &tr->grid_height, &tr->heights))
   {
     return false;
   }
@@ -180,7 +191,7 @@ void KRR_TERRAIN_free(TERRAIN* tr)
   tr = NULL;
 }
 
-bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor, VERTEXTEXNORM3D** dst_vertices, int* vertices_count, GLuint** dst_indices, int* indices_count, int* rst_grid_width, int* rst_grid_height)
+bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor, VERTEXTEXNORM3D** dst_vertices, int* vertices_count, GLuint** dst_indices, int* indices_count, int* rst_grid_width, int* rst_grid_height, float** rst_heights)
 {
   // load the heightmap
   KRR_TEXTURE* heightmap = KRR_TEXTURE_new();
@@ -206,6 +217,11 @@ bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor,
     KRR_LOGE("Error locking heightmap file");
     return false;
   }
+
+  // create heights buffer to store height information
+  // that will allow user to access such data and use in the game
+  // initially set to zero height for all vertices
+  float* heights = calloc(1, verts_count * sizeof(float));
 
   //
   // A ---- B
@@ -242,6 +258,9 @@ bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor,
       v.position.x = i*size;
       v.position.y = height_val*hfactor;
       v.position.z = j*size;
+
+      // also save height into heights info buffer
+      heights[i + j*grid_width_size] = v.position.y;
 
       // texcoord
       // repeating of texture coord will be set in shader code
@@ -326,6 +345,10 @@ bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor,
   if (rst_grid_height != NULL)
   {
     *rst_grid_height = grid_height_size;
+  }
+  if (rst_heights != NULL)
+  {
+    *rst_heights = heights;
   }
 
   return true;
