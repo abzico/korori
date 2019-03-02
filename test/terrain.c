@@ -672,6 +672,21 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         glm_vec3_copy(GLM_YUP, player_jump_velocity);
       }
     }
+    else if (k == SDLK_f)
+    {
+      // toggle fog
+      texture3d_shader->fog_enabled = !texture3d_shader->fog_enabled;
+      texturealpha3d_shader->fog_enabled = !texturealpha3d_shader->fog_enabled;
+      terrain3d_shader->fog_enabled = !terrain3d_shader->fog_enabled;
+      
+      SU_BEGIN(texture3d_shader)
+        KRR_TEXSHADERPROG3D_update_fog_enabled(texture3d_shader);
+      SU_BEGIN(texturealpha3d_shader)
+        KRR_TEXALPHASHADERPROG3D_update_fog_enabled(texturealpha3d_shader);
+      SU_BEGIN(terrain3d_shader)
+        KRR_TERRAINSHADERPROG3D_update_fog_enabled(terrain3d_shader);
+      SU_END(terrain3d_shader)
+    }
   }
   else if (e->type == SDL_MOUSEBUTTONDOWN)
   {
