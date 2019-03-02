@@ -960,7 +960,7 @@ void update_camera(float delta_time)
     // transform relative cam position
     // 3: addition: angle around player
     // note: rotate around y-axis
-    float angle2_rad = GLM_PI - glm_rad(-player_forward_rotation - player_cam_yaw_angle);
+    float angle2_rad = GLM_PI - glm_rad(-player_forward_rotation + player_cam_yaw_angle);
     float z2_dst = z_dst * cos(angle2_rad);
     float x2_dst = z_dst * sin(angle2_rad);
     glm_vec3_add(campos, (vec3){x2_dst, y_dst, z2_dst}, campos);
