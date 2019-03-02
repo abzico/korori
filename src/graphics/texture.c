@@ -1155,8 +1155,8 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture)
     else
     {
       // free allocated pixel data space
-      free(texture->pixels);
-      texture->pixels = NULL;
+      free(texture->pixels8);
+      texture->pixels8 = NULL;
 
       // init VBO and IBO
       init_VAO_VBO_IBO(texture);
@@ -1169,7 +1169,7 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture)
   }
   else
   {
-    if (texture->pixels == NULL)
+    if (texture->pixels8 == NULL)
     {
       KRR_LOGE("Cannot load texture from pre-created pixels8, there is no pixels data");
     }
