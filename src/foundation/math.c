@@ -282,3 +282,12 @@ int KRR_math_bitcount(int value)
 
   return bitcount;
 }
+
+float KRR_math_barycentric(vec3 p1, vec3 p2, vec3 p3, vec3 p)
+{
+  float det = (p2[2] - p3[2]) * (p1[0] - p3[0]) + (p3[0] - p2[0]) * (p1[2] - p3[2]);
+	float l1 = ((p2[2] - p3[2]) * (p[0] - p3[0]) + (p3[0] - p2[0]) * (p[1] - p3[2])) / det;
+	float l2 = ((p3[2] - p1[2]) * (p[0] - p3[0]) + (p1[0] - p3[0]) * (p[1] - p3[2])) / det;
+	float l3 = 1.0f - l1 - l2;
+	return l1 * p1[1] + l2 * p2[1] + l3 * p3[1];
+}

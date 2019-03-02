@@ -76,4 +76,15 @@ extern int KRR_math_min(int a, int b);
 ///
 extern int KRR_math_bitcount(int value);
 
+///
+/// Compute barycentric of 2d position `p` from 3 points defining a triangle
+///
+/// \param p1 point of triangle
+/// \param p2 point of triangle
+/// \param p3 point of triangle
+/// \param p arbitrary 2d point inside a triangle to determine its height
+/// \return height of point `p`
+///
+extern float KRR_math_barycentric(vec3 p1, vec3 p2, vec3 p3, vec3 p);
+
 #endif
