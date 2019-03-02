@@ -140,16 +140,15 @@ static CGLM_ALIGN(8) vec3 randomized_tree_pos[NUM_TREE];
 #define FERN_RANDOM_SIZE 50
 static CGLM_ALIGN(8) vec3 randomized_fern_pos[NUM_FERN];
 
-#define TERRAIN_GRID_WIDTH 10
-#define TERRAIN_GRID_HEIGHT 10
-#define TERRAIN_SLOT_SIZE 200
+#define TERRAIN_SLOT_SIZE 10
+#define TERRAIN_HFACTOR 3.0f
 
 // all in per second
-#define MOVE_SPEED 60.f
-#define PLAYER_SPEED 30.f
+#define MOVE_SPEED 120.f
+#define PLAYER_SPEED 50.f
 #define PLAYER_TURN_SPEED 150.f
 #define GRAVITY -5.f
-#define JUMP_POWER 75.0f
+#define JUMP_POWER 140.0f
 
 void usercode_app_went_windowed_mode()
 {
@@ -578,7 +577,7 @@ bool usercode_loadmedia()
   
   // load from generation of terrain
   tr = KRR_TERRAIN_new();
-  if (!KRR_TERRAIN_load_from_generation(tr, TERRAIN_GRID_WIDTH, TERRAIN_GRID_HEIGHT, TERRAIN_SLOT_SIZE))
+  if (!KRR_TERRAIN_load_from_generation(tr, "res/models/heightmap.png", TERRAIN_SLOT_SIZE, TERRAIN_HFACTOR))
   {
     KRR_LOGE("Error loading terrain from generation");
     return false;
@@ -671,6 +670,21 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         // define jump velocity
         glm_vec3_copy(GLM_YUP, player_jump_velocity);
       }
+    }
+    else if (k == SDLK_f)
+    {
+      // toggle fog
+      texture3d_shader->fog_enabled = !texture3d_shader->fog_enabled;
+      texturealpha3d_shader->fog_enabled = !texturealpha3d_shader->fog_enabled;
+      terrain3d_shader->fog_enabled = !terrain3d_shader->fog_enabled;
+      
+      SU_BEGIN(texture3d_shader)
+        KRR_TEXSHADERPROG3D_update_fog_enabled(texture3d_shader);
+      SU_BEGIN(texturealpha3d_shader)
+        KRR_TEXALPHASHADERPROG3D_update_fog_enabled(texturealpha3d_shader);
+      SU_BEGIN(terrain3d_shader)
+        KRR_TERRAINSHADERPROG3D_update_fog_enabled(terrain3d_shader);
+      SU_END(terrain3d_shader)
     }
   }
   else if (e->type == SDL_MOUSEBUTTONDOWN)
@@ -1187,7 +1201,7 @@ void usercode_render(void)
     glm_mat4_copy(g_base_model_matrix, terrain3d_shader->model_matrix);
     // rotate around itself
     //glm_rotate(terrain3d_shader->model_matrix, glm_rad(roty), GLM_YUP);
-    glm_translate(terrain3d_shader->model_matrix, (vec3){-TERRAIN_GRID_WIDTH*TERRAIN_SLOT_SIZE/2, 0.0f, -TERRAIN_GRID_HEIGHT*TERRAIN_SLOT_SIZE/2});
+    glm_translate(terrain3d_shader->model_matrix, (vec3){-tr->grid_width*TERRAIN_SLOT_SIZE/2, 0.0f, -tr->grid_height*TERRAIN_SLOT_SIZE/2});
     //update model matrix
     KRR_TERRAINSHADERPROG3D_update_model_matrix(terrain3d_shader);
 
