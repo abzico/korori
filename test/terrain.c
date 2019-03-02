@@ -148,7 +148,10 @@ static CGLM_ALIGN(8) vec3 randomized_fern_pos[NUM_FERN];
 #define PLAYER_SPEED 50.f
 #define PLAYER_TURN_SPEED 150.f
 #define GRAVITY -5.f
-#define JUMP_POWER 140.0f
+#define JUMP_POWER 2.5f
+
+static void update_camera(float delta_time);
+static float compute_player_posy(float x, float z);
 
 void usercode_app_went_windowed_mode()
 {
@@ -669,6 +672,8 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         is_player_inair = true;
         // define jump velocity
         glm_vec3_copy(GLM_YUP, player_jump_velocity);
+        // immediately scale with JUMP_POWER
+        glm_vec3_scale(player_jump_velocity, JUMP_POWER, player_jump_velocity);
       }
     }
     else if (k == SDLK_f)
@@ -815,6 +820,93 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
   }
 }
 
+float compute_player_posy(float x, float z)
+{
+  // compute offset from terrain's position (world space)
+  // this depends on how we translate such terrain in render() function
+  // by default, there's no special offset inside KRR_TERRAIN, thus it's zero
+  float adjusted_x = x + tr->grid_width*TERRAIN_SLOT_SIZE/2;
+  float adjusted_z = z + tr->grid_height*TERRAIN_SLOT_SIZE/2;
+
+  int index_i = (int)floor(adjusted_x / TERRAIN_SLOT_SIZE);
+  int index_z = (int)floor(adjusted_z / TERRAIN_SLOT_SIZE);
+
+  //KRR_LOGI("index_i = %d, index_z = %d", index_i, index_z);
+
+  // check if indexes are in the range of terrain
+  // it might be player is outside of terrain area
+  if (index_i < 0 || index_i >= tr->grid_width ||
+      index_z < 0 || index_z >= tr->grid_height)
+  {
+    KRR_LOGI("return 0.0f");
+    return 0.0f;
+  }
+
+  // determine which triangle input position will be in
+  //
+  // ref from terrain which bases on this in its implementation,
+  // with index denoted to work with barycentric coordinate
+  //
+  // ^
+  // | Z-Axis
+  //
+  // A(0,0) ---- B(1,0)
+  // |          /   |
+  // |        /     |
+  // |      /       |
+  // |    /         |
+  // |  /           |
+  // C(0,1) ---- D(1,1)  --> X-Axis
+  //
+  // first get the unit coordinate of input position for that terrain slot
+  float x_coord = (((int)adjusted_x) % tr->grid_width) * 1.0f / tr->grid_width;
+  float z_coord = (((int)adjusted_z) % tr->grid_height) * 1.0f / tr->grid_height;
+
+  //KRR_LOGI("x_coord = %f, z_coord = %f", x_coord, z_coord);
+
+  // set next indexes, and bound them for this triangle
+  int next_index_i = index_i+1; if (next_index_i > tr->grid_width) next_index_i = tr->grid_width;
+  int next_index_z = index_z+1; if (next_index_z > tr->grid_height) next_index_z = tr->grid_height;
+
+  // determine which triangle of such slot input position is in
+  if (x_coord <= 1.0f - z_coord)
+  {
+    // left triangle
+    CGLM_ALIGN(8) vec3 p1;
+    CGLM_ALIGN(8) vec3 p2;
+    CGLM_ALIGN(8) vec3 p3;
+    vec2 p;
+    p[0] = x_coord;
+    p[1] = z_coord;
+
+    glm_vec3_copy((vec3){0.0f, tr->heights[index_z*(tr->grid_width) + index_i], 0.0f}, p1);
+    glm_vec3_copy((vec3){1.0f, tr->heights[index_z*(tr->grid_width) + next_index_i], 0.0f}, p2);
+    glm_vec3_copy((vec3){0.0f, tr->heights[next_index_z*(tr->grid_width) + index_i], 1.0f}, p3);
+
+    //KRR_LOGI("height = %f", KRR_math_barycentric(p1, p2, p3, p));
+
+    return KRR_math_barycentric(p1, p2, p3, p);
+  }
+  else
+  {
+    // right triangle
+    CGLM_ALIGN(8) vec3 p1;
+    CGLM_ALIGN(8) vec3 p2;
+    CGLM_ALIGN(8) vec3 p3;
+    vec2 p;
+    p[0] = x_coord;
+    p[1] = z_coord;
+
+    glm_vec3_copy((vec3){1.0f, tr->heights[index_z*(tr->grid_width) + next_index_i], 0.0f}, p1);
+    glm_vec3_copy((vec3){0.0f, tr->heights[next_index_z*(tr->grid_width) + index_i], 1.0f}, p2);
+    glm_vec3_copy((vec3){1.0f, tr->heights[next_index_z*(tr->grid_width) + next_index_i], 1.0f}, p3);
+
+    //KRR_LOGI("height = %f", KRR_math_barycentric(p1, p2, p3, p));
+
+    return KRR_math_barycentric(p1, p2, p3, p);
+  }
+}
+
 void update_camera(float delta_time)
 {
   if (is_freelook_mode_enabled)
@@ -843,6 +935,12 @@ void update_camera(float delta_time)
     // define relative position to place our camera right behind the player's position
     CGLM_ALIGN(8) vec3 campos;
     glm_vec3_copy((vec3){0.0f, 0.0f, 1.0f}, campos);
+
+    // update player's position y, only when player is on the ground
+    if (!is_player_inair)
+    {
+      player_position[1] = KRR_math_lerp(player_position[1], compute_player_posy(player_position[0], player_position[2]), 0.15f);
+    }
 
     // cam modes
     // 1: addition: zoom in/out
@@ -1069,21 +1167,25 @@ void usercode_update(float delta_time)
   {
     // pos = pos + velocity*dt
     // velocity = velocity + gravity*dt
-    CGLM_ALIGN(8) vec3 velocity;
-    glm_vec3_scale(player_jump_velocity, JUMP_POWER * delta_time, velocity);
     CGLM_ALIGN(8) vec3 gravity;
     glm_vec3_scale(GLM_YUP, GRAVITY * delta_time, gravity);
     // update position
-    glm_vec3_add(velocity, player_position, player_position);
+    glm_vec3_add(player_jump_velocity, player_position, player_position);
     // update velocity
     glm_vec3_add(player_jump_velocity, gravity, player_jump_velocity);
 
+    // define ground offset to be slightly below the ground
+    // to have the effect of bouncing back (as lerping will further work in update_camera())
+    const float ground_offset = 1.5f;
+    // get the current player's position y
+    float curr_player_posy = compute_player_posy(player_position[0], player_position[2]);
+
     // check if player touches the ground
-    if (player_position[1] < 0.0f)
+    if (player_position[1] < curr_player_posy - ground_offset && player_jump_velocity[1] < 0.0f)
     {
       is_player_inair = false;
       // set player on the ground
-      player_position[1] = 0.0f;
+      player_position[1] = curr_player_posy - ground_offset;
       // no more jump velocity
       glm_vec3_zero(player_jump_velocity);
     }
