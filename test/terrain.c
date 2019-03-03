@@ -128,6 +128,8 @@ static CGLM_ALIGN(16) versor player_dummy_object_rot;
 
 static CGLM_ALIGN(16) versor cam_rot;
 
+static CGLM_ALIGN(8) vec3 stall_pos;
+
 #define NUM_GRASS_UNIT 10
 #define GRASS_RANDOM_SIZE 30
 static CGLM_ALIGN(8) vec3 randomized_grass_pos[NUM_GRASS_UNIT];
@@ -151,7 +153,7 @@ static CGLM_ALIGN(8) vec3 randomized_fern_pos[NUM_FERN];
 #define JUMP_POWER 2.5f
 
 static void update_camera(float delta_time);
-static float compute_player_posy(float x, float z);
+static float compute_posy(float x, float z);
 
 void usercode_app_went_windowed_mode()
 {
@@ -414,24 +416,6 @@ bool usercode_loadmedia()
     return false;
   }
 
-  // random all position of grass unit to show on terrain
-  // **note: we have problem re-export grasssModel thus we need
-  // to use original one which -y is UP
-  for (int i=0; i<NUM_GRASS_UNIT; ++i)
-  {
-    glm_vec3_copy((vec3){KRR_math_rand_float2(-GRASS_RANDOM_SIZE, GRASS_RANDOM_SIZE), -1.0f, KRR_math_rand_float2(-GRASS_RANDOM_SIZE, GRASS_RANDOM_SIZE)}, randomized_grass_pos[i]);
-  }
-
-  for (int i=0; i<NUM_TREE; ++i)
-  {
-    glm_vec3_copy((vec3){KRR_math_rand_float2(-TREE_RANDOM_SIZE, TREE_RANDOM_SIZE), -1.0f, KRR_math_rand_float2(-TREE_RANDOM_SIZE, TREE_RANDOM_SIZE)}, randomized_tree_pos[i]);
-  }
-
-  for (int i=0; i<NUM_FERN; ++i)
-  {
-    glm_vec3_copy((vec3){KRR_math_rand_float2(-FERN_RANDOM_SIZE, FERN_RANDOM_SIZE), -1.0f, KRR_math_rand_float2(-FERN_RANDOM_SIZE, FERN_RANDOM_SIZE)}, randomized_fern_pos[i]);
-  }
-
   // initially update all related matrices and related graphics stuff for both basic shaders
   SU_BEGIN(texture_shader)
     SU_TEXSHADERPROG2D(texture_shader)
@@ -584,6 +568,34 @@ bool usercode_loadmedia()
   {
     KRR_LOGE("Error loading terrain from generation");
     return false;
+  }
+
+  // set stall's position
+  glm_vec3_copy((vec3){0.0f, compute_posy(0.0f, -50.0f), -50.0f}, stall_pos);
+
+  // random all position of grass unit to show on terrain
+  // **note: we have problem re-export grasssModel thus we need
+  // to use original one which -y is UP
+  float temp_x, temp_z;
+  for (int i=0; i<NUM_GRASS_UNIT; ++i)
+  {
+    temp_x = KRR_math_rand_float2(-GRASS_RANDOM_SIZE, GRASS_RANDOM_SIZE);
+    temp_z = KRR_math_rand_float2(-GRASS_RANDOM_SIZE, GRASS_RANDOM_SIZE);
+    glm_vec3_copy((vec3){temp_x, -compute_posy(temp_x, temp_z) - 0.1f, temp_z}, randomized_grass_pos[i]);
+  }
+
+  for (int i=0; i<NUM_TREE; ++i)
+  {
+    temp_x = KRR_math_rand_float2(-TREE_RANDOM_SIZE, TREE_RANDOM_SIZE);
+    temp_z = KRR_math_rand_float2(-TREE_RANDOM_SIZE, TREE_RANDOM_SIZE);
+    glm_vec3_copy((vec3){temp_x, compute_posy(temp_x, temp_z) - 0.6f, temp_z}, randomized_tree_pos[i]);
+  }
+
+  for (int i=0; i<NUM_FERN; ++i)
+  {
+    temp_x = KRR_math_rand_float2(-FERN_RANDOM_SIZE, FERN_RANDOM_SIZE);
+    temp_z = KRR_math_rand_float2(-FERN_RANDOM_SIZE, FERN_RANDOM_SIZE);
+    glm_vec3_copy((vec3){temp_x, compute_posy(temp_x, temp_z) - 0.1f, temp_z}, randomized_fern_pos[i]);
   }
 
   return true;
@@ -820,7 +832,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
   }
 }
 
-float compute_player_posy(float x, float z)
+float compute_posy(float x, float z)
 {
   // compute offset from terrain's position (world space)
   // this depends on how we translate such terrain in render() function
@@ -939,7 +951,7 @@ void update_camera(float delta_time)
     // update player's position y, only when player is on the ground
     if (!is_player_inair)
     {
-      player_position[1] = KRR_math_lerp(player_position[1], compute_player_posy(player_position[0], player_position[2]), 0.15f);
+      player_position[1] = KRR_math_lerp(player_position[1], compute_posy(player_position[0], player_position[2]), 0.15f);
     }
 
     // cam modes
@@ -1178,7 +1190,7 @@ void usercode_update(float delta_time)
     // to have the effect of bouncing back (as lerping will further work in update_camera())
     const float ground_offset = 1.5f;
     // get the current player's position y
-    float curr_player_posy = compute_player_posy(player_position[0], player_position[2]);
+    float curr_player_posy = compute_posy(player_position[0], player_position[2]);
 
     // check if player touches the ground
     if (player_position[1] < curr_player_posy - ground_offset && player_jump_velocity[1] < 0.0f)
@@ -1230,7 +1242,7 @@ void usercode_render(void)
 
     // transform model matrix
     glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
-    glm_translate(texture3d_shader->model_matrix, (vec3){0.0f, 0.0f, -50.0f});
+    glm_translate(texture3d_shader->model_matrix, stall_pos);
     //update model matrix
     KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
 
