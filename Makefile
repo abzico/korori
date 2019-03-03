@@ -22,6 +22,7 @@ TARGETS := \
 	  $(FDIR)/util.o \
 	  $(FDIR)/window.o \
 	  $(FDIR)/timer.o \
+	  $(FDIR)/mem.o	\
 	  $(UI_DIR)/button.o \
 	  $(EXTERDIR)/vector.o \
 	  $(GPDIR)/util.o \
@@ -43,9 +44,6 @@ TARGETS := \
 all: $(TARGETS) 
 	# create a static library
 	ar rcs libkrr.a $^
-	
-$(OUTPUT): $(TARGETS_LINK)
-	$(CC) $^ -o $(OUTPUT)$(EXE) $(LFLAGS)
 
 $(FDIR)/common.o: $(FDIR)/common.c $(FDIR)/common.h
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -60,6 +58,9 @@ $(FDIR)/window.o: $(FDIR)/window.c $(FDIR)/window.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(FDIR)/timer.o: $(FDIR)/timer.c $(FDIR)/timer.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(FDIR)/mem.o: $(FDIR)/mem.c $(FDIR)/mem.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(UI_DIR)/button.o: $(UI_DIR)/button.c $(UI_DIR)/button.h
