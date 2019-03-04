@@ -20,8 +20,12 @@ typedef struct
   int grid_height;
 
   /// height information for terrain
-  /// note: it will be available only when load via KRR_TERRAIN_load_objfile() function
+  /// note: it will be available only when load via KRR_TERRAIN_load_objfile()
   float* heights;
+
+  /// normals information for terrain
+  /// note: it will be available only when load via KRR_TERRAIN_load_objfile()
+  vec3* normals; 
 
   GLuint vbo_id;
   GLuint ibo_id;
@@ -100,9 +104,10 @@ extern void KRR_TERRAIN_free(TERRAIN* tr);
 /// \param rst_grid_width returned grid size in width
 /// \param rst_grid_height returned grid size in height
 /// \param rst_heights returned computed heights information
+/// \param rst_normals returned computed normals information
 /// \return return true for success, otherwise return false.
 ///
-extern bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor, VERTEXTEXNORM3D** dst_vertices, int* vertices_count, GLuint** dst_indices, int* indices_count, int* rst_grid_width, int* rst_grid_height, float** rst_heights);
+extern bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor, VERTEXTEXNORM3D** dst_vertices, int* vertices_count, GLuint** dst_indices, int* indices_count, int* rst_grid_width, int* rst_grid_height, float** rst_heights, vec3** rst_normals);
 
 
 

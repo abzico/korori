@@ -4,6 +4,7 @@
 #include "graphics/texture.h"
 #include <stdlib.h>
 #include "foundation/log.h"
+#include "foundation/mem.h"
 
 #define MIN_TERRAIN_HEIGHT -50
 #define MAX_TERRAIN_HEIGHT 100
@@ -20,6 +21,7 @@ static void init_defaults(TERRAIN* tr)
   tr->grid_height = 0;
   
   tr->heights = NULL;
+  tr->normals = NULL;
 
   tr->vbo_id = 0;
   tr->ibo_id = 0;
@@ -57,6 +59,12 @@ void KRR_TERRAIN_free_internals(TERRAIN* tr)
   {
     free(tr->heights);
     tr->heights = NULL;
+  }
+  if (tr->normals != NULL)
+  {
+    // free memory via KRR_MEM_free8() as we allocated it aligned with 8 bytes boundary
+    KRR_MEM_free8(tr->normals);
+    tr->normals = NULL;    
   }
 
   if (tr->vbo_id != 0)
@@ -124,7 +132,7 @@ bool KRR_TERRAIN_load_objfile(TERRAIN* tr, const char* filepath)
 bool KRR_TERRAIN_load_from_generation(TERRAIN* tr, const char* heightmap_path, float size, float hfactor)
 {
   // generate terrain's vertices and indices
-  if (!KRR_TERRAIN_generate(heightmap_path, size, hfactor, &tr->vertices, &tr->vertices_count, &tr->indices, &tr->indices_count, &tr->grid_width, &tr->grid_height, &tr->heights))
+  if (!KRR_TERRAIN_generate(heightmap_path, size, hfactor, &tr->vertices, &tr->vertices_count, &tr->indices, &tr->indices_count, &tr->grid_width, &tr->grid_height, &tr->heights, &tr->normals))
   {
     return false;
   }
@@ -191,7 +199,7 @@ void KRR_TERRAIN_free(TERRAIN* tr)
   tr = NULL;
 }
 
-bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor, VERTEXTEXNORM3D** dst_vertices, int* vertices_count, GLuint** dst_indices, int* indices_count, int* rst_grid_width, int* rst_grid_height, float** rst_heights)
+bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor, VERTEXTEXNORM3D** dst_vertices, int* vertices_count, GLuint** dst_indices, int* indices_count, int* rst_grid_width, int* rst_grid_height, float** rst_heights, vec3** rst_normals)
 {
   // load the heightmap
   KRR_TEXTURE* heightmap = KRR_TEXTURE_new();
@@ -218,10 +226,16 @@ bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor,
     return false;
   }
 
-  // create heights buffer to store height information
+  // create heights memory space to store height information
   // that will allow user to access such data and use in the game
   // initially set to zero height for all vertices
   float* heights = calloc(1, verts_count * sizeof(float));
+
+  // create normals memory space to store normal information
+  // that will allow user to access in the game i.e. rotate object on
+  // terrain according to make it oriented with normals on that position of terrain
+  // note: remember to free this memory space with KRR_MEM_free8()
+  vec3* normals = KRR_MEM_malloc8(verts_count * sizeof(vec3));
 
   //
   // A ---- B
@@ -291,6 +305,9 @@ bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor,
       v.normal.y = n[1];
       v.normal.z = n[2];
 
+      // store normals information
+      glm_vec3_copy((vec3){n[0], n[1], n[2]}, normals[i + j*grid_width_size]);
+
       // set to result vertices pointer
       memcpy(vertices + idx++, &v, sizeof(v));
     }
@@ -349,6 +366,10 @@ bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor,
   if (rst_heights != NULL)
   {
     *rst_heights = heights;
+  }
+  if (rst_normals != NULL)
+  {
+    *rst_normals = normals;
   }
 
   return true;
