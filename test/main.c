@@ -228,6 +228,12 @@ void close()
   // relay call to user's code in separate file
   usercode_close();
 
+	// destroy opengl context
+	if (opengl_context != NULL)
+	{
+		SDL_GL_DeleteContext(opengl_context);
+	}
+
   // destroy window
   KRR_WINDOW_free(gWindow);
 
