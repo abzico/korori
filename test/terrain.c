@@ -12,7 +12,6 @@
 
  stall, and tree model uses the same (texture 3d) shader
  terrain uses terrain shader
- grass uses texture alpha 3d shader
 */
 
 #include "usercode.h"
@@ -84,7 +83,6 @@ static KRR_FONT* font = NULL;
 
 // TODO: define variables here
 static KRR_TEXTURE* terrain_texture = NULL;
-static KRR_TEXTURE* grass_texture = NULL;
 static KRR_TEXTURE* stall_texture = NULL;
 static KRR_TEXTURE* tree_texture = NULL;
 static KRR_TEXTURE* fern_texture = NULL;
@@ -96,7 +94,6 @@ static KRR_TEXTURE* mt_b_texture = NULL;
 static KRR_TEXTURE* mt_blendmap = NULL;
 
 static SIMPLEMODEL* stall = NULL;
-static SIMPLEMODEL* grass = NULL;
 static SIMPLEMODEL* tree = NULL;
 static SIMPLEMODEL* fern = NULL;
 static SIMPLEMODEL* player = NULL;
@@ -129,18 +126,17 @@ static CGLM_ALIGN(16) versor player_dummy_object_rot;
 static CGLM_ALIGN(16) versor cam_rot;
 
 static CGLM_ALIGN(8) vec3 stall_pos;
+static CGLM_ALIGN(16) versor stall_rot;
 
-#define NUM_GRASS_UNIT 10
-#define GRASS_RANDOM_SIZE 30
-static CGLM_ALIGN(8) vec3 randomized_grass_pos[NUM_GRASS_UNIT];
-
-#define NUM_TREE 3
-#define TREE_RANDOM_SIZE 50
+#define NUM_TREE 10
+#define TREE_RANDOM_SIZE 200
 static CGLM_ALIGN(8) vec3 randomized_tree_pos[NUM_TREE];
+static CGLM_ALIGN(16) versor tree_rots[NUM_TREE];
 
-#define NUM_FERN 10
-#define FERN_RANDOM_SIZE 50
+#define NUM_FERN 20
+#define FERN_RANDOM_SIZE 200
 static CGLM_ALIGN(8) vec3 randomized_fern_pos[NUM_FERN];
+static CGLM_ALIGN(16) versor fern_rots[NUM_FERN];
 
 #define TERRAIN_SLOT_SIZE 10
 #define TERRAIN_HFACTOR 3.0f
@@ -153,7 +149,10 @@ static CGLM_ALIGN(8) vec3 randomized_fern_pos[NUM_FERN];
 #define JUMP_POWER 2.5f
 
 static void update_camera(float delta_time);
+/// compute position y from world position in xz plane
 static float compute_posy(float x, float z);
+/// compute to get normal of terrain at the world position in xz plane
+static void compute_terrain_normal(float x, float y, float z, vec3 dest);
 
 void usercode_app_went_windowed_mode()
 {
@@ -341,13 +340,6 @@ bool usercode_loadmedia()
   glBindTexture(GL_TEXTURE_2D, terrain_texture->texture_id);
   KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, 0.0f);
 
-  // grass texture
-  grass_texture = KRR_TEXTURE_new();
-  if (!KRR_TEXTURE_load_texture_from_file(grass_texture, "res/models/grassTexture.png"))
-  {
-    KRR_LOGE("Error loading grass's texture");
-    return false;
-  }
   // stall texture
   stall_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(stall_texture, "res/models/stallTexture.png"))
@@ -530,14 +522,6 @@ bool usercode_loadmedia()
     return false;
   }
 
-  // load grass model
-  grass = SIMPLEMODEL_new();
-  if (!SIMPLEMODEL_load_objfile(grass, "res/models/grassModel.obj"))
-  {
-    KRR_LOGE("Error loading grass model file");
-    return false;
-  }
-
   // load tree model
   tree = SIMPLEMODEL_new();
   if (!SIMPLEMODEL_load_objfile(tree, "res/models/lowPolyTree.obj"))
@@ -570,32 +554,51 @@ bool usercode_loadmedia()
     return false;
   }
 
-  // set stall's position
-  glm_vec3_copy((vec3){0.0f, compute_posy(0.0f, -50.0f), -50.0f}, stall_pos);
+  // temp variables to hold randomized value for positioning
+  float temp_x, temp_y, temp_z;
+  CGLM_ALIGN(8) vec3 normal;
 
-  // random all position of grass unit to show on terrain
-  // **note: we have problem re-export grasssModel thus we need
-  // to use original one which -y is UP
-  float temp_x, temp_z;
-  for (int i=0; i<NUM_GRASS_UNIT; ++i)
-  {
-    temp_x = KRR_math_rand_float2(-GRASS_RANDOM_SIZE, GRASS_RANDOM_SIZE);
-    temp_z = KRR_math_rand_float2(-GRASS_RANDOM_SIZE, GRASS_RANDOM_SIZE);
-    glm_vec3_copy((vec3){temp_x, -compute_posy(temp_x, temp_z) - 0.1f, temp_z}, randomized_grass_pos[i]);
-  }
+  // set stall's position
+  temp_y = compute_posy(0.0f, -50.0f);
+  glm_vec3_copy((vec3){0.0f, temp_y, -50.0f}, stall_pos);
+
+  // find stall's rotation according to terrain's height
+  compute_terrain_normal(0.0f, temp_y, -50.0f, normal);
+  // nudge and give more weight to y-axis
+  normal[1] *= 2.3f;
+  glm_vec3_normalize(normal);
+  KRR_math_quat_v2rot(GLM_YUP, normal, stall_rot);
 
   for (int i=0; i<NUM_TREE; ++i)
   {
     temp_x = KRR_math_rand_float2(-TREE_RANDOM_SIZE, TREE_RANDOM_SIZE);
     temp_z = KRR_math_rand_float2(-TREE_RANDOM_SIZE, TREE_RANDOM_SIZE);
-    glm_vec3_copy((vec3){temp_x, compute_posy(temp_x, temp_z) - 0.6f, temp_z}, randomized_tree_pos[i]);
+    temp_y = compute_posy(temp_x, temp_z) - 1.0f;
+    glm_vec3_copy((vec3){temp_x, temp_y, temp_z}, randomized_tree_pos[i]);
+
+    // use y position to find terrain's normal at that position
+    compute_terrain_normal(temp_x, temp_y, temp_z, normal);
+    normal[1] *= 2.3f;
+    glm_vec3_normalize(normal);
+    
+    // compute quaternion for rotation from UP vector to result normal
+    KRR_math_quat_v2rot(GLM_YUP, normal, tree_rots[i]);
   }
 
   for (int i=0; i<NUM_FERN; ++i)
   {
     temp_x = KRR_math_rand_float2(-FERN_RANDOM_SIZE, FERN_RANDOM_SIZE);
     temp_z = KRR_math_rand_float2(-FERN_RANDOM_SIZE, FERN_RANDOM_SIZE);
-    glm_vec3_copy((vec3){temp_x, compute_posy(temp_x, temp_z) - 0.1f, temp_z}, randomized_fern_pos[i]);
+    temp_y = compute_posy(temp_x, temp_z) - 1.0f;
+    glm_vec3_copy((vec3){temp_x, temp_y, temp_z}, randomized_fern_pos[i]);
+
+    // use y position to find terrain's normal at that position
+    compute_terrain_normal(temp_x, temp_y, temp_z, normal);
+    normal[1] *= 2.3f;
+    glm_vec3_normalize(normal);
+
+    // compute quaternion for rotation from UP vector to result normal
+    KRR_math_quat_v2rot(GLM_YUP, normal, fern_rots[i]);
   }
 
   return true;
@@ -832,18 +835,135 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
   }
 }
 
-float compute_posy(float x, float z)
+void compute_terrain_normal(float x, float y, float z, vec3 dest)
 {
   // compute offset from terrain's position (world space)
   // this depends on how we translate such terrain in render() function
-  // by default, there's no special offset inside KRR_TERRAIN, thus it's zero
   float adjusted_x = x + tr->grid_width*TERRAIN_SLOT_SIZE/2;
   float adjusted_z = z + tr->grid_height*TERRAIN_SLOT_SIZE/2;
 
   int index_i = (int)floor(adjusted_x / TERRAIN_SLOT_SIZE);
   int index_z = (int)floor(adjusted_z / TERRAIN_SLOT_SIZE);
 
-  //KRR_LOGI("index_i = %d, index_z = %d", index_i, index_z);
+  // check if indexes are in the range of terrain
+  // it might be player is outside of terrain area
+  if (index_i < 0 || index_i >= tr->grid_width ||
+      index_z < 0 || index_z >= tr->grid_height)
+  {
+    KRR_LOGI("return zero vector as result");
+    glm_vec3_copy(GLM_VEC3_ZERO, dest);
+    return;
+  }
+
+  // determine which triangle input position will be in
+  //
+  // ref from terrain which bases on this in its implementation,
+  // with index denoted to work with barycentric coordinate
+  //
+  // ^
+  // | Z-Axis
+  //
+  // A(0,0) ---- B(1,0)
+  // |          /   |
+  // |        /     |
+  // |      /       |
+  // |    /         |
+  // |  /           |
+  // C(0,1) ---- D(1,1)  --> X-Axis
+  //
+  // first get the unit coordinate of input position for that terrain slot
+  float x_coord = (((int)adjusted_x) % tr->grid_width) * 1.0f / tr->grid_width;
+  float z_coord = (((int)adjusted_z) % tr->grid_height) * 1.0f / tr->grid_height;
+
+  // set next indexes, and bound them for this triangle
+  int next_index_i = index_i+1; if (next_index_i > tr->grid_width) next_index_i = tr->grid_width;
+  int next_index_z = index_z+1; if (next_index_z > tr->grid_height) next_index_z = tr->grid_height;
+
+  // grab normal
+  CGLM_ALIGN(8) vec3 n_topleft;
+  CGLM_ALIGN(8) vec3 n_topright;
+  CGLM_ALIGN(8) vec3 n_bottomleft;
+  CGLM_ALIGN(8) vec3 n_bottomright;
+
+  glm_vec3_copy(tr->normals[index_z*(tr->grid_width) + index_i], n_topleft);
+  glm_vec3_copy(tr->normals[index_z*(tr->grid_width) + next_index_i], n_topright);
+  glm_vec3_copy(tr->normals[next_index_z*(tr->grid_width) + index_i], n_bottomleft);
+  glm_vec3_copy(tr->normals[next_index_z*(tr->grid_width) + next_index_i], n_bottomright);
+
+  // determine which triangle of such slot input position is in
+  if (x_coord <= 1.0f - z_coord)
+  {
+    // left triangle
+    CGLM_ALIGN(8) vec3 p1;
+    CGLM_ALIGN(8) vec3 p2;
+    CGLM_ALIGN(8) vec3 p3;
+    vec2 p;
+    p[0] = x_coord;
+    p[1] = z_coord;
+
+    // x
+    glm_vec3_copy((vec3){0.0f, n_topleft[0], 0.0f}, p1);
+    glm_vec3_copy((vec3){1.0f, n_topright[0], 0.0f}, p2);
+    glm_vec3_copy((vec3){0.0f, n_bottomleft[0], 1.0f}, p3);
+    float normal_x = KRR_math_barycentric_xz(p1, p2, p3, p);
+
+    // y
+    glm_vec3_copy((vec3){0.0f, n_topleft[1], 0.0f}, p1);
+    glm_vec3_copy((vec3){1.0f, n_topright[1], 0.0f}, p2);
+    glm_vec3_copy((vec3){0.0f, n_bottomleft[1], 1.0f}, p3);
+    float normal_y = KRR_math_barycentric_xz(p1, p2, p3, p);
+
+    // z
+    glm_vec3_copy((vec3){0.0f, n_topleft[2], 0.0f}, p1);
+    glm_vec3_copy((vec3){1.0f, n_topright[2], 0.0f}, p2);
+    glm_vec3_copy((vec3){0.0f, n_bottomleft[2], 1.0f}, p3);
+    float normal_z = KRR_math_barycentric_xz(p1, p2, p3, p);
+
+    // fill in result
+    glm_vec3_copy((vec3){normal_x, normal_y, normal_z}, dest);
+  }
+  else
+  {
+    // right triangle
+    CGLM_ALIGN(8) vec3 p1;
+    CGLM_ALIGN(8) vec3 p2;
+    CGLM_ALIGN(8) vec3 p3;
+    vec2 p;
+    p[0] = x_coord;
+    p[1] = z_coord;
+
+    // x
+    glm_vec3_copy((vec3){1.0f, n_topright[0], 0.0f}, p1);
+    glm_vec3_copy((vec3){0.0f, n_bottomleft[0], 1.0f}, p2);
+    glm_vec3_copy((vec3){1.0f, n_bottomright[0], 1.0f}, p3);
+    float normal_x = KRR_math_barycentric_xz(p1, p2, p3, p);
+
+    // y
+    glm_vec3_copy((vec3){1.0f, n_topright[1], 0.0f}, p1);
+    glm_vec3_copy((vec3){0.0f, n_bottomleft[1], 1.0f}, p2);
+    glm_vec3_copy((vec3){1.0f, n_bottomright[1], 1.0f}, p3);
+    float normal_y = KRR_math_barycentric_xz(p1, p2, p3, p);
+
+    // z
+    glm_vec3_copy((vec3){1.0f, n_topright[2], 0.0f}, p1);
+    glm_vec3_copy((vec3){0.0f, n_bottomleft[2], 1.0f}, p2);
+    glm_vec3_copy((vec3){1.0f, n_bottomright[2], 1.0f}, p3);
+    float normal_z = KRR_math_barycentric_xz(p1, p2, p3, p);
+
+    // fill in result
+    glm_vec3_copy((vec3){normal_x, normal_y, normal_z}, dest);
+  }
+}
+
+float compute_posy(float x, float z)
+{
+  // compute offset from terrain's position (world space)
+  // this depends on how we translate such terrain in render() function
+  float adjusted_x = x + tr->grid_width*TERRAIN_SLOT_SIZE/2;
+  float adjusted_z = z + tr->grid_height*TERRAIN_SLOT_SIZE/2;
+
+  int index_i = (int)floor(adjusted_x / TERRAIN_SLOT_SIZE);
+  int index_z = (int)floor(adjusted_z / TERRAIN_SLOT_SIZE);
 
   // check if indexes are in the range of terrain
   // it might be player is outside of terrain area
@@ -874,8 +994,6 @@ float compute_posy(float x, float z)
   float x_coord = (((int)adjusted_x) % tr->grid_width) * 1.0f / tr->grid_width;
   float z_coord = (((int)adjusted_z) % tr->grid_height) * 1.0f / tr->grid_height;
 
-  //KRR_LOGI("x_coord = %f, z_coord = %f", x_coord, z_coord);
-
   // set next indexes, and bound them for this triangle
   int next_index_i = index_i+1; if (next_index_i > tr->grid_width) next_index_i = tr->grid_width;
   int next_index_z = index_z+1; if (next_index_z > tr->grid_height) next_index_z = tr->grid_height;
@@ -895,9 +1013,7 @@ float compute_posy(float x, float z)
     glm_vec3_copy((vec3){1.0f, tr->heights[index_z*(tr->grid_width) + next_index_i], 0.0f}, p2);
     glm_vec3_copy((vec3){0.0f, tr->heights[next_index_z*(tr->grid_width) + index_i], 1.0f}, p3);
 
-    //KRR_LOGI("height = %f", KRR_math_barycentric(p1, p2, p3, p));
-
-    return KRR_math_barycentric(p1, p2, p3, p);
+    return KRR_math_barycentric_xz(p1, p2, p3, p);
   }
   else
   {
@@ -913,9 +1029,7 @@ float compute_posy(float x, float z)
     glm_vec3_copy((vec3){0.0f, tr->heights[next_index_z*(tr->grid_width) + index_i], 1.0f}, p2);
     glm_vec3_copy((vec3){1.0f, tr->heights[next_index_z*(tr->grid_width) + next_index_i], 1.0f}, p3);
 
-    //KRR_LOGI("height = %f", KRR_math_barycentric(p1, p2, p3, p));
-
-    return KRR_math_barycentric(p1, p2, p3, p);
+    return KRR_math_barycentric_xz(p1, p2, p3, p);
   }
 }
 
@@ -1232,6 +1346,8 @@ void usercode_render(void)
   }
 
   // TODO: render code goes here...
+  CGLM_ALIGN_MAT mat4 t_mat;  // for temp converted from quaternion, rotate object according
+                              // to current terrain's normal
 
   // STALL & TREE & PLAYER
   KRR_SHADERPROG_bind(texture3d_shader->program);
@@ -1243,6 +1359,12 @@ void usercode_render(void)
     // transform model matrix
     glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
     glm_translate(texture3d_shader->model_matrix, stall_pos);
+
+    // convert from quaternion to matrix
+    glm_quat_mat4(stall_rot, t_mat);
+    // (t_mat must be on the right of multiplication as we want it to happen first!)
+    glm_mat4_mul(texture3d_shader->model_matrix, t_mat, texture3d_shader->model_matrix);
+
     //update model matrix
     KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
 
@@ -1259,7 +1381,13 @@ void usercode_render(void)
       // transform model matrix
       glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
       glm_translate(texture3d_shader->model_matrix, randomized_tree_pos[i]);
-      // update model matrix
+      
+      // convert from quaternion to matrix
+      glm_quat_mat4(tree_rots[i], t_mat);
+      // (t_mat must be on the right of multiplication as we want it to happen first!)
+      glm_mat4_mul(texture3d_shader->model_matrix, t_mat, texture3d_shader->model_matrix);
+      
+      // update model matrix to GPU
       KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
 
       // render
@@ -1327,28 +1455,10 @@ void usercode_render(void)
   // unbind shader
   KRR_SHADERPROG_unbind(terrain3d_shader->program);
 
-  // TEXTURE ALPHA (grass & fern)
+  // TEXTURE ALPHA fern
   KRR_SHADERPROG_bind(texturealpha3d_shader->program);
-  // disable backface culling as grass made up of crossing polygon
+  // disable backface culling as fern made up of crossing polygon
   glDisable(GL_CULL_FACE);
-
-  // render grass
-  glBindVertexArray(grass->vao_id);
-    // bind texture
-    glBindTexture(GL_TEXTURE_2D, grass_texture->texture_id);
-    // clamp texture
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-    for (int i=0; i<NUM_GRASS_UNIT; ++i)
-    {
-      glm_mat4_copy(g_base_model_matrix, texturealpha3d_shader->model_matrix);
-      glm_rotate(texturealpha3d_shader->model_matrix, GLM_PI, GLM_ZUP);
-      glm_translate(texturealpha3d_shader->model_matrix, randomized_grass_pos[i]);
-      KRR_TEXALPHASHADERPROG3D_update_model_matrix(texturealpha3d_shader);
-
-      SIMPLEMODEL_render(grass);
-    }
 
   // render fern
   glBindVertexArray(fern->vao_id);
@@ -1359,6 +1469,13 @@ void usercode_render(void)
     {
       glm_mat4_copy(g_base_model_matrix, texturealpha3d_shader->model_matrix);
       glm_translate(texturealpha3d_shader->model_matrix, randomized_fern_pos[i]);
+
+      // convert from quaternion to matrix
+      glm_quat_mat4(fern_rots[i], t_mat);
+      // t_mat must be on the right!
+      glm_mat4_mul(texturealpha3d_shader->model_matrix, t_mat, texturealpha3d_shader->model_matrix);
+
+      // update matrix to GPU
       KRR_TEXALPHASHADERPROG3D_update_model_matrix(texturealpha3d_shader);
 
       SIMPLEMODEL_render(fern);
@@ -1480,11 +1597,6 @@ void usercode_close()
     KRR_TEXTURE_free(terrain_texture);
     terrain_texture = NULL;
   }
-  if (grass_texture != NULL)
-  {
-    KRR_TEXTURE_free(grass_texture);
-    grass_texture = NULL;
-  }
   if (stall_texture != NULL)
   {
     KRR_TEXTURE_free(stall_texture);
@@ -1530,11 +1642,6 @@ void usercode_close()
   {
     SIMPLEMODEL_free(stall);
     stall = NULL;
-  }
-  if (grass != NULL)
-  {
-    SIMPLEMODEL_free(grass);
-    grass = NULL;
   }
   if (tree != NULL)
   {
