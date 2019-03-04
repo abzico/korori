@@ -283,7 +283,7 @@ bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor,
       float hU = H_CONV(H_VAL(normal_i, hU_i));
 
       CGLM_ALIGN(8) vec3 n;
-      glm_vec3_copy((vec3){hR - hL, hD - hU, 2.0f}, n);
+      glm_vec3_copy((vec3){hL - hR, 2.0f, hD - hU}, n);
       glm_vec3_normalize(n);
 
       // normal
