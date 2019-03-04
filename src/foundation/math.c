@@ -1,6 +1,7 @@
 #include "math.h"
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 float KRR_math_lerp(float a, float b, float t)
 {
@@ -290,4 +291,42 @@ float KRR_math_barycentric_xz(vec3 p1, vec3 p2, vec3 p3, vec2 p)
 	float l2 = ((p3[2] - p1[2]) * (p[0] - p3[0]) + (p1[0] - p3[0]) * (p[1] - p3[2])) / det;
 	float l3 = 1.0f - l1 - l2;
 	return l1 * p1[1] + l2 * p2[1] + l3 * p3[1];
+}
+
+void KRR_math_quat_v2rot(vec3 v1, vec3 v2, versor dest)
+{
+  // port implementation at http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
+  // into C here (use cglm)
+  glm_vec3_normalize(v1);
+  glm_vec3_normalize(v2);
+
+  float cos_theta = glm_vec3_dot(v1, v2);
+  CGLM_ALIGN(8) vec3 rot_axis;
+
+  // handle opposite direction of vectors
+  if (cos_theta < -1 + 0.001f)
+  {
+    // if vectors are in opposite direction, then use just one vector which need to be
+    // perpendicular to v1 vector
+    glm_vec3_cross(GLM_ZUP, v1, rot_axis);
+    if (glm_vec3_dot(rot_axis, rot_axis) < 0.01f) // it's parallell, then use another axis
+      glm_vec3_cross(GLM_XUP, v1, rot_axis);
+
+    glm_vec3_normalize(rot_axis);
+    // store result into dest (via axis-angle through cglm's glm_quatv())
+    glm_quatv(dest, glm_rad(180.0f), rot_axis);
+  }
+  else
+  {
+    glm_vec3_cross(v1, v2, rot_axis);
+    double s = sqrt((1+cos_theta)*2);
+    double invs = 1.0 / s; 
+
+    // store raw results to form quaternion
+    glm_quat_init(dest,
+        (float)(rot_axis[0] * invs), 
+        (float)(rot_axis[1] * invs),
+        (float)(rot_axis[2] * invs),
+        (float)(s * 0.5));
+  }
 }

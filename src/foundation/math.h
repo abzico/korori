@@ -88,5 +88,17 @@ extern int KRR_math_bitcount(int value);
 /// \param p arbitrary 2d point inside a triangle to determine its height
 /// \return height of point `p`
 ///
+extern float KRR_math_barycentric_xz(vec3 p1, vec3 p2, vec3 p3, vec2 p);
+
+///
+/// Find quaternion from vector rotation from `v1` to `v2`
+///
+/// `v1`, `v2` and `dest` needed to be memory aligned.
+///
+/// \param v1 starting vector
+/// \param v2 destination vector
+/// \param dest output quaternion
+///
+extern void KRR_math_quat_v2rot(vec3 v1, vec3 v2, versor dest);
 
 #endif
