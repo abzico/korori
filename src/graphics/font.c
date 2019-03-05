@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "foundation/log.h"
-#include "externals/vector.h"
+#include "externals/vector_c/vector.h"
 #include "graphics/texture_internals.h"
 #include FT_BITMAP_H
 #include "graphics/shaderprog.h"
