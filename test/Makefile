@@ -100,3 +100,6 @@ clean:
 	rm -f $(TARGETS)
 	rm -f *.o
 	rm -rf ./res
+
+clean-all: clean
+	make clean -C ../
