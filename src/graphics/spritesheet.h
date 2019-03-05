@@ -4,7 +4,7 @@
 #include "graphics/common.h"
 #include "graphics/types.h"
 #include "graphics/texture.h"
-#include "externals/vector.h"
+#include "externals/vector_c/vector.h"
 
 typedef struct
 {

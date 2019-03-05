@@ -24,7 +24,7 @@ TARGETS := \
 	  $(FDIR)/timer.o \
 	  $(FDIR)/mem.o	\
 	  $(UI_DIR)/button.o \
-	  $(EXTERDIR)/vector.o \
+	  $(EXTERDIR)/vector_c/vector.o \
 	  $(GPDIR)/util.o \
 	  $(GPDIR)/texture.o \
 	  $(GPDIR)/spritesheet.o \
@@ -66,8 +66,8 @@ $(FDIR)/mem.o: $(FDIR)/mem.c $(FDIR)/mem.h
 $(UI_DIR)/button.o: $(UI_DIR)/button.c $(UI_DIR)/button.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(VDRDIR)/vector.o: $(VDRDIR)/vector.c $(VDRDIR)/vector.h
-	$(CC) $(CFLAGS) -c $< -o $@
+$(EXTERDIR)/vector_c/vector.o:
+	make -C $(EXTERDIR)/vector_c
 
 $(GPDIR)/util.o: $(GPDIR)/util.c $(GPDIR)/util.h
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -114,8 +114,8 @@ $(PROGRAM).o: $(PROGRAM).c
 clean:
 	rm -f src/foundation/*.o
 	rm -f src/graphics/*.o
-	rm -f src/externals/*.o
 	rm -f src/ui/*.o
 	rm -f $(OUTPUT)
 	rm -f libkrr.a
 	rm -f *.o *.dSYM
+	make clean -C $(EXTERDIR)/vector_c
