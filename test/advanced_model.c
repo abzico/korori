@@ -335,6 +335,10 @@ void usercode_update(float delta_time)
   }
 }
 
+void usercode_render_ui_text()
+{
+}
+
 void usercode_render()
 {
   // clear color buffer
