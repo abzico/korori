@@ -25,6 +25,7 @@ TARGETS := \
 	  $(FDIR)/mem.o	\
 	  $(UI_DIR)/button.o \
 	  $(EXTERDIR)/vector_c/vector.o \
+	  $(EXTERDIR)/hashmap_c/build/hashmapc.o \
 	  $(GPDIR)/util.o \
 	  $(GPDIR)/texture.o \
 	  $(GPDIR)/spritesheet.o \
@@ -68,6 +69,12 @@ $(UI_DIR)/button.o: $(UI_DIR)/button.c $(UI_DIR)/button.h
 
 $(EXTERDIR)/vector_c/vector.o:
 	make -C $(EXTERDIR)/vector_c
+
+$(EXTERDIR)/hashmap_c/build/hashmapc.o:
+	# produce .o files in build directory
+	make -C $(EXTERDIR)/hashmap_c
+	# combine multiple .o files together into one single file
+	ld -r $(EXTERDIR)/hashmap_c/build/hashmap_c.o $(EXTERDIR)/hashmap_c/build/MurmurHash3.o -o $@
 
 $(GPDIR)/util.o: $(GPDIR)/util.c $(GPDIR)/util.h
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -119,3 +126,4 @@ clean:
 	rm -f libkrr.a
 	rm -f *.o *.dSYM
 	make clean -C $(EXTERDIR)/vector_c
+	make clean -C $(EXTERDIR)/hashmap_c
