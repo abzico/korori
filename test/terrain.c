@@ -596,10 +596,7 @@ bool usercode_loadmedia()
     KRR_math_quat_v2rot(GLM_YUP, normal, tree_rots[i]);
   }
 
-  // pre-calculate fern's texture coordinate for each sprite in the sheet
-  //
-  // to hold min/max of uv texcoord for clipped texture inside the sheet
-  CGLM_ALIGN(16) vec4 clipped_texcoord;
+  // get pre-computed texture coordinates from sprites and save it for rendering
   for (int i=0; i<4; ++i)
   {
     const texpackr_sprite* sprite = NULL;
@@ -623,12 +620,15 @@ bool usercode_loadmedia()
       sprite = hashmapc_get(fern_sheetmeta->sprites, "/Users/haxpor/Desktop/fern4.png");
     }
 
-    clipped_texcoord[0] = sprite->offset.x * 1.0f / fern_sheetmeta->size.x;
-    clipped_texcoord[1] = (sprite->offset.x + sprite->size.x) * 1.0f / fern_sheetmeta->size.x;
-    clipped_texcoord[2] = sprite->offset.y * 1.0f / fern_sheetmeta->size.y;
-    clipped_texcoord[3] = (sprite->offset.y + sprite->size.y) * 1.0f / fern_sheetmeta->size.y;
+    // it's already pre-computed, we get it hre
+    texpackr_vec2f tc_u = sprite->texcoord_u;
+    texpackr_vec2f tc_v = sprite->texcoord_v;
 
-    glm_vec4_copy(clipped_texcoord, fern_clipped_texcoords[i]);
+    // copy to our cached variable
+    glm_vec4_copy((vec4){
+          tc_u.x, tc_u.y,
+          tc_v.x, tc_v.y
+        }, fern_clipped_texcoords[i]);
 
     KRR_LOG("ferp_clipped_texcoords[%d] = u(%f,%f), v(%f,%f)", i, fern_clipped_texcoords[i][0], fern_clipped_texcoords[i][1], fern_clipped_texcoords[i][2], fern_clipped_texcoords[i][3]);
   }
@@ -650,24 +650,6 @@ bool usercode_loadmedia()
 
     // random to get different texture for fern
     int rand_fern_i = KRR_math_rand_int(3);
-
-    // random to use which one of fern texture in the sheet
-    if (rand_fern_i == 0)
-    {
-      KRR_LOG("fern ran 1");
-    }
-    else if (rand_fern_i == 1)
-    {
-      KRR_LOG("fern ran 2");
-    }
-    else if (rand_fern_i == 2)
-    {
-      KRR_LOG("fern ran 3");
-    }
-    else
-    {
-      KRR_LOG("fern ran 4");
-    }
 
     // save which fern texcoord this fern should be
     fern_texcoord_is[i] = rand_fern_i;
