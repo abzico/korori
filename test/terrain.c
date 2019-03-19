@@ -30,6 +30,7 @@
 #include "graphics/model.h"
 #include "graphics/font.h"
 #include "graphics/fontpp2d.h"
+#include "texpackr/texpackr.h"
 #include <math.h>
 
 #define CONTENT_BG_COLOR 155.0f/255.0f, 202.0f/255.0f, 192.0f/255.0f, 1.0f
@@ -137,6 +138,8 @@ static CGLM_ALIGN(16) versor tree_rots[NUM_TREE];
 #define FERN_RANDOM_SIZE 200
 static CGLM_ALIGN(8) vec3 randomized_fern_pos[NUM_FERN];
 static CGLM_ALIGN(16) versor fern_rots[NUM_FERN];
+static CGLM_ALIGN(8) vec4 fern_clipped_texcoords[4];
+static int fern_texcoord_is[NUM_FERN];
 
 #define TERRAIN_SLOT_SIZE 10
 #define TERRAIN_HFACTOR 3.0f
@@ -356,11 +359,19 @@ bool usercode_loadmedia()
   }
   // fern texture
   fern_texture = KRR_TEXTURE_new();
-  if (!KRR_TEXTURE_load_texture_from_file(fern_texture, "res/models/fern.png"))
+  if (!KRR_TEXTURE_load_texture_from_file(fern_texture, "res/models/fern-sheet.png"))
   {
     KRR_LOGE("Error loading fern texture");
     return false;
   }
+  // load sheet meta
+  texpackr_sheetmeta* fern_sheetmeta = texpackr_parse("res/models/fern-sheet.tpr");
+  if (fern_sheetmeta == NULL)
+  {
+    KRR_LOGE("Error loading fern-sheet.tpr");
+    return false;
+  }
+
   // player texture
   player_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(player_texture, "res/models/playerTexture-flip.png"))
@@ -585,6 +596,43 @@ bool usercode_loadmedia()
     KRR_math_quat_v2rot(GLM_YUP, normal, tree_rots[i]);
   }
 
+  // pre-calculate fern's texture coordinate for each sprite in the sheet
+  //
+  // to hold min/max of uv texcoord for clipped texture inside the sheet
+  CGLM_ALIGN(16) vec4 clipped_texcoord;
+  for (int i=0; i<4; ++i)
+  {
+    const texpackr_sprite* sprite = NULL;
+
+    // calculate texcoord's clipping for this particular
+    // optimize note: pre-cache calcuting this.
+    if (i == 0)
+    {
+      sprite = hashmapc_get(fern_sheetmeta->sprites, "/Users/haxpor/Desktop/fern1.png");
+    }
+    else if (i == 1)
+    {
+      sprite = hashmapc_get(fern_sheetmeta->sprites, "/Users/haxpor/Desktop/fern2.png");
+    }
+    else if (i == 2)
+    {
+      sprite = hashmapc_get(fern_sheetmeta->sprites, "/Users/haxpor/Desktop/fern3.png");
+    }
+    else
+    {
+      sprite = hashmapc_get(fern_sheetmeta->sprites, "/Users/haxpor/Desktop/fern4.png");
+    }
+
+    clipped_texcoord[0] = sprite->offset.x * 1.0f / fern_sheetmeta->size.x;
+    clipped_texcoord[1] = (sprite->offset.x + sprite->size.x) * 1.0f / fern_sheetmeta->size.x;
+    clipped_texcoord[2] = sprite->offset.y * 1.0f / fern_sheetmeta->size.y;
+    clipped_texcoord[3] = (sprite->offset.y + sprite->size.y) * 1.0f / fern_sheetmeta->size.y;
+
+    glm_vec4_copy(clipped_texcoord, fern_clipped_texcoords[i]);
+
+    KRR_LOG("ferp_clipped_texcoords[%d] = u(%f,%f), v(%f,%f)", i, fern_clipped_texcoords[i][0], fern_clipped_texcoords[i][1], fern_clipped_texcoords[i][2], fern_clipped_texcoords[i][3]);
+  }
+
   for (int i=0; i<NUM_FERN; ++i)
   {
     temp_x = KRR_math_rand_float2(-FERN_RANDOM_SIZE, FERN_RANDOM_SIZE);
@@ -599,7 +647,35 @@ bool usercode_loadmedia()
 
     // compute quaternion for rotation from UP vector to result normal
     KRR_math_quat_v2rot(GLM_YUP, normal, fern_rots[i]);
+
+    // random to get different texture for fern
+    int rand_fern_i = KRR_math_rand_int(3);
+
+    // random to use which one of fern texture in the sheet
+    if (rand_fern_i == 0)
+    {
+      KRR_LOG("fern ran 1");
+    }
+    else if (rand_fern_i == 1)
+    {
+      KRR_LOG("fern ran 2");
+    }
+    else if (rand_fern_i == 2)
+    {
+      KRR_LOG("fern ran 3");
+    }
+    else
+    {
+      KRR_LOG("fern ran 4");
+    }
+
+    // save which fern texcoord this fern should be
+    fern_texcoord_is[i] = rand_fern_i;
   }
+
+  // we have no need to continue using sheetmeta for fern anymore
+  texpackr_sheetmeta_free(fern_sheetmeta);
+  fern_sheetmeta = NULL;
 
   return true;
 }
@@ -1467,6 +1543,11 @@ void usercode_render(void)
 
     for (int i=0; i<NUM_FERN; ++i)
     {
+      // set computed result to shader
+      glm_vec4_copy(fern_clipped_texcoords[fern_texcoord_is[i]], texturealpha3d_shader->clipped_texcoord);
+      // update to GPU
+      KRR_TEXALPHASHADERPROG3D_update_clipped_texcoord(texturealpha3d_shader);
+      
       glm_mat4_copy(g_base_model_matrix, texturealpha3d_shader->model_matrix);
       glm_translate(texturealpha3d_shader->model_matrix, randomized_fern_pos[i]);
 
