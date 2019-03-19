@@ -22,6 +22,9 @@ KRR_TEXALPHASHADERPROG3D* KRR_TEXALPHASHADERPROG3D_new(void)
   out->view_matrix_location = -1;
   glm_mat4_identity(out->model_matrix);
   out->model_matrix_location = -1;
+	out->clipped_texcoord_location = -1;
+	// all zeros means we don't set such values in shader
+	glm_vec4_zero(out->clipped_texcoord);
   out->light_position_location = -1;
   out->light_color_location = -1;
   memset(&out->light.pos, 0, sizeof(out->light.pos)); 
@@ -161,6 +164,11 @@ bool KRR_TEXALPHASHADERPROG3D_load_program(KRR_TEXALPHASHADERPROG3D* program)
   {
     KRR_LOGW("Warning: texture_sampler is invalid glsl variable name");
   }
+	program->clipped_texcoord_location = glGetUniformLocation(uprog->program_id, "packed_clip_texture_uv");
+	if (program->clipped_texcoord_location == -1)
+	{
+		KRR_LOGW("Warning: packed_clip_texture_uv is invalid glsl variable name");
+	}
   program->light_position_location = glGetUniformLocation(uprog->program_id, "light_position");
   if (program->light_position_location == -1)
   {
@@ -223,6 +231,11 @@ void KRR_TEXALPHASHADERPROG3D_update_view_matrix(KRR_TEXALPHASHADERPROG3D* progr
 void KRR_TEXALPHASHADERPROG3D_update_model_matrix(KRR_TEXALPHASHADERPROG3D* program)
 {
   glUniformMatrix4fv(program->model_matrix_location, 1, GL_FALSE, program->model_matrix[0]);
+}
+
+void KRR_TEXALPHASHADERPROG3D_update_clipped_texcoord(KRR_TEXALPHASHADERPROG3D* program)
+{
+	glUniform4fv(program->clipped_texcoord_location, 1, &program->clipped_texcoord[0]);
 }
 
 void KRR_TEXALPHASHADERPROG3D_update_light(KRR_TEXALPHASHADERPROG3D* program)

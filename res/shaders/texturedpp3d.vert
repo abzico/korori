@@ -7,7 +7,9 @@ uniform vec3 light_position;
 uniform float fog_enabled;
 uniform float fog_density;
 uniform float fog_gradient;
-
+// packed x-axis in first two vecs, and y-axis for second two vecs
+// format is (min_u, max_u), (min_v, max_v)
+uniform vec4 packed_clip_texture_uv;
 in vec3 vertex_pos3d;
 in vec2 texcoord;
 in vec3 normal;
@@ -23,7 +25,21 @@ void main()
   vec4 world_position = model_matrix * vec4(vertex_pos3d, 1.0f);
 
   // process texcoord
-  outin_texcoord = texcoord;
+	if (packed_clip_texture_uv.x == 0.0 &&
+			packed_clip_texture_uv.y == 0.0 &&
+			packed_clip_texture_uv.z == 0.0 &&
+			packed_clip_texture_uv.w == 0.0)
+	{
+		outin_texcoord = texcoord;
+	}
+	// this is sprite inside the sheet
+	else
+	{
+		// calculate result texcoord xy
+		outin_texcoord.x = (packed_clip_texture_uv.y - packed_clip_texture_uv.x) * texcoord.x + packed_clip_texture_uv.x;
+		outin_texcoord.y = (packed_clip_texture_uv.w - packed_clip_texture_uv.z) * texcoord.y + packed_clip_texture_uv.z;
+	}
+
   surface_normal = (model_matrix * vec4(normal, 0.0f)).xyz;
 
   tolight_dir = light_position - world_position.xyz;

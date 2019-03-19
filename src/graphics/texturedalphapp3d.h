@@ -29,6 +29,10 @@ typedef struct KRR_TEXALPHASHADERPROG3D_
   mat4 model_matrix;
   GLint model_matrix_location;
 
+	// clipped texture coordinate
+	GLint clipped_texcoord_location;
+	vec4 clipped_texcoord;
+
   // light
   GLint light_position_location;
   GLint light_color_location;
@@ -118,10 +122,18 @@ extern void KRR_TEXALPHASHADERPROG3D_update_model_matrix(KRR_TEXALPHASHADERPROG3
 extern void KRR_TEXALPHASHADERPROG3D_update_shininess(KRR_TEXALPHASHADERPROG3D* program);
 
 ///
+/// update clipped texture coordinate
+/// set it value (see header) first then call this function to update to GPU.
+///
+/// \param program pointer to KRR_TEXALPHASHADERPROG3D
+///
+extern void KRR_TEXALPHASHADERPROG3D_update_clipped_texcoord(KRR_TEXALPHASHADERPROG3D* program);
+
+///
 /// update light information
 /// set light information first (see header) then call this function to update to GPU
 ///
-/// \param program poitner to 
+/// \param program pointer to KRR_TEXALPHASHADERPROG3D
 extern void KRR_TEXALPHASHADERPROG3D_update_light(KRR_TEXALPHASHADERPROG3D* program);
 
 ///
