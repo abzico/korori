@@ -26,6 +26,7 @@ TARGETS := \
 	  $(UI_DIR)/button.o \
 	  $(EXTERDIR)/vector_c/vector.o \
 	  $(EXTERDIR)/hashmap_c/build/hashmapc.o \
+	  $(EXTERDIR)/texpackr/build/combined-texpackr.o \
 	  $(GPDIR)/util.o \
 	  $(GPDIR)/texture.o \
 	  $(GPDIR)/spritesheet.o \
@@ -76,6 +77,12 @@ $(EXTERDIR)/hashmap_c/build/hashmapc.o:
 	# combine multiple .o files together into one single file
 	ld -r $(EXTERDIR)/hashmap_c/build/hashmap_c.o $(EXTERDIR)/hashmap_c/build/MurmurHash3.o -o $@
 
+$(EXTERDIR)/texpackr/build/combined-texpackr.o:
+	# we will be intersting for object files, lib target
+	make lib -C $(EXTERDIR)/texpackr
+	# combine multiple .o files together into one single file
+	ld -r $(EXTERDIR)/texpackr/build/*.o -o $@
+
 $(GPDIR)/util.o: $(GPDIR)/util.c $(GPDIR)/util.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -118,6 +125,11 @@ $(GPDIR)/terrain.o: $(GPDIR)/terrain.c $(GPDIR)/terrain.h
 $(PROGRAM).o: $(PROGRAM).c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+clean-deps:
+	make clean -C $(EXTERDIR)/vector_c
+	make clean -C $(EXTERDIR)/hashmap_c
+	make clean -C $(EXTERDIR)/texpackr
+
 clean:
 	rm -f src/foundation/*.o
 	rm -f src/graphics/*.o
@@ -125,5 +137,5 @@ clean:
 	rm -f $(OUTPUT)
 	rm -f libkrr.a
 	rm -f *.o *.dSYM
-	make clean -C $(EXTERDIR)/vector_c
-	make clean -C $(EXTERDIR)/hashmap_c
+
+clean-all: clean clean-deps
