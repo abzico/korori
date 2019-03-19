@@ -4,3 +4,6 @@
 [submodule "src/externals/hashmap_c"]
 	path = src/externals/hashmap_c
 	url = git@github.com:haxpor/hashmap_c.git
+[submodule "src/externals/texpackr"]
+	path = src/externals/texpackr
+	url = git@github.com:abzico/texpackr.git
