@@ -1,6 +1,3 @@
-[submodule "src/externals/vector_c"]
-	path = src/externals/vector_c
-	url = git@github.com:haxpor/vector_c.git
 [submodule "src/externals/hashmap_c"]
 	path = src/externals/hashmap_c
 	url = git@github.com:haxpor/hashmap_c.git
