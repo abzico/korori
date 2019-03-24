@@ -1,3 +1,0 @@
-[submodule "src/externals/texpackr"]
-	path = src/externals/texpackr
-	url = git@github.com:abzico/texpackr.git
