@@ -3,11 +3,44 @@ AC_INIT([krr], [0.1], [wasin@abzi.co])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 AC_CONFIG_HEADERS([config.h])
+AC_CANONICAL_HOST
+
+dnl Variables we will share their result to Makefile(s)
+ISUNIX="false"
+ISWINDOWS="false"
+ISMACOSX="false"
+
+AM_EXTRA_RECURSIVE_TARGETS([samples])
 
 AM_PROG_AR
 
 AC_ENABLE_SHARED
 AC_ENABLE_STATIC
+
+dnl Determine the OS
+case "$host" in
+  *-*-cygwin* | *-*-mingw32*)
+    ISWINDOWS="true"
+    ;;
+  *-*-darwin*)
+    ISMACOSX="true"
+    ;;
+  *)
+    dnl otherwise, just treat it as unix
+    ISUNIX="true"
+    ;;
+esac
+
+AC_SUBST(ISUNIX)
+AC_SUBST(ISWINDOWS)
+AC_SUBST(ISMACOSX)
+
+dnl Conditionals used in samples/Makefile.am
+dnl Note: Conditional must be defined after result is asigned
+dnl back to the variable, it will capture such value at that time
+AM_CONDITIONAL([CD_IS_MACOSX], [test x$ISMACOSX = xtrue])
+AM_CONDITIONAL([CD_IS_WINDOWS], [test x$ISWINDOWS = xtrue])
+AM_CONDITIONAL([CD_IS_UNIX], [test x$ISUNIX = true])
 
 LT_INIT
 

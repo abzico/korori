@@ -37,6 +37,7 @@ libkrr_la_SOURCES = src/foundation/common.c \
 		    src/graphics/terrain_shader3d.c \
 		    src/graphics/texture.c \
 		    src/graphics/texturedalphapp3d.c \
+		    src/graphics/texturedpp2d.c \
 		    src/graphics/texturedpp3d.c \
 		    src/graphics/util.c \
 		    src/ui/button.c
@@ -75,3 +76,6 @@ krr_graphics_HEADERS = include/krr/graphics/common.h \
 
 krr_uidir=$(includedir)/krr/ui
 krr_ui_HEADERS = include/krr/ui/button.h
+
+# samples
+SUBDIRS = . samples
