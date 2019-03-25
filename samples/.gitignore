@@ -1,7 +1,12 @@
 *.swp
 *.swo
 *.o
+*.obj
 *.dSYM
+*.dylib
+*.so
+*.dll
+*.lo
 res/
 
 doublemulticolorshader

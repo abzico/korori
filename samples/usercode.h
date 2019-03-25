@@ -3,8 +3,8 @@
 /// It can include either OpenGL and normal SDL2 stuff.
 ///
 
-#include "SDL.h"
-#include "graphics/common.h"
+#include <SDL2/SDL.h>
+#include "krr/graphics/common.h"
 #include <stdbool.h>
 
 ///

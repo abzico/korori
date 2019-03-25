@@ -1,7 +1,7 @@
 #ifndef KRR_TEST_FUNCTS_h_
 #define KRR_TEST_FUNCTS_h_
 
-#include "foundation/common.h"
+#include "krr/foundation/common.h"
 
 #define SU_BEGIN(x) \
   KRR_SHADERPROG_bind(x->program);

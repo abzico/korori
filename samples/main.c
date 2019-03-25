@@ -6,14 +6,14 @@
 #include <string.h>
 #include <math.h>
 
-#include "SDL.h"
-#include "SDL_image.h"
-#include "foundation/common.h"
-#include "foundation/window.h"
-#include "graphics/common.h"
-#include "graphics/texture.h"
-#include "graphics/spritesheet.h"
-#include "graphics/font.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include "krr/foundation/common.h"
+#include "krr/foundation/window.h"
+#include "krr/graphics/common.h"
+#include "krr/graphics/texture.h"
+#include "krr/graphics/spritesheet.h"
+#include "krr/graphics/font.h"
 
 #include "usercode.h"
 

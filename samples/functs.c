@@ -1,10 +1,10 @@
 #include "functs.h"
-#include "graphics/texturedpp2d.h"
-#include "graphics/texturedpp3d.h"
-#include "graphics/texturedalphapp3d.h"
-#include "graphics/terrain_shader3d.h"
-#include "graphics/fontpp2d.h"
-#include "foundation/log.h"
+#include "krr/graphics/texturedpp2d.h"
+#include "krr/graphics/texturedpp3d.h"
+#include "krr/graphics/texturedalphapp3d.h"
+#include "krr/graphics/terrain_shader3d.h"
+#include "krr/graphics/fontpp2d.h"
+#include "krr/foundation/log.h"
 
 mat4 g_ui_projection_matrix;
 mat4 g_projection_matrix;
