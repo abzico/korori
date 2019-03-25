@@ -31,14 +31,14 @@ Build system is based on autotools.
 
 The list of available sample to build in `samples/`.
 
-* doublemulticolorshader - custom double color shader
-* rotatingcube
-* rotatingplane
-* readobjfile_manual - read .obj file while we build VBO as part of VAO to draw loaded .obj file manually wrapping around `SIMPLEMODEL`
-* readobjfile - more automatic after loading .obj file to render on screen
-* advanced_model - load .obj model then render with some other features on top
-* headless - headless program without GUI window, it will load .obj model then shows it while rotating the model, then after enough frames has been rendered, it will take snapshot of screen then finally write as output .png file `headless-snapshot.tga`
-* terrain
+* `doublemulticolorshader` - custom double color shader
+* `rotatingcube`
+* `rotatingplane`
+* `readobjfile_manual` - read .obj file while we build VBO as part of VAO to draw loaded .obj file manually wrapping around `SIMPLEMODEL`
+* `readobjfile` - more automatic after loading .obj file to render on screen
+* `advanced_model` - load .obj model then render with some other features on top
+* `headless` - headless program without GUI window, it will load .obj model then shows it while rotating the model, then after enough frames has been rendered, it will take snapshot of screen then finally write as output .png file `headless-snapshot.tga`
+* `terrain`
 
 # Credits
 
