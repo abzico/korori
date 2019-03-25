@@ -1,7 +1,7 @@
 #ifndef KRR_OBJLOADER_h_
 #define KRR_OBJLOADER_h_
 
-#include "graphics/common.h"
+#include "krr/graphics/common.h"
 
 ///
 /// Load .obj file then return result of formed vertices.

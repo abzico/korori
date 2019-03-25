@@ -6,7 +6,7 @@
 #define KRR_common_h_
 
 #include <stdbool.h>
-#include "window.h"
+#include "krr/foundation/window.h"
 
 // use library call
 // for inline
@@ -14,7 +14,7 @@
 // for function call
 //#include <cglm/call.h>
 
-#include "foundation/log.h"
+#include "krr/foundation/log.h"
 
 /*
  * The window we'll be rendering to.

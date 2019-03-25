@@ -2,8 +2,8 @@
 #define KRR_TEXTURE_h_
 
 #include <stdbool.h>
-#include "graphics/common.h"
-#include "graphics/types.h"
+#include "krr/graphics/common.h"
+#include "krr/graphics/types.h"
 
 /// global shared variable that all instance of KRR_TEXTURE will use
 struct KRR_TEXSHADERPROG2D_;

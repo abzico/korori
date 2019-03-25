@@ -1,7 +1,7 @@
 #ifndef KRR_TEXTURE_internals_h_
 #define KRR_TEXTURE_internals_h_
 
-#include "texture.h"
+#include "krr/graphics/texture.h"
 #include <stdbool.h>
 
 /// these API meant to be used internally by library only (not limited to only KRR_TEXTURE.c), not expose to user.

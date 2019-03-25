@@ -12,7 +12,7 @@
 #ifndef KRR_BUTTON_h_
 #define KRR_BUTTON_h_
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 
 /// state of button
 enum KRR_BUTTON_STATE

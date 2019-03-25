@@ -1,9 +1,9 @@
 #ifndef KRR_FONT_h_
 #define KRR_FONT_h_
 
-#include "graphics/common.h"
-#include "graphics/spritesheet.h"
-#include "ft2build.h"
+#include "krr/graphics/common.h"
+#include "krr/graphics/spritesheet.h"
+#include <ft2build.h>
 #include FT_FREETYPE_H
 
 enum KRR_FONT_TEXTALIGNMENT

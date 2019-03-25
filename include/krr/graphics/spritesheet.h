@@ -1,10 +1,10 @@
 #ifndef KRR_TEXTURE_spritesheet_h_
 #define KRR_TEXTURE_spritesheet_h_
 
-#include "graphics/common.h"
-#include "graphics/types.h"
-#include "graphics/texture.h"
-#include "externals/vector_c/vector.h"
+#include "krr/graphics/common.h"
+#include "krr/graphics/types.h"
+#include "krr/graphics/texture.h"
+#include <vector/vector.h>
 
 typedef struct
 {

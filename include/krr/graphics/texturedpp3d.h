@@ -1,8 +1,8 @@
 #ifndef KRR_TEXSHADERPROG3D_h_
 #define KRR_TEXSHADERPROG3D_h_
 
-#include "graphics/common.h"
-#include "graphics/shaderprog.h"
+#include "krr/graphics/common.h"
+#include "krr/graphics/shaderprog.h"
 
 typedef struct KRR_TEXSHADERPROG3D_
 {

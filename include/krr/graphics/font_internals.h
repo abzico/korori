@@ -1,8 +1,8 @@
 #ifndef KRR_FONT_internals_h_
 #define KRR_FONT_internals_h_
 
-#include "graphics/common.h"
-#include "graphics/font.h"
+#include "krr/graphics/common.h"
+#include "krr/graphics/font.h"
 
 /// This header is meant to be used internally by library itself.
 /// If you include this, you should know what you're doing.

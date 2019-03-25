@@ -1,7 +1,7 @@
 #ifndef KRR_gputil_h_
 #define KRR_gputil_h_
 
-#include "graphics/common.h"
+#include "krr/graphics/common.h"
 
 /// Utility functions to work with OpenGL
 

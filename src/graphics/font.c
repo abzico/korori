@@ -1,13 +1,13 @@
-#include "font.h"
+#include "krr/graphics/font.h"
 #include <stdlib.h>
 #include <stddef.h>
-#include "foundation/log.h"
-#include "externals/vector_c/vector.h"
-#include "graphics/texture_internals.h"
+#include "krr/foundation/log.h"
+#include <vector/vector.h>
+#include "krr/graphics/texture_internals.h"
 #include FT_BITMAP_H
-#include "graphics/shaderprog.h"
-#include "graphics/font_internals.h"
-#include "graphics/fontpp2d.h"
+#include "krr/graphics/shaderprog.h"
+#include "krr/graphics/font_internals.h"
+#include "krr/graphics/fontpp2d.h"
 
 // spacing when render between character in pixel
 #define BETWEEN_CHAR_SPACING 4

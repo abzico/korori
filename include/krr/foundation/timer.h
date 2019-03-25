@@ -1,7 +1,7 @@
 #ifndef KRR_TIMER_h_
 #define KRR_TIMER_h_
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include <stdbool.h>
 
 typedef struct KRR_TIMER {

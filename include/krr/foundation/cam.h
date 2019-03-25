@@ -1,7 +1,7 @@
 #ifndef KRR_CAM_h_
 #define KRR_CAM_h_
 
-#include "graphics/common.h"
+#include "krr/graphics/common.h"
 
 typedef struct
 {

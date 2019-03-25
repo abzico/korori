@@ -1,7 +1,7 @@
 #ifndef KRR_MODEL_h_
 #define KRR_MODEL_h_
 
-#include "graphics/common.h"
+#include "krr/graphics/common.h"
 
 typedef struct
 {

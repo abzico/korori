@@ -1,10 +1,10 @@
-#include "graphics/terrain.h"
-#include "graphics/terrain_shader3d.h"
-#include "graphics/objloader.h"
-#include "graphics/texture.h"
+#include "krr/graphics/terrain.h"
+#include "krr/graphics/terrain_shader3d.h"
+#include "krr/graphics/objloader.h"
+#include "krr/graphics/texture.h"
 #include <stdlib.h>
-#include "foundation/log.h"
-#include "foundation/mem.h"
+#include "krr/foundation/log.h"
+#include "krr/foundation/mem.h"
 
 #define MIN_TERRAIN_HEIGHT -50
 #define MAX_TERRAIN_HEIGHT 100

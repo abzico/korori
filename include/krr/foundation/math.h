@@ -1,9 +1,9 @@
 #ifndef KRR_math_h_
 #define KRR_math_h_
 
-#include "SDL.h"
-#include "types.h"
-#include "foundation/common.h"
+#include <SDL2/SDL.h>
+#include "krr/foundation/types.h"
+#include "krr/foundation/common.h"
 
 extern float KRR_math_lerp(float a, float b, float t);
 

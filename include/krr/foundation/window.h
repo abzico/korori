@@ -1,7 +1,7 @@
 #ifndef KRR_window_h_
 #define KRR_window_h_
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include <stdbool.h>
 
 #define ORIGINAL_WINDOW_TITLE_BUFFER 50

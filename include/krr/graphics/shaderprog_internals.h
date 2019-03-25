@@ -3,7 +3,7 @@
 
 /// this header is meant to be used internally by library or if you know what you're doing
 
-#include "graphics/shaderprog.h"
+#include "krr/graphics/shaderprog.h"
 
 ///
 /// Init defaults
