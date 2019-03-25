@@ -1,10 +1,10 @@
-#include "spritesheet.h"
+#include "krr/graphics/spritesheet.h"
 #include <stdlib.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include "foundation/common.h"
-#include "graphics/texturedpp2d.h"
-#include "graphics/util.h"
+#include "krr/foundation/common.h"
+#include "krr/graphics/texturedpp2d.h"
+#include "krr/graphics/util.h"
 
 static void init_defaults(KRR_SPRITESHEET* spritesheet);
 static void free_internals(KRR_SPRITESHEET* spritesheet);

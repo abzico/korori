@@ -1,7 +1,7 @@
-#include "terrain_shader3d.h"
+#include "krr/graphics/terrain_shader3d.h"
 #include <stdlib.h>
 #include <string.h>
-#include "foundation/log.h"
+#include "krr/foundation/log.h"
 
 // this should be set once in user's program
 KRR_TERRAINSHADERPROG3D* shared_terrain3d_shaderprogram = NULL;

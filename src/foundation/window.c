@@ -1,5 +1,5 @@
-#include "window.h"
-#include "SDL_log.h"
+#include "krr/foundation/window.h"
+#include <SDL2/SDL_log.h>
 #include <stdlib.h>
 
 #define WINDOW_TITLE_BUFFER 60

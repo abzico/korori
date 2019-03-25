@@ -1,6 +1,6 @@
-#include "texturedpp2d.h"
+#include "krr/graphics/texturedpp2d.h"
 #include <stdlib.h>
-#include "foundation/log.h"
+#include "krr/foundation/log.h"
 
 KRR_TEXSHADERPROG2D* KRR_TEXSHADERPROG2D_new(void)
 {

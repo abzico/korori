@@ -1,11 +1,11 @@
-#include "graphics/objloader.h"
+#include "krr/graphics/objloader.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
-#include "foundation/log.h"
+#include "krr/foundation/log.h"
 
 // start with 100 empty space to hold elements
 #define INITIAL_ELEM_COUNT 100

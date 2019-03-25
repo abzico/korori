@@ -1,11 +1,11 @@
-#include "shaderprog.h"
+#include "krr/graphics/shaderprog.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "foundation/log.h"
-#include "foundation/util.h"
-#include "graphics/shaderprog_internals.h"
-#include "graphics/util.h"
+#include "krr/foundation/log.h"
+#include "krr/foundation/util.h"
+#include "krr/graphics/shaderprog_internals.h"
+#include "krr/graphics/util.h"
 
 void KRR_SHADERPROG_init_defaults(KRR_SHADERPROG* shader_program)
 {

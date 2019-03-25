@@ -1,6 +1,6 @@
-#include "util.h"
+#include "krr/graphics/util.h"
 #include <stdarg.h>
-#include "foundation/log.h"
+#include "krr/foundation/log.h"
 
 void KRR_gputil_adapt_to_normal(int screen_width, int screen_height)
 {

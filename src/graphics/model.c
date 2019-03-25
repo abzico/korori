@@ -1,6 +1,6 @@
-#include "graphics/model.h"
-#include "graphics/objloader.h"
-#include "graphics/texturedpp3d.h"
+#include "krr/graphics/model.h"
+#include "krr/graphics/objloader.h"
+#include "krr/graphics/texturedpp3d.h"
 #include <stdlib.h>
 
 static void init_defaults(SIMPLEMODEL* sm)

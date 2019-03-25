@@ -1,7 +1,7 @@
-#include "texturedalphapp3d.h"
+#include "krr/graphics/texturedalphapp3d.h"
 #include <stdlib.h>
 #include <string.h>
-#include "foundation/log.h"
+#include "krr/foundation/log.h"
 
 // this should be set once in user's program
 KRR_TEXALPHASHADERPROG3D* shared_texturedalpha3d_shaderprogram = NULL;
