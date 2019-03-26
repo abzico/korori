@@ -79,3 +79,21 @@ krr_ui_HEADERS = include/krr/ui/button.h
 
 # samples
 SUBDIRS = . samples
+
+samples-local: all
+
+sample-doublemulticolorshader-local: all
+
+sample-rotatingcube-local: all
+
+sample-rotatingplane-local: all
+
+sample-readobjfile_manual-local: all
+
+sample-readobjfile-local: all
+
+sample-advanced_model-local: all
+
+sample-headless-local: all
+
+sample-terrain-local: all

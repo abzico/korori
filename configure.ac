@@ -10,7 +10,16 @@ ISUNIX="false"
 ISWINDOWS="false"
 ISMACOSX="false"
 
-AM_EXTRA_RECURSIVE_TARGETS([samples])
+AM_EXTRA_RECURSIVE_TARGETS([samples \
+                            clean-samples \
+                            sample-doublemulticolorshader \
+                            sample-rotatingcube \
+                            sample-rotatingplane \
+                            sample-readobjfile_manual \
+                            sample-readobjfile \
+                            sample-advanced_model \
+                            sample-headless \
+                            sample-terrain])
 
 AM_PROG_AR
 

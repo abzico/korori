@@ -7,16 +7,16 @@
 
 #include "usercode.h"
 #include "functs.h"
-#include "foundation/common.h"
-#include "foundation/window.h"
-#include "foundation/util.h"
-#include "foundation/cam.h"
-#include "foundation/math.h"
-#include "graphics/util.h"
-#include "graphics/texturedpp2d.h"
-#include "graphics/font.h"
-#include "graphics/fontpp2d.h"
-#include "graphics/texture.h"
+#include "krr/foundation/common.h"
+#include "krr/foundation/window.h"
+#include "krr/foundation/util.h"
+#include "krr/foundation/cam.h"
+#include "krr/foundation/math.h"
+#include "krr/graphics/util.h"
+#include "krr/graphics/texturedpp2d.h"
+#include "krr/graphics/font.h"
+#include "krr/graphics/fontpp2d.h"
+#include "krr/graphics/texture.h"
 #include <math.h>
 
 // don't use this elsewhere
