@@ -14,6 +14,19 @@ LDFLAGS =	-lSDL2 \
 					-ltexpackr \
 					main.o functs.o
 
+dist_data_DATA = template.c \
+								 main.c \
+								 functs.c functs.h \
+								 usercode.h \
+								 doublemulticolorshader.c \
+								 rotatingcube.c \
+								 rotatingplane.c \
+								 readobjfile_manual.c \
+								 readobjfile.c \
+								 advanced_model.c \
+								 headless.c \
+								 terrain.c
+
 if CD_IS_MACOSX
 CFLAGS += -DGL_SILENCE_DEPRECATION
 LDFLAGS += -framework OpenGL \
