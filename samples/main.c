@@ -3,6 +3,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -35,12 +36,12 @@
 #define COLDSTATE_UPDATERATE 0.1
 
 // -- functions
-bool init();
-bool setup();
-void handleEvent(SDL_Event *e, float deltaTime);
-void update(float deltaTime);
-void render();
-void close();
+static bool init();
+static bool setup();
+static void handleEvent(SDL_Event *e, float deltaTime);
+static void update(float deltaTime);
+static void render();
+static void close();
 
 static void on_window_focus_gained(Uint32 window_id);
 static void on_window_focus_lost(Uint32 window_id);
@@ -79,12 +80,19 @@ void on_window_focus_lost(Uint32 window_id)
 
 bool init() {
   // initialize sdl
-  // also init SDL_INIT_JOYSTICK to prevent frame from taken too long than should, see
-  // https://discourse.libsdl.org/t/unstable-frame-rate-unexpectedly/25783
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     KRR_LOGE("SDL could not initialize! SDL_Error: %s", SDL_GetError());
     return false;
   }
+
+#ifdef SDL_HEADLESS
+  // define environment variable to videodriver
+  // note: do this after SDL_Init() but before creating a new window with KRR_WINDOW_new()
+  if (putenv("SDL_VIDEODRIVER=dummy") != 0)
+  {
+    KRR_LOGW("Warning: cannot set environment variable 'dummy' to cleanly go headless.");
+  }
+#endif
   
   // use core profile of opengl 3.3
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // Always required on Mac
@@ -124,9 +132,6 @@ bool init() {
     return false;
   }
 
-  // check opengl version we got
-  KRR_LOG("OpenGL version %s\nGLSL version: %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
-
   // use vsync
   // we need to enable vsync to resolve stuttering issue for now
   if (SDL_GL_SetSwapInterval(1) != 0)
@@ -142,6 +147,9 @@ bool init() {
     KRR_LOGE("Failed initialize glew! %s", glewGetErrorString(glewError));
     return false;
   }
+
+  // check opengl version we got
+  KRR_LOG("OpenGL version %s\nGLSL version: %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
   // make sure OpenGL 3.3 is supported
   if (!GLEW_VERSION_3_3)
