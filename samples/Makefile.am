@@ -22,6 +22,18 @@ LDFLAGS =	main.o functs.o \
 					-lhashmap_c \
 					-ltexpackr
 
+LDFLAGS_HEADLESS = main-headless.o functs-headless.o \
+		   $(LINK_KRR_FLAGS) \
+		   -lm \
+		   -lSDL2 \
+		   -lSDL2_image \
+		   -lGLEW \
+		   -lfreetype \
+		   -lcglm \
+		   -lvector \
+		   -lhashmap_c \
+		   -ltexpackr
+
 dist_data_DATA = template.c \
 								 main.c \
 								 functs.c functs.h \
@@ -40,18 +52,24 @@ CFLAGS += -DGL_SILENCE_DEPRECATION \
 					-I/usr/local/include/freetype2
 LDFLAGS += -framework OpenGL \
 					 -Wl,-rpath,/usr/local/lib
+LDFLAGS_HEADLESS += -framework OpenGL \
+		    -Wl,-rpath,/usr/local/lib
 endif
 
 if CD_IS_WINDOWS
 CFLAGS += -I/usr/include/freetype2
 LDFLAGS += -lGL \
 					 -Wl,-rpath,/usr/local/lib
+LDFLAGS_HEADLESS += -lGL \
+		    -Wl,-rpath,/usr/local/lib
 endif
 
 if CD_IS_UNIX
 CFLAGS += -I/usr/include/freetype2
 LDFLAGS += -lGL \
 					 -Wl,-rpath,/usr/local/lib
+LDFLAGS_HEADLESS += -lGL \
+		    -Wl,-rpath,/usr/local/lib
 endif
 
 clean-samples-local:
@@ -69,7 +87,7 @@ clean-samples-local:
 	rm -f headless
 	rm -f terrain
 
-samples-local: copy-res common \
+samples-local: copy-res common common-headless \
 							 sample-doublemulticolorshader-local \
 							 sample-rotatingcube-local \
 							 sample-rotatingplane-local \
@@ -87,6 +105,11 @@ common: main.c functs.c functs.h usercode.h
 	@echo "Build common"
 	$(CC) $(CFLAGS) -c main.c
 	$(CC) $(CFLAGS) -c functs.c
+
+common-headless: main.c functs.c functs.h usercode.h
+	@echo "Build common headless"
+	$(CC) $(CFLAGS) -DSDL_HEADLESS -c main.c -o main-headless.o
+	$(CC) $(CFLAGS) -DSDL_HEADLESS -c functs.c -o functs-headless.o
 
 sample-doublemulticolorshader-local: copy-res common
 	@echo "Build doublemulticolorshader"
@@ -112,9 +135,9 @@ sample-advanced_model-local: copy-res common
 	@echo "Build advanced_model"
 	$(CC) $(CFLAGS) advanced_model.c $(LDFLAGS) -o advanced_model$(EXEEXT)
 
-sample-headless-local: copy-res common
+sample-headless-local: copy-res common-headless
 	@echo "Build headless"
-	$(CC) $(CFLAGS) headless.c $(LDFLAGS) -o headless$(EXEEXT)
+	$(CC) $(CFLAGS) headless.c $(LDFLAGS_HEADLESS) -o headless$(EXEEXT)
 
 sample-terrain-local: copy-res common
 	@echo "Build terrain"

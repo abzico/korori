@@ -68,11 +68,11 @@ static bool take_frame_snapshot_tofile(const char* dst_filepath)
   unsigned char pixels[number_of_pixels];
 
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  glReadBuffer(GL_FRONT);
+  glReadBuffer(GL_BACK);
   // use GL_BGR because TGA stores its data in file in little-endian
   glReadPixels(0, 0, g_logical_width, g_logical_height, GL_BGR, GL_UNSIGNED_BYTE, pixels);
 
-  FILE *out_file = fopen(dst_filepath, "w");
+  FILE *out_file = fopen(dst_filepath, "wb");
   if (out_file == NULL)
   {
     KRR_LOGE("Error attempting to open file for writing");

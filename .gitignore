@@ -21,6 +21,9 @@
 /missing
 Makefile
 Makefile.in
+m4/!ax_check_gl.m4.m4
+m4/!ax_save_flags_with_prefix.m4
+m4/!ax_save_flags_with_prefix.m4
 m4/*.m4
 config.h.*
 /config.h
