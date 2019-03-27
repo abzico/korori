@@ -2,17 +2,25 @@ CC = gcc
 CFLAGS = -g \
 				 -O2 \
 				 -I./include \
-				 -I../include \
-				 -I/usr/local/include/freetype2
-LDFLAGS =	-lSDL2 \
+				 -I../include
+
+if CD_IS_WINDOWS
+LINK_KRR_FLAGS = ../.libs/libkrr.lib
+else
+LINK_KRR_FLAGS = ../.libs/libkrr.a
+endif
+
+LDFLAGS =	main.o functs.o \
+					$(LINK_KRR_FLAGS) \
+					-lm \
+					-lSDL2 \
 					-lSDL2_image \
 					-lGLEW \
 					-lfreetype \
 					-lcglm \
 					-lvector \
 					-lhashmap_c \
-					-ltexpackr \
-					main.o functs.o
+					-ltexpackr
 
 dist_data_DATA = template.c \
 								 main.c \
@@ -28,19 +36,22 @@ dist_data_DATA = template.c \
 								 terrain.c
 
 if CD_IS_MACOSX
-CFLAGS += -DGL_SILENCE_DEPRECATION
+CFLAGS += -DGL_SILENCE_DEPRECATION \
+					-I/usr/local/include/freetype2
 LDFLAGS += -framework OpenGL \
-					 ../.libs/libkrr.a
+					 -Wl,-rpath,/usr/local/lib
 endif
 
 if CD_IS_WINDOWS
+CFLAGS += -I/usr/include/freetype2
 LDFLAGS += -lGL \
-					 ../.libs/libkrr.lib
+					 -Wl,-rpath,/usr/local/lib
 endif
 
 if CD_IS_UNIX
+CFLAGS += -I/usr/include/freetype2
 LDFLAGS += -lGL \
-					 ../.libs/libkrr.a
+					 -Wl,-rpath,/usr/local/lib
 endif
 
 clean-samples-local:

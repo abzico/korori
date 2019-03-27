@@ -49,7 +49,7 @@ dnl Note: Conditional must be defined after result is asigned
 dnl back to the variable, it will capture such value at that time
 AM_CONDITIONAL([CD_IS_MACOSX], [test x$ISMACOSX = xtrue])
 AM_CONDITIONAL([CD_IS_WINDOWS], [test x$ISWINDOWS = xtrue])
-AM_CONDITIONAL([CD_IS_UNIX], [test x$ISUNIX = true])
+AM_CONDITIONAL([CD_IS_UNIX], [test x$ISUNIX = xtrue])
 
 LT_INIT
 

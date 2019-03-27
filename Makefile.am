@@ -9,8 +9,14 @@ EXTRA_DIST = README.md LICENSE autogen.sh res
 
 # lib
 lib_LTLIBRARIES = libkrr.la
-# FIXME: hard-coded freetype's lib path as the library uses <> that causes us problem in linking
-libkrr_la_CFLAGS = -I./include -I/usr/local/include/freetype2
+libkrr_la_CFLAGS = -I./include
+
+if CD_IS_MACOSX
+libkrr_la_CFLAGS += -I/usr/local/include/freetype2
+else
+libkrr_la_CFLAGS += -I/usr/include/freetype2
+endif
+
 libkrr_la_LDFLAGS = -no-defined -version-info 0:1:0 \
 		    -lSDL2 \
 		    -lSDL2_image \
