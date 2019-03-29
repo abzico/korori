@@ -25,12 +25,17 @@ KRR_TEXALPHASHADERPROG3D* KRR_TEXALPHASHADERPROG3D_new(void)
 	out->clipped_texcoord_location = -1;
 	// all zeros means we don't set such values in shader
 	glm_vec4_zero(out->clipped_texcoord);
-  out->light_position_location = -1;
-  out->light_color_location = -1;
-  memset(&out->light.pos, 0, sizeof(out->light.pos)); 
-  out->light.color.r = 1.0f;
-  out->light.color.g = 1.0f;
-  out->light.color.b = 1.0f;
+  for (int i=0; i<KRR_SHADERPROG_MAX_LIGHTS; ++i)
+  {
+    out->light_position_locations[i] = -1;
+    out->light_color_locations[i] = -1;
+
+    memset(&out->lights[i].pos, 0, sizeof(out->lights[i].pos)); 
+    out->lights[i].color.r = 1.0f;
+    out->lights[i].color.g = 1.0f;
+    out->lights[i].color.b = 1.0f;
+  }
+  out->light_num_location = -1;
   out->shine_damper = 1.0f;
   out->reflectivity = 0.0f;
   out->ambient_color_location = -1;
@@ -169,15 +174,29 @@ bool KRR_TEXALPHASHADERPROG3D_load_program(KRR_TEXALPHASHADERPROG3D* program)
 	{
 		KRR_LOGW("Warning: packed_clip_texture_uv is invalid glsl variable name");
 	}
-  program->light_position_location = glGetUniformLocation(uprog->program_id, "light_position");
-  if (program->light_position_location == -1)
+
+  // exact byte allocation enough to hold "light_position[%d]" and "light_color[%d]"
+  const int temp_str_size = 18;
+  char temp_str[temp_str_size];
+  for (int i=0; i<KRR_SHADERPROG_MAX_LIGHTS; ++i)
   {
-    KRR_LOGW("Warning: light_position is invalid glsl variable name");
-  }
-  program->light_color_location = glGetUniformLocation(uprog->program_id, "light_color");
-  if (program->light_color_location == -1)
-  {
-    KRR_LOGW("Warning: light_color is invalid glsl variable name");
+    // form string used to refer to the variable in glsl
+    snprintf(temp_str, temp_str_size, "light_position[%d]", i);
+
+    program->light_position_locations[i] = glGetUniformLocation(uprog->program_id, temp_str);
+    if (program->light_position_locations[i] == -1)
+    {
+      KRR_LOGW("Warning: light_position[%d] is invalid glsl variable name", i);
+    }
+
+    // form string again for "light_color[%d]"
+    snprintf(temp_str, temp_str_size, "light_color[%d]", i);
+
+    program->light_color_locations[i] = glGetUniformLocation(uprog->program_id, temp_str);
+    if (program->light_color_locations[i] == -1)
+    {
+      KRR_LOGW("Warning: light_color[%d] is invalid glsl variable name", i);
+    }
   }
   program->shine_damper_location = glGetUniformLocation(uprog->program_id, "shine_damper");
   if (program->shine_damper_location == -1)
@@ -238,10 +257,28 @@ void KRR_TEXALPHASHADERPROG3D_update_clipped_texcoord(KRR_TEXALPHASHADERPROG3D* 
 	glUniform4fv(program->clipped_texcoord_location, 1, &program->clipped_texcoord[0]);
 }
 
-void KRR_TEXALPHASHADERPROG3D_update_light(KRR_TEXALPHASHADERPROG3D* program)
+void KRR_TEXALPHASHADERPROG3D_update_lights(KRR_TEXALPHASHADERPROG3D* program)
 {
-  glUniform3fv(program->light_position_location, 1, &program->light.pos.x);
-  glUniform3fv(program->light_color_location, 1, &program->light.color.r);
+  for (int i=0; i<KRR_SHADERPROG_MAX_LIGHTS; ++i)
+  {
+    glUniform3fv(program->light_position_locations[i], 1, &program->lights[i].pos.x);
+    glUniform3fv(program->light_color_locations[i], 1, &program->lights[i].color.r);
+  }
+
+  // automatically update number of lights to be used in shader
+  glUniform1i(program->light_num_location, KRR_SHADERPROG_MAX_LIGHTS);
+}
+
+void KRR_TEXALPHASHADERPROG3D_update_lights_num(KRR_TEXALPHASHADERPROG3D* program, int num_lights)
+{
+  for (int i=0; i<num_lights; ++i)
+  {
+    glUniform3fv(program->light_position_locations[i], 1, &program->lights[i].pos.x);
+    glUniform3fv(program->light_color_locations[i], 1, &program->lights[i].color.r);
+  }
+
+  // automatically update number of lights to be used in shader
+  glUniform1i(program->light_num_location, num_lights);
 }
 
 void KRR_TEXALPHASHADERPROG3D_update_ambient_color(KRR_TEXALPHASHADERPROG3D* program)

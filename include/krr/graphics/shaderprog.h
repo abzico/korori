@@ -4,6 +4,11 @@
 #include "krr/graphics/common.h"
 #include <stdbool.h>
 
+///
+/// Maximum lights supported all across the board for all shaders
+///
+#define KRR_SHADERPROG_MAX_LIGHTS 4
+
 typedef struct
 {
   // program id
