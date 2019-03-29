@@ -99,7 +99,7 @@ samples-local: copy-res common common-headless \
 	@echo "All samples are built"
 
 copy-res:
-	cp -R ../res res
+	rsync -av ../res ./
 
 common: main.c functs.c functs.h usercode.h
 	@echo "Build common"
