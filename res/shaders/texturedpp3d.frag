@@ -44,7 +44,6 @@ void main()
     float damped_factor = pow(specular_factor, shine_damper);
     total_specular = total_specular + damped_factor * light_color[i] * reflectivity;
   }
-  total_diffuse = clamp(total_diffuse, 0.0f, 1.0f);
 
   final_color = vec4(total_diffuse, 1.0f) * texture(texture_sampler, outin_texcoord) + vec4(total_specular, 1.0f);
   if (fog_enabled == 1.0f)
