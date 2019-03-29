@@ -1,6 +1,7 @@
 CC = gcc
 CFLAGS = -g \
 				 -O2 \
+				 -std=c99 \
 				 -I./include \
 				 -I../include
 
