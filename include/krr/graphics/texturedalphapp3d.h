@@ -34,9 +34,10 @@ typedef struct KRR_TEXALPHASHADERPROG3D_
 	vec4 clipped_texcoord;
 
   // light
-  GLint light_position_location;
-  GLint light_color_location;
-  LIGHT light;
+  GLint light_position_locations[KRR_SHADERPROG_MAX_LIGHTS];
+  GLint light_color_locations[KRR_SHADERPROG_MAX_LIGHTS];
+  GLint light_num_location;
+  LIGHT lights[KRR_SHADERPROG_MAX_LIGHTS];
 
   // specular
   GLint shine_damper_location;
@@ -131,10 +132,27 @@ extern void KRR_TEXALPHASHADERPROG3D_update_clipped_texcoord(KRR_TEXALPHASHADERP
 
 ///
 /// update light information
+/// this will update all lights up to maximum as defined via `KRR_SHADERPROG_MAX_LIGHTS`.
 /// set light information first (see header) then call this function to update to GPU
 ///
+/// It will also automatically update number of lights as will be processed by shader.
+/// For this case, it will use all lights as defined maximally.
+///
 /// \param program pointer to KRR_TEXALPHASHADERPROG3D
-extern void KRR_TEXALPHASHADERPROG3D_update_light(KRR_TEXALPHASHADERPROG3D* program);
+///
+extern void KRR_TEXALPHASHADERPROG3D_update_lights(KRR_TEXALPHASHADERPROG3D* program);
+
+///
+/// update light information
+/// set light information first (see header) then call this function to update to GPU
+///
+/// It will also automatically update number of light as will be processed by shader.
+/// For this case, it will set `num_lights` to be used by shader.
+///
+/// \param program pointer to KRR_TEXALPHASHADERPROG3D
+/// \param num_lights number of lights
+///
+extern void KRR_TEXALPHASHADERPROG3D_update_lights_num(KRR_TEXALPHASHADERPROG3D* program, int num_lights);
 
 ///
 /// update ambient color
