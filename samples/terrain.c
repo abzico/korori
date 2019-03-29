@@ -436,12 +436,22 @@ bool usercode_loadmedia()
     texture3d_shader->shine_damper = 10.0f;
     texture3d_shader->reflectivity = 0.2f;
     KRR_TEXSHADERPROG3D_update_shininess(texture3d_shader);
-    // set light info
-    vec3 light_pos = {30.0f, 30.0f, 30.0f};
-    vec3 light_color = {1.0f, 1.f, 1.f};
-    memcpy(&texture3d_shader->light.pos, &light_pos, sizeof(light_pos));
-    memcpy(&texture3d_shader->light.color, &light_color, sizeof(light_color));
-    KRR_TEXSHADERPROG3D_update_light(texture3d_shader);
+    // set light info - 1st light
+    {
+    VERTEXPOS3D light_pos = {30.0f, 30.0f, 30.0f};
+    COLOR3F light_color = {1.0f, 1.f, 1.f};
+    memcpy(&texture3d_shader->lights[0].pos, &light_pos, sizeof(light_pos));
+    memcpy(&texture3d_shader->lights[0].color, &light_color, sizeof(light_color));
+    }
+    // set light info - 2nd light
+    {
+    VERTEXPOS3D light_pos = {100.0f, 30.0f, -100.0f};
+    COLOR3F light_color = {1.0f, 0.f, 0.f};
+    memcpy(&texture3d_shader->lights[1].pos, &light_pos, sizeof(light_pos));
+    memcpy(&texture3d_shader->lights[1].color, &light_color, sizeof(light_color));
+    }
+    // update 2 lights we have
+    KRR_TEXSHADERPROG3D_update_lights_num(texture3d_shader, 2);
     // sky color (affect to fog)
     glm_vec3_copy(SKY_COLOR_INIT, texture3d_shader->sky_color);
     KRR_TEXSHADERPROG3D_update_sky_color(texture3d_shader);
@@ -466,8 +476,12 @@ bool usercode_loadmedia()
     texturealpha3d_shader->reflectivity = 0.2f;
     KRR_TEXALPHASHADERPROG3D_update_shininess(texturealpha3d_shader);
     // set light info
+    {
+    VERTEXPOS3D light_pos = {30.0f, 30.0f, 30.0f};
+    COLOR3F light_color = {1.0f, 1.f, 1.f};
     memcpy(&texturealpha3d_shader->light.pos, &light_pos, sizeof(light_pos));
     memcpy(&texturealpha3d_shader->light.color, &light_color, sizeof(light_color));
+    }
     KRR_TEXALPHASHADERPROG3D_update_light(texturealpha3d_shader);
     // sky color (affect to fog)
     glm_vec3_copy(SKY_COLOR_INIT, texturealpha3d_shader->sky_color);
@@ -503,10 +517,22 @@ bool usercode_loadmedia()
     // set repeatness over texture coord
     terrain3d_shader->texcoord_repeat = 30.0f;
     KRR_TERRAINSHADERPROG3D_update_texcoord_repeat(terrain3d_shader);
-    // set light info
-    memcpy(&terrain3d_shader->light.pos, &light_pos, sizeof(light_pos));
-    memcpy(&terrain3d_shader->light.color, &light_color, sizeof(light_color));
-    KRR_TERRAINSHADERPROG3D_update_light(terrain3d_shader);
+    // set light info - 1st
+    {
+    VERTEXPOS3D light_pos = {30.0f, 30.0f, 30.0f};
+    COLOR3F light_color = {1.0f, 1.f, 1.f};
+    memcpy(&terrain3d_shader->lights[0].pos, &light_pos, sizeof(light_pos));
+    memcpy(&terrain3d_shader->lights[0].color, &light_color, sizeof(light_color));
+    }
+    // set light info - 2nd
+    {
+    VERTEXPOS3D light_pos = {100.0f, 30.0f, -100.0f};
+    COLOR3F light_color = {1.0f, 0.f, 0.f};
+    memcpy(&terrain3d_shader->lights[1].pos, &light_pos, sizeof(light_pos));
+    memcpy(&terrain3d_shader->lights[1].color, &light_color, sizeof(light_color));
+    }
+    // update light info with 2 lights as used
+    KRR_TERRAINSHADERPROG3D_update_lights_num(terrain3d_shader, 2);
     // sky color (affect to fog)
     glm_vec3_copy(SKY_COLOR_INIT, terrain3d_shader->sky_color);
     KRR_TERRAINSHADERPROG3D_update_sky_color(terrain3d_shader);
