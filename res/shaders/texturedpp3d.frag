@@ -35,7 +35,7 @@ void main()
     float attenuation_denom = 1.0f + light_attenuation[i]*dist_sq;
     
     vec3 light_dir = normalize(tolight_dir[i]);
-    float brightness = max(dot(unit_normal, light_dir), 0.2f);
+    float brightness = max(dot(unit_normal, light_dir), 0.0f);
     total_diffuse = total_diffuse + (brightness * light_color[i] + ambient_color) / attenuation_denom;
 
     // calculate specular

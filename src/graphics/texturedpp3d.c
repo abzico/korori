@@ -24,12 +24,10 @@ KRR_TEXSHADERPROG3D* KRR_TEXSHADERPROG3D_new(void)
   out->model_matrix_location = -1;
   for (int i=0; i<KRR_SHADERPROG_MAX_LIGHTS; ++i)
   {
-    // light_position_locations and light_color_locations
     out->light_position_locations[i] = -1;
     out->light_color_locations[i] = -1;
     out->light_attenuation_locations[i] = -1;
 
-    // lights
     memset(&out->lights[i].pos, 0, sizeof(out->lights[i].pos)); 
     out->lights[i].color.r = 1.0f;
     out->lights[i].color.g = 1.0f;
@@ -177,7 +175,7 @@ bool KRR_TEXSHADERPROG3D_load_program(KRR_TEXSHADERPROG3D* program)
     KRR_LOGW("Warning: light_num is invalid glsl variable name");
   }
 
-  // exact byte allocation enough to hold "light_attenuation[%d], light_position[%d]" and "light_color[%d]"
+  // exact byte allocation enough to hold "light_attenuation[%d]", light_position[%d]" and "light_color[%d]"
   const int temp_str_size = 21;
   char temp_str[temp_str_size];
   for (int i=0; i<KRR_SHADERPROG_MAX_LIGHTS; ++i)
