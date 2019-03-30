@@ -101,6 +101,7 @@ typedef struct
 {
   VERTEXPOS3D pos;
   COLOR3F color;
+  float attenuation_factor;
 } LIGHT;
 
 typedef struct

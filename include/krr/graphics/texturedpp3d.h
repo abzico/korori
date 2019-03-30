@@ -32,6 +32,7 @@ typedef struct KRR_TEXSHADERPROG3D_
   // light
   GLint light_position_locations[KRR_SHADERPROG_MAX_LIGHTS];
   GLint light_color_locations[KRR_SHADERPROG_MAX_LIGHTS];
+  GLint light_attenuation_locations[KRR_SHADERPROG_MAX_LIGHTS];
   GLint light_num_location;
   LIGHT lights[KRR_SHADERPROG_MAX_LIGHTS];
 
