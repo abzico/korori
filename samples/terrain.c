@@ -33,9 +33,9 @@
 #include <texpackr/texpackr.h>
 #include <math.h>
 
-#define CONTENT_BG_COLOR 155.0f/255.0f, 202.0f/255.0f, 192.0f/255.0f, 1.0f
-// the color should be the same as content bg color
-#define SKY_COLOR_INIT (vec3){155.0f/255.0f, 202.0f/255.0f, 192.0f/255.0f}
+#define CONTENT_BG_COLOR 0xDC/255.0f, 0xE4/255.0f, 0xF1/255.0f, 1.0f
+// note: the color should be the same as content bg color
+#define SKY_COLOR_INIT (vec3){0xDC/255.0f, 0xE4/255.0f, 0xF1/255.0f}
 
 #define TARGET_POS_LOOKAT_INIT (vec3){0.0f, 2.0f, -40.0f}
 
@@ -88,6 +88,7 @@ static KRR_TEXTURE* stall_texture = NULL;
 static KRR_TEXTURE* tree_texture = NULL;
 static KRR_TEXTURE* fern_texture = NULL;
 static KRR_TEXTURE* player_texture = NULL;
+static KRR_TEXTURE* lamp_texture = NULL;
 
 static KRR_TEXTURE* mt_r_texture = NULL;
 static KRR_TEXTURE* mt_g_texture = NULL;
@@ -98,6 +99,7 @@ static SIMPLEMODEL* stall = NULL;
 static SIMPLEMODEL* tree = NULL;
 static SIMPLEMODEL* fern = NULL;
 static SIMPLEMODEL* player = NULL;
+static SIMPLEMODEL* lamp = NULL;
 static TERRAIN* tr = NULL;
 
 static KRR_CAM cam;
@@ -128,6 +130,10 @@ static CGLM_ALIGN(16) versor cam_rot;
 
 static CGLM_ALIGN(8) vec3 stall_pos;
 static CGLM_ALIGN(16) versor stall_rot;
+
+#define NUM_LAMP 2
+#define LAMP_RANDOM_SIZE 200
+static CGLM_ALIGN(8)  vec3 lamp_pos[NUM_LAMP];
 
 #define NUM_TREE 10
 #define TREE_RANDOM_SIZE 200
@@ -379,6 +385,13 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading player texture");
     return false;
   }
+  // lamp texture
+  lamp_texture = KRR_TEXTURE_new();
+  if (!KRR_TEXTURE_load_texture_from_file(lamp_texture, "res/models/lamp-optimized.png"))
+  {
+    KRR_LOGE("Error loading lamp texture");
+    return false;
+  }
   // multitexture r
   mt_r_texture = KRR_TEXTURE_new();
   if (!KRR_TEXTURE_load_texture_from_file(mt_r_texture, "res/models/mud.png"))
@@ -419,17 +432,36 @@ bool usercode_loadmedia()
     return false;
   }
 
+  // load from generation of terrain
+  tr = KRR_TERRAIN_new();
+  if (!KRR_TERRAIN_load_from_generation(tr, "res/models/heightmap.png", TERRAIN_SLOT_SIZE, TERRAIN_HFACTOR))
+  {
+    KRR_LOGE("Error loading terrain from generation");
+    return false;
+  }
+
   // pre-define lights
-  const int num_lights = 3;
+  // place light higher above the ground of terrain at that location of x/z
+#define NUM_LIGHTS 3
+  float light_yoffsets[] = {
+    50.0f,
+    50.0f,
+    50.0f
+  };
   VERTEXPOS3D light_poss[] = {
-    {30.0f, 30.0f, 30.0f},
-    {100.0f, 30.0f, -100.0f},
-    {200.0f, 50.0f, -200.0f}
+    {30.0f, compute_posy(30.0f, 30.0f) + light_yoffsets[0], 30.0f},
+    {100.0f, compute_posy(100.0f, -100.0f) + light_yoffsets[1], -100.0f},
+    {200.0f, compute_posy(200.0f, -200.0f) + light_yoffsets[2], -200.0f}
   };
   COLOR3F light_colors[] = {
-    {1.0f, 1.0f, 1.0f},
-    {1.0f, 0.0f, 0.0f},
-    {0.0f, 0.0f, 1.0f}
+    {0.3f, 0.3f, 0.3f},
+    {2.0f, 0.0f, 0.0f},     // set value more than 1.0f to accomodate the loss of light intensity when we use light calculation
+    {0.0f, 2.0f, 2.0f}      // same
+  };
+  float light_attenuation_factors[] = {
+    0.0f,       // sun, no attenuation, just set to 0.0f
+    0.0003f,    // point light
+    0.0003f     // point light
   };
 
   // initially update all related matrices and related graphics stuff for both basic shaders
@@ -450,13 +482,14 @@ bool usercode_loadmedia()
     texture3d_shader->reflectivity = 0.2f;
     KRR_TEXSHADERPROG3D_update_shininess(texture3d_shader);
     // set lights info
-    for (int i=0; i<num_lights; ++i)
+    for (int i=0; i<NUM_LIGHTS; ++i)
     {
       memcpy(&texture3d_shader->lights[i].pos, &light_poss[i], sizeof(VERTEXPOS3D));
       memcpy(&texture3d_shader->lights[i].color, &light_colors[i], sizeof(COLOR3F));
+      texture3d_shader->lights[i].attenuation_factor = light_attenuation_factors[i];
     }
     // update lights we have
-    KRR_TEXSHADERPROG3D_update_lights_num(texture3d_shader, num_lights);
+    KRR_TEXSHADERPROG3D_update_lights_num(texture3d_shader, NUM_LIGHTS);
     // sky color (affect to fog)
     glm_vec3_copy(SKY_COLOR_INIT, texture3d_shader->sky_color);
     KRR_TEXSHADERPROG3D_update_sky_color(texture3d_shader);
@@ -481,13 +514,14 @@ bool usercode_loadmedia()
     texturealpha3d_shader->reflectivity = 0.2f;
     KRR_TEXALPHASHADERPROG3D_update_shininess(texturealpha3d_shader);
     // set light info - 1st
-    for (int i=0; i<num_lights; ++i)
+    for (int i=0; i<NUM_LIGHTS; ++i)
     {
       memcpy(&texturealpha3d_shader->lights[i].pos, &light_poss[i], sizeof(VERTEXPOS3D));
       memcpy(&texturealpha3d_shader->lights[i].color, &light_colors[i], sizeof(COLOR3F));
+      texturealpha3d_shader->lights[i].attenuation_factor = light_attenuation_factors[i];
     }
     // update lights
-    KRR_TEXALPHASHADERPROG3D_update_lights_num(texturealpha3d_shader, num_lights);
+    KRR_TEXALPHASHADERPROG3D_update_lights_num(texturealpha3d_shader, NUM_LIGHTS);
     // sky color (affect to fog)
     glm_vec3_copy(SKY_COLOR_INIT, texturealpha3d_shader->sky_color);
     KRR_TEXALPHASHADERPROG3D_update_sky_color(texturealpha3d_shader);
@@ -503,7 +537,7 @@ bool usercode_loadmedia()
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
     // set ambient color
-    glm_vec3_copy((vec3){0.2f, 0.2f, 0.2f}, terrain3d_shader->ambient_color);
+    glm_vec3_copy((vec3){0.1f, 0.1f, 0.1f}, terrain3d_shader->ambient_color);
     KRR_TERRAINSHADERPROG3D_update_ambient_color(terrain3d_shader);
     // set texture unit (at the same time this is multiteture background texture)
     KRR_TERRAINSHADERPROG3D_set_texture_sampler(terrain3d_shader, 0);
@@ -523,12 +557,13 @@ bool usercode_loadmedia()
     terrain3d_shader->texcoord_repeat = 30.0f;
     KRR_TERRAINSHADERPROG3D_update_texcoord_repeat(terrain3d_shader);
     // set light info - 1st
-    for (int i=0; i<num_lights; ++i) {
+    for (int i=0; i<NUM_LIGHTS; ++i) {
       memcpy(&terrain3d_shader->lights[i].pos, &light_poss[i], sizeof(VERTEXPOS3D));
       memcpy(&terrain3d_shader->lights[i].color, &light_colors[i], sizeof(COLOR3F));
+      terrain3d_shader->lights[i].attenuation_factor = light_attenuation_factors[i];
     }
     // update light to GPU
-    KRR_TERRAINSHADERPROG3D_update_lights_num(terrain3d_shader, num_lights);
+    KRR_TERRAINSHADERPROG3D_update_lights_num(terrain3d_shader, NUM_LIGHTS);
     // sky color (affect to fog)
     glm_vec3_copy(SKY_COLOR_INIT, terrain3d_shader->sky_color);
     KRR_TERRAINSHADERPROG3D_update_sky_color(terrain3d_shader);
@@ -578,12 +613,12 @@ bool usercode_loadmedia()
     KRR_LOGE("Error loading player model");
     return false;
   }
-  
-  // load from generation of terrain
-  tr = KRR_TERRAIN_new();
-  if (!KRR_TERRAIN_load_from_generation(tr, "res/models/heightmap.png", TERRAIN_SLOT_SIZE, TERRAIN_HFACTOR))
+
+  // load lamp model
+  lamp = SIMPLEMODEL_new();
+  if (!SIMPLEMODEL_load_objfile(lamp, "res/models/lamp.obj"))
   {
-    KRR_LOGE("Error loading terrain from generation");
+    KRR_LOGE("Error loading lamp model");
     return false;
   }
 
@@ -675,6 +710,20 @@ bool usercode_loadmedia()
 
     // save which fern texcoord this fern should be
     fern_texcoord_is[i] = rand_fern_i;
+  }
+
+  for (int i=0; i<NUM_LAMP; ++i)
+  {
+    // note: number of lights and number of lamps are not the same
+    // sun (light at index 0) we don't use lamp to represent it, thus we have lamp less by 1
+    //
+    // FIXME: Additional texture workflow for clener solution to disable real light calcution to fully accept light effect from light source for a model
+    // note for placing the position of lamp here is slightly under the actual light source's position
+    // and we need to fake the normal of lamp in order to get the light effect from the light source as well
+    // for now we pre-faked normal from .obj file by using only yUP as normal for all vertices
+    // but for better we could use additional texture to identify which part of the model to *fully* accept and being influenced
+    // by the light source without factor of light attenuation or light direction in dot product.
+    glm_vec3_copy((vec3){light_poss[i+1].x, light_poss[i+1].y - light_yoffsets[i+1] - 2.0f, light_poss[i+1].z}, lamp_pos[i]);
   }
 
   // we have no need to continue using sheetmeta for fern anymore
@@ -1474,6 +1523,18 @@ void usercode_render(void)
       SIMPLEMODEL_render(tree);
     }
 
+  // render lamp
+  glBindVertexArray(lamp->vao_id);
+    glBindTexture(GL_TEXTURE_2D, lamp_texture->texture_id);
+
+    for (int i=0; i<NUM_LAMP; ++i)
+    {
+      glm_mat4_copy(g_base_model_matrix, texture3d_shader->model_matrix);
+      glm_translate(texture3d_shader->model_matrix, lamp_pos[i]);
+      KRR_TEXSHADERPROG3D_update_model_matrix(texture3d_shader);
+      SIMPLEMODEL_render(lamp);
+    }
+
   // render player
   glBindVertexArray(player->vao_id);
     // bind texture
@@ -1702,6 +1763,11 @@ void usercode_close()
     KRR_TEXTURE_free(player_texture);
     player_texture = NULL;
   }
+  if (lamp_texture != NULL)
+  {
+    KRR_TEXTURE_free(lamp_texture);
+    lamp_texture = NULL;
+  }
   if (mt_r_texture != NULL)
   {
     KRR_TEXTURE_free(mt_r_texture);
@@ -1742,6 +1808,11 @@ void usercode_close()
   {
     SIMPLEMODEL_free(player);
     player = NULL;
+  }
+  if (lamp != NULL)
+  {
+    SIMPLEMODEL_free(lamp);
+    lamp = NULL;
   }
   if (tr != NULL)
   {
