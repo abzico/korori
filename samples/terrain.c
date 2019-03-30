@@ -233,6 +233,9 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // enable depth test
   glEnable(GL_DEPTH_TEST);
 
+  // enable gamma correction
+  glEnable(GL_FRAMEBUFFER_SRGB);
+
   // initially start user's camera looking at -z, and up with +y
   glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, cam.forward);
   glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, cam.up);
