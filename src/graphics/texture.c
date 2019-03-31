@@ -330,12 +330,12 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   {
     if ((header.dds_pixel_format.flags & 0x1) == 0)
     {
-      gl_format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+      gl_format = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
       KRR_LOG("RGB DXT1");
     }
     else
     {
-      gl_format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+      gl_format = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
       KRR_LOG("RGBA DXT1");
     }
   }
@@ -347,12 +347,12 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
     {
       // DXT3
       case 0x33545844:
-        gl_format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+        gl_format = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
         KRR_LOG("RGBA DXT3");
         break;
       // DXT5
       case 0x35545844:
-        gl_format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+        gl_format = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
         KRR_LOG("RGBA DXT5");
         break;
     }
@@ -571,11 +571,11 @@ bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels
   // generate texture
   if (is_need_to_resize)
   {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture->physical_width_, texture->physical_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, resized_pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, texture->physical_width_, texture->physical_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, resized_pixels);
   }
   else
   {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
   }
 
   // unbind texture
@@ -1074,7 +1074,7 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels32(KRR_TEXTURE* texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     
     // generate texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture->physical_width_, texture->physical_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, texture->physical_width_, texture->physical_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->pixels);
 
     // unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -1139,7 +1139,7 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     
     // generate texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, texture->physical_width_, texture->physical_height_, 0, GL_RED, GL_UNSIGNED_BYTE, texture->pixels8);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8_SNORM, texture->physical_width_, texture->physical_height_, 0, GL_RED, GL_UNSIGNED_BYTE, texture->pixels8);
 
     // unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
