@@ -93,12 +93,22 @@ bool init() {
     KRR_LOGW("Warning: cannot set environment variable 'dummy' to cleanly go headless.");
   }
 #endif
-  
+
+#define STRF(str) "Warning: " #str " failed to configured"
+#define GLATTR_WLOG(r, str) if (r != 0) KRR_LOGW(STRF(str));
+
   // use core profile of opengl 3.3
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // Always required on Mac
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+  int attr_res = -1;
+  attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // Always required on Mac
+    GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG")
+  attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_PROFILE_CORE")
+  attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_MAJOR_VERSION")
+  attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_MINOR_VERSION")
+  attr_res = SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
+    GLATTR_WLOG(attr_res, "SDL_GL_FRAMEBUFFER_SRGB_CAPABLE")
 
   // just to be pragmatic
   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
