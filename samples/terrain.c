@@ -459,7 +459,7 @@ bool usercode_loadmedia()
     {-200.0f, compute_posy(-200.0f, -200.0f) + light_yoffsets[3], -200.0f}
   };
   COLOR3F light_colors[] = {
-    {0.01f, 0.01f, 0.01f},
+    {0.05f, 0.05f, 0.05f},
     {2.0f, 0.0f, 0.0f},     // set value more than 1.0f to accomodate the loss of light intensity when we use light calculation
     {0.0f, 2.0f, 2.0f},     // same
     {0.0f, 2.0f, 0.0f}      // same
@@ -480,7 +480,7 @@ bool usercode_loadmedia()
   SU_BEGIN(texture3d_shader)
     SU_TEXSHADERPROG3D(texture3d_shader)
     // update ambient color
-    glm_vec3_copy((vec3){0.01f, 0.01f, 0.01f}, texture3d_shader->ambient_color);
+    glm_vec3_copy((vec3){0.0f, 0.0f, 0.0f}, texture3d_shader->ambient_color);
     KRR_TEXSHADERPROG3D_update_ambient_color(texture3d_shader);
     // set texture unit
     KRR_TEXSHADERPROG3D_set_texture_sampler(texture3d_shader, 0);
@@ -512,7 +512,7 @@ bool usercode_loadmedia()
   SU_BEGIN(texturealpha3d_shader)
     SU_TEXALPHASHADERPROG3D(texturealpha3d_shader)
     // update ambient color
-    glm_vec3_copy((vec3){0.01f, 0.01f, 0.01f}, texturealpha3d_shader->ambient_color);
+    glm_vec3_copy((vec3){0.0f, 0.0f, 0.0f}, texturealpha3d_shader->ambient_color);
     KRR_TEXALPHASHADERPROG3D_update_ambient_color(texturealpha3d_shader);
     // set texture unit
     KRR_TEXALPHASHADERPROG3D_set_texture_sampler(texturealpha3d_shader, 0);
@@ -544,7 +544,7 @@ bool usercode_loadmedia()
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
     // set ambient color
-    glm_vec3_copy((vec3){0.01f, 0.01f, 0.01f}, terrain3d_shader->ambient_color);
+    glm_vec3_copy((vec3){0.0f, 0.0f, 0.0f}, terrain3d_shader->ambient_color);
     KRR_TERRAINSHADERPROG3D_update_ambient_color(terrain3d_shader);
     // set texture unit (at the same time this is multiteture background texture)
     KRR_TERRAINSHADERPROG3D_set_texture_sampler(terrain3d_shader, 0);
