@@ -39,6 +39,7 @@ The list of available sample to build in `samples/`.
 * `advanced_model` - load .obj model then render with some other features on top
 * `headless` - headless program without GUI window, it will load .obj model then shows it while rotating the model, then after enough frames has been rendered, it will take snapshot of screen then finally write as output .png file `headless-snapshot.tga`
 * `terrain`
+* `dds` - reading dds texture (mipmaps, with alpha, in format DXT5), then render on screen. DDS header info will be shown on console.
 
 # Credits
 
