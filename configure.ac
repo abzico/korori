@@ -19,7 +19,8 @@ AM_EXTRA_RECURSIVE_TARGETS([samples \
                             sample-readobjfile \
                             sample-advanced_model \
                             sample-headless \
-                            sample-terrain])
+                            sample-terrain \
+                            sample-dds])
 
 AM_PROG_AR
 

@@ -46,7 +46,8 @@ dist_data_DATA = template.c \
 								 readobjfile.c \
 								 advanced_model.c \
 								 headless.c \
-								 terrain.c
+								 terrain.c \
+								 dds.c
 
 if CD_IS_MACOSX
 CFLAGS += -DGL_SILENCE_DEPRECATION \
@@ -96,7 +97,8 @@ samples-local: copy-res common common-headless \
 							 sample-readobjfile-local \
 							 sample-advanced_model-local \
 							 sample-headless-local \
-							 sample-terrain-local
+							 sample-terrain-local \
+							 sample-dds-local
 	@echo "All samples are built"
 
 copy-res:
@@ -143,3 +145,7 @@ sample-headless-local: copy-res common-headless
 sample-terrain-local: copy-res common
 	@echo "Build terrain"
 	$(CC) $(CFLAGS) terrain.c $(LDFLAGS) -o terrain$(EXEEXT)
+
+sample-dds-local: copy-res common
+	@echo "Build dds"
+	$(CC) $(CFLAGS) dds.c $(LDFLAGS) -o dds$(EXEEXT)

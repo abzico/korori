@@ -103,3 +103,5 @@ sample-advanced_model-local: all
 sample-headless-local: all
 
 sample-terrain-local: all
+
+sample-dds-local: all
