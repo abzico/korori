@@ -46,3 +46,4 @@ Testing models
 
 * Stall (.obj) model and texture, Stanfort Dragon (.obj) model which grabbed from Thinmatrix tutorial - the former is modified for its scaling, facing orientation, and exported texture.
 * [Horse model](https://www.turbosquid.com/3d-models/free-low--horse-3d-model/810753) (.obj) - we've modified its scaling, facing orientation, and exported texture externally.
+* Zombie sprite is copyrights and owned by Secrete Character, from [Zombie Hero : Kiki Strikes Back](http://zombie-hero.com).
