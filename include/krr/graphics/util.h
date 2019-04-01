@@ -102,4 +102,20 @@ extern void KRR_gputil_create_view_matrix(vec3 trans, vec3 rot, float scale, mat
 ///
 extern void KRR_gputil_generate_mipmaps(GLenum target, float lod_bias);
 
+///
+/// Load and return cubemap texture name from specified texture paths of all side of cubemap.
+/// Returned value is texture name that can be used with OpenGL right away i.e. glBindTexture()
+///
+/// Input image should be in format of RGB, otherwise undefined behavior.
+///
+/// \param right null-terminated string right-side texture path
+/// \param left null-terminated string left-side texture path
+/// \param top null-terminated string top-side texture path
+/// \param bottom bull-terminated string bottom-side texture path
+/// \param back null-terminated string back-side texture path
+/// \param front null-terminated string front-side texture path
+/// \return generated texture name which can be used with OpenGL operations right away, otherwise if not successful or error occurs, -1 is returned.
+///
+extern int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top, const char* bottom, const char* back, const char* front);
+
 #endif

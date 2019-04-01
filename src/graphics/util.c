@@ -1,6 +1,7 @@
 #include "krr/graphics/util.h"
 #include <stdarg.h>
 #include "krr/foundation/log.h"
+#include <SDL2/SDL_image.h>
 
 void KRR_gputil_adapt_to_normal(int screen_width, int screen_height)
 {
@@ -153,4 +154,138 @@ void KRR_gputil_generate_mipmaps(GLenum target, float lod_bias)
   glTexParameterf(target, GL_TEXTURE_LOD_BIAS, lod_bias);
 
   glGenerateMipmap(target);
+}
+
+int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top, const char* bottom, const char* back, const char* front)
+{
+  // pre-error checking
+  if (right == NULL ||
+      left == NULL ||
+      top == NULL ||
+      bottom == NULL ||
+      back == NULL ||
+      front == NULL)
+  {
+    KRR_LOGE("Error: one of textures for cubemap generation is empty");
+    return -1;
+  }
+
+  // generate texture name for cubemap
+  GLuint textureID;
+  glGenTextures(1, &textureID);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+  
+  // set texture parameters
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+  // there's no mipmap for this single texture
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 0);
+
+  // create texture for each side of cubemap
+  SDL_Surface* temptex = NULL;
+  // => right
+  temptex = IMG_Load(right);
+  if (temptex == NULL)
+  {
+    KRR_LOGE("Unable to load %s! Error: %s", right, IMG_GetError());
+    // clear generated texture name
+    glDeleteTextures(1, &textureID);
+    return -1;
+  }
+  // note: lock texture in case RLE compression is applied, but no harm if not
+  SDL_LockSurface(temptex);
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
+  SDL_UnlockSurface(temptex);
+  // free surface
+  SDL_FreeSurface(temptex);
+  temptex = NULL;
+
+  // => left
+  temptex = IMG_Load(left);
+  if (temptex == NULL)
+  {
+    KRR_LOGE("Unable to load %s! Error: %s", left, IMG_GetError());
+    // clear generated texture name
+    glDeleteTextures(1, &textureID);
+    return -1;
+  }
+  SDL_LockSurface(temptex);
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
+  SDL_UnlockSurface(temptex);
+  // free surface
+  SDL_FreeSurface(temptex);
+  temptex = NULL;
+
+  // => top
+  temptex = IMG_Load(top);
+  if (temptex == NULL)
+  {
+    KRR_LOGE("Unable to load %s! Error: %s", top, IMG_GetError());
+    // clear generated texture name
+    glDeleteTextures(1, &textureID);
+    return -1;
+  }
+  SDL_LockSurface(temptex);
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
+  SDL_UnlockSurface(temptex);
+  // free surface
+  SDL_FreeSurface(temptex);
+  temptex = NULL;
+
+  // => bottom
+  temptex = IMG_Load(bottom);
+  if (temptex == NULL)
+  {
+    KRR_LOGE("Unable to load %s! Error: %s", bottom, IMG_GetError());
+    // clear generated texture name
+    glDeleteTextures(1, &textureID);
+    return -1;
+  }
+  SDL_LockSurface(temptex);
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
+  SDL_UnlockSurface(temptex);
+  // free surface
+  SDL_FreeSurface(temptex);
+  temptex = NULL;
+
+  // => back
+  temptex = IMG_Load(back);
+  if (temptex == NULL)
+  {
+    KRR_LOGE("Unable to load %s! Error: %s", back, IMG_GetError());
+    // clear generated texture name
+    glDeleteTextures(1, &textureID);
+    return -1;
+  }
+  SDL_LockSurface(temptex);
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
+  SDL_UnlockSurface(temptex);
+  // free surface
+  SDL_FreeSurface(temptex);
+  temptex = NULL;
+
+  // => front 
+  temptex = IMG_Load(front);
+  if (temptex == NULL)
+  {
+    KRR_LOGE("Unable to load %s! Error: %s", front, IMG_GetError());
+    // clear generated texture name
+    glDeleteTextures(1, &textureID);
+    return -1;
+  }
+  SDL_LockSurface(temptex);
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
+  SDL_UnlockSurface(temptex);
+  // free surface
+  SDL_FreeSurface(temptex);
+  temptex = NULL;
+
+  // unbind cubemap texture
+  glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+  return textureID;
 }
