@@ -46,6 +46,8 @@ libkrr_la_SOURCES = src/foundation/common.c \
 		    src/graphics/texturedpp2d.c \
 		    src/graphics/texturedpp3d.c \
 		    src/graphics/util.c \
+				src/graphics/skybox.c \
+				src/graphics/skybox_shader.c \
 		    src/ui/button.c
 
 krr_foundationdir=$(includedir)/krr/foundation
@@ -78,7 +80,9 @@ krr_graphics_HEADERS = include/krr/graphics/common.h \
 		       include/krr/graphics/texturedpp2d.h \
 		       include/krr/graphics/texturedpp3d.h \
 		       include/krr/graphics/types.h \
-		       include/krr/graphics/util.h
+		       include/krr/graphics/util.h \
+					 include/krr/graphics/skybox.h \
+					 include/krr/graphics/skybox_shader.h
 
 krr_uidir=$(includedir)/krr/ui
 krr_ui_HEADERS = include/krr/ui/button.h

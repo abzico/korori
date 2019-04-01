@@ -90,6 +90,7 @@ extern bool KRR_TEXSHADERPROG3D_load_program(KRR_TEXSHADERPROG3D* program);
 
 ///
 /// update projection matrix
+/// set projection matrix (see header) first then call this function to update to GPU
 ///
 /// \param program pointer to KRR_TEXSHADERPROG3D
 ///

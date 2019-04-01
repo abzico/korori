@@ -30,6 +30,8 @@
 #include "krr/graphics/model.h"
 #include "krr/graphics/font.h"
 #include "krr/graphics/fontpp2d.h"
+#include "krr/graphics/skybox.h"
+#include "krr/graphics/skybox_shader.h"
 #include <texpackr/texpackr.h>
 #include <math.h>
 
@@ -79,6 +81,7 @@ static KRR_TEXSHADERPROG2D* texture_shader = NULL;
 static KRR_TEXSHADERPROG3D* texture3d_shader = NULL;
 static KRR_TEXALPHASHADERPROG3D* texturealpha3d_shader = NULL;
 static KRR_TERRAINSHADERPROG3D* terrain3d_shader = NULL;
+static KRR_SKYBOXSHADERPROG* skybox_shader = NULL;
 static KRR_FONTSHADERPROG2D* font_shader = NULL;
 static KRR_FONT* font = NULL;
 
@@ -101,6 +104,7 @@ static SIMPLEMODEL* fern = NULL;
 static SIMPLEMODEL* player = NULL;
 static SIMPLEMODEL* lamp = NULL;
 static TERRAIN* tr = NULL;
+static KRR_SKYBOX* skybox = NULL;
 
 static KRR_CAM cam;
 static float roty = 0.0f;
@@ -173,6 +177,8 @@ void usercode_app_went_windowed_mode()
     SU_TEXALPHASHADERPROG3D(texturealpha3d_shader)
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
+  SU_BEGIN(skybox_shader)
+    SU_SKYBOXSHADER(skybox_shader)
   SU_BEGIN(font_shader)
     SU_FONTSHADER(font_shader)
   SU_END(font_shader)
@@ -188,6 +194,8 @@ void usercode_app_went_fullscreen()
     SU_TEXALPHASHADERPROG3D(texturealpha3d_shader)
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
+  SU_BEGIN(skybox_shader)
+    SU_SKYBOXSHADER(skybox_shader)
   SU_BEGIN(font_shader)
     SU_FONTSHADER(font_shader)
   SU_END(font_shader)
@@ -311,6 +319,16 @@ bool usercode_loadmedia()
   }
   // set terrain shader
   shared_terrain3d_shaderprogram = terrain3d_shader;
+
+  // load skybox shader
+  skybox_shader = KRR_SKYBOXSHADERPROG_new();
+  if (!KRR_SKYBOXSHADERPROG_load_program(skybox_shader))
+  {
+    KRR_LOGE("Error loading skybox shader");
+    return false;
+  }
+  // set skybox shader
+  shared_skybox_shaderprogram = skybox_shader;
   
   // load font shader
   font_shader = KRR_FONTSHADERPROG2D_new();
@@ -432,6 +450,20 @@ bool usercode_loadmedia()
   if (!KRR_TEXTURE_load_texture_from_file(mt_blendmap, "res/models/blendMap.png"))
   {
     KRR_LOGE("Error loading multitexture blendmap");
+    return false;
+  }
+
+  // skybox
+  skybox = KRR_SKYBOX_new();
+  if (!KRR_SKYBOX_load(skybox,
+        "res/images/bluemoon_rt.tga",
+        "res/images/bluemoon_lf.tga",
+        "res/images/bluemoon2_up.tga",
+        "res/images/bluemoon_dn.tga",
+        "res/images/bluemoon_bk.tga",
+        "res/images/bluemoon_ft.tga"))
+  {
+    KRR_LOGE("Error loading skybox");
     return false;
   }
 
@@ -582,6 +614,11 @@ bool usercode_loadmedia()
     terrain3d_shader->fog_gradient = 1.5f;
     KRR_TERRAINSHADERPROG3D_update_fog_density(terrain3d_shader);
     KRR_TERRAINSHADERPROG3D_update_fog_gradient(terrain3d_shader);
+
+  SU_BEGIN(skybox_shader)
+    SU_SKYBOXSHADER(skybox_shader)
+    // set cubemap unit
+    KRR_SKYBOXSHADERPROG_set_cubemap_sampler(skybox_shader, 0);
 
   SU_BEGIN(font_shader)
     SU_FONTSHADER(font_shader)
@@ -1250,7 +1287,11 @@ void update_camera(float delta_time)
   // terrain 3d
   KRR_SHADERPROG_bind(terrain3d_shader->program);
   usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_TERRAIN_SHADER, terrain3d_shader);
-  KRR_SHADERPROG_unbind(terrain3d_shader->program);
+
+  // skybox
+  KRR_SHADERPROG_bind(skybox_shader->program);
+  usercode_set_matrix_then_update_to_shader(USERCODE_MATRIXTYPE_VIEW_MATRIX, USERCODE_SHADERTYPE_SKYBOX_SHADER, skybox_shader);
+  KRR_SHADERPROG_unbind(skybox_shader->program);
 }
 
 void usercode_update(float delta_time)
@@ -1485,6 +1526,7 @@ void usercode_render(void)
   CGLM_ALIGN_MAT mat4 t_mat;  // for temp converted from quaternion, rotate object according
                               // to current terrain's normal
 
+  
   // STALL & TREE & PLAYER
   KRR_SHADERPROG_bind(texture3d_shader->program);
   // render stall
@@ -1636,10 +1678,19 @@ void usercode_render(void)
 
   // enable backface culling again
   glEnable(GL_CULL_FACE);
+  // unbind shader
+  KRR_SHADERPROG_unbind(texturealpha3d_shader->program);
+
+  // SKYBOX
+  KRR_SHADERPROG_bind(skybox_shader->program);
+  // render skybox
+  glBindVertexArray(skybox->vao_id);
+    // render
+    KRR_SKYBOX_render(skybox);
   // unbind vao
   glBindVertexArray(0);
   // unbind shader
-  KRR_SHADERPROG_unbind(texturealpha3d_shader->program);
+  KRR_SHADERPROG_unbind(skybox_shader->program);
 
   // disable scissor (if needed)
   if (g_need_clipping)
@@ -1744,6 +1795,11 @@ void usercode_close()
     KRR_TERRAINSHADERPROG3D_free(terrain3d_shader);
     terrain3d_shader = NULL;
   }
+  if (skybox_shader != NULL)
+  {
+    KRR_SKYBOXSHADERPROG_free(skybox_shader);
+    skybox_shader = NULL;
+  }
 
   if (terrain_texture != NULL)
   {
@@ -1825,5 +1881,10 @@ void usercode_close()
   {
     KRR_TERRAIN_free(tr);
     tr = NULL;
+  }
+  if (skybox != NULL)
+  {
+    KRR_SKYBOX_free(skybox);
+    skybox = NULL;
   }
 }

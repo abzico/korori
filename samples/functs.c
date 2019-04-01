@@ -3,6 +3,7 @@
 #include "krr/graphics/texturedpp3d.h"
 #include "krr/graphics/texturedalphapp3d.h"
 #include "krr/graphics/terrain_shader3d.h"
+#include "krr/graphics/skybox_shader.h"
 #include "krr/graphics/fontpp2d.h"
 #include "krr/foundation/log.h"
 
@@ -45,6 +46,13 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
       glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
       KRR_TERRAINSHADERPROG3D_update_projection_matrix(shader_ptr);
     }
+    // skybox shader
+    else if (shader_program == USERCODE_SHADERTYPE_SKYBOX_SHADER)
+    {
+      KRR_SKYBOXSHADERPROG* shader_ptr = (KRR_SKYBOXSHADERPROG*)program;
+      glm_mat4_copy(g_projection_matrix, shader_ptr->projection_matrix);
+      KRR_SKYBOXSHADERPROG_update_projection_matrix(shader_ptr);
+    }
     // font shader
     else if (shader_program == USERCODE_SHADERTYPE_FONT_SHADER)
     {
@@ -83,6 +91,13 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
       KRR_TERRAINSHADERPROG3D* shader_ptr = (KRR_TERRAINSHADERPROG3D*)program;
       glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
       KRR_TERRAINSHADERPROG3D_update_view_matrix(shader_ptr);
+    }
+    // skybox shader
+    else if (shader_program == USERCODE_SHADERTYPE_SKYBOX_SHADER)
+    {
+      KRR_SKYBOXSHADERPROG* shader_ptr = (KRR_SKYBOXSHADERPROG*)program;
+      glm_mat4_copy(g_view_matrix, shader_ptr->view_matrix);
+      KRR_SKYBOXSHADERPROG_update_view_matrix(shader_ptr);
     }
     // note: font shader doesn't have view matrix yet
   }
@@ -124,5 +139,6 @@ void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_t
       glm_mat4_copy(g_base_ui_model_matrix, shader_ptr->model_matrix);
       KRR_FONTSHADERPROG2D_update_model_matrix(shader_ptr);
     }
+    // note: skybox shader doesn't need model matrix
   }
 }

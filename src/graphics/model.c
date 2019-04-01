@@ -85,6 +85,7 @@ bool SIMPLEMODEL_load_objfile(SIMPLEMODEL* sm, const char* filepath)
   glBindVertexArray(sm->vao_id);
 
     // enable vertex attributes
+    // as all models use the same shader, we operate on shared shader here
     KRR_TEXSHADERPROG3D_enable_attrib_pointers(shared_textured3d_shaderprogram);
 
     // set vertex data
