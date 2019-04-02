@@ -456,12 +456,12 @@ bool usercode_loadmedia()
   // skybox
   skybox = KRR_SKYBOX_new();
   if (!KRR_SKYBOX_load(skybox,
-        "res/images/bluemoon_rt.tga",
-        "res/images/bluemoon_lf.tga",
-        "res/images/bluemoon2_up.tga",
-        "res/images/bluemoon_dn.tga",
-        "res/images/bluemoon_bk.tga",
-        "res/images/bluemoon_ft.tga"))
+        "res/images/miramar_rt-compressed.tga",
+        "res/images/miramar_lf-compressed.tga",
+        "res/images/miramar_up-compressed.tga",
+        "res/images/miramar_dn-compressed.tga",
+        "res/images/miramar_bk-compressed.tga",
+        "res/images/miramar_ft-compressed.tga"))
   {
     KRR_LOGE("Error loading skybox");
     return false;
