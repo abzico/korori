@@ -14,6 +14,11 @@ KRR_SKYBOXSHADERPROG* KRR_SKYBOXSHADERPROG_new()
   out->program = NULL;
   out->vertex_pos3d_location = -1;
   out->cubemap_sampler_location = -1;
+  out->fog_color_location = -1;
+  glm_vec3_zero(out->fog_color);
+  out->ctrans_limits_location = -1;
+  out->ctrans_limits[0] = 0.0f; // initially set to (0.0f, 1.0f) to avoid divide by zero in shader code
+  out->ctrans_limits[1] = 1.0f;
   glm_mat4_identity(out->projection_matrix);
   out->projection_matrix_location = -1;
   glm_mat4_identity(out->view_matrix);
@@ -118,6 +123,16 @@ bool KRR_SKYBOXSHADERPROG_load_program(KRR_SKYBOXSHADERPROG* program)
   {
     KRR_LOGW("Warning: cubemap_sampler is invalid glsl variable name");
   }
+  program->fog_color_location = glGetUniformLocation(uprog->program_id, "fog_color");
+  if (program->fog_color_location == -1)
+  {
+    KRR_LOGW("Warning: fog_color is invalid glsl variable name");
+  }
+  program->ctrans_limits_location = glGetUniformLocation(uprog->program_id, "ctrans_limits");
+  if (program->ctrans_limits_location == -1)
+  {
+    KRR_LOGW("Warning: ctrans_limits is invalid glsl variable name");
+  }
   program->vertex_pos3d_location = glGetAttribLocation(uprog->program_id, "vertex_pos3d");
   if (program->vertex_pos3d_location == -1)
   {
@@ -150,6 +165,16 @@ void KRR_SKYBOXSHADERPROG_set_vertex_pointer(KRR_SKYBOXSHADERPROG* program, GLsi
 void KRR_SKYBOXSHADERPROG_set_cubemap_sampler(KRR_SKYBOXSHADERPROG* program, GLuint sampler)
 {
   glUniform1i(program->cubemap_sampler_location, sampler);
+}
+
+void KRR_SKYBOXSHADERPROG_update_fog_color(KRR_SKYBOXSHADERPROG* program)
+{
+  glUniform3fv(program->fog_color_location, 1, program->fog_color);
+}
+
+void KRR_SKYBOXSHADERPROG_update_ctrans_limits(KRR_SKYBOXSHADERPROG* program)
+{
+  glUniform2fv(program->ctrans_limits_location, 1, program->ctrans_limits);
 }
 
 void KRR_SKYBOXSHADERPROG_enable_attrib_pointers(KRR_SKYBOXSHADERPROG* program)

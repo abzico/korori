@@ -35,9 +35,9 @@
 #include <texpackr/texpackr.h>
 #include <math.h>
 
-#define CONTENT_BG_COLOR 0xDC/255.0f, 0xE4/255.0f, 0xF1/255.0f, 1.0f
+#define CONTENT_BG_COLOR 0x72/255.0f, 0x8C/255.0f, 0x9E/255.0f, 1.0f
 // note: the color should be the same as content bg color
-#define SKY_COLOR_INIT (vec3){0xDC/255.0f, 0xE4/255.0f, 0xF1/255.0f}
+#define SKY_COLOR_INIT (vec3){0x72/255.0f, 0x8C/255.0f, 0x9E/255.0f}
 
 #define TARGET_POS_LOOKAT_INIT (vec3){0.0f, 2.0f, -40.0f}
 
@@ -536,8 +536,8 @@ bool usercode_loadmedia()
     texture3d_shader->fog_enabled = true;
     KRR_TEXSHADERPROG3D_update_fog_enabled(texture3d_shader);
     // configure fog
-    texture3d_shader->fog_density = 0.0055f;
-    texture3d_shader->fog_gradient = 1.5f;
+    texture3d_shader->fog_density = 0.0025f;
+    texture3d_shader->fog_gradient = 20.0f;
     KRR_TEXSHADERPROG3D_update_fog_density(texture3d_shader);
     KRR_TEXSHADERPROG3D_update_fog_gradient(texture3d_shader);
 
@@ -568,8 +568,8 @@ bool usercode_loadmedia()
     texturealpha3d_shader->fog_enabled = true;
     KRR_TEXALPHASHADERPROG3D_update_fog_enabled(texturealpha3d_shader);
     // configure fog
-    texturealpha3d_shader->fog_density = 0.0055f;
-    texturealpha3d_shader->fog_gradient = 1.5f;
+    texturealpha3d_shader->fog_density = 0.0025f;
+    texturealpha3d_shader->fog_gradient = 20.0f;
     KRR_TEXALPHASHADERPROG3D_update_fog_density(texturealpha3d_shader);
     KRR_TEXALPHASHADERPROG3D_update_fog_gradient(texturealpha3d_shader);
 
@@ -610,8 +610,8 @@ bool usercode_loadmedia()
     terrain3d_shader->fog_enabled = true;
     KRR_TERRAINSHADERPROG3D_update_fog_enabled(terrain3d_shader);
     // configure fog
-    terrain3d_shader->fog_density = 0.0055f;
-    terrain3d_shader->fog_gradient = 1.5f;
+    terrain3d_shader->fog_density = 0.0025f;
+    terrain3d_shader->fog_gradient = 20.0f;
     KRR_TERRAINSHADERPROG3D_update_fog_density(terrain3d_shader);
     KRR_TERRAINSHADERPROG3D_update_fog_gradient(terrain3d_shader);
 
@@ -619,6 +619,13 @@ bool usercode_loadmedia()
     SU_SKYBOXSHADER(skybox_shader)
     // set cubemap unit
     KRR_SKYBOXSHADERPROG_set_cubemap_sampler(skybox_shader, 0);
+    // set fog color
+    glm_vec3_copy(SKY_COLOR_INIT, skybox_shader->fog_color);
+    KRR_SKYBOXSHADERPROG_update_fog_color(skybox_shader);
+    // set lower / upper limits
+    skybox_shader->ctrans_limits[0] = 0.0f;
+    skybox_shader->ctrans_limits[1] = 50.0f;
+    KRR_SKYBOXSHADERPROG_update_ctrans_limits(skybox_shader);
 
   SU_BEGIN(font_shader)
     SU_FONTSHADER(font_shader)
@@ -870,6 +877,18 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       texture3d_shader->fog_enabled = !texture3d_shader->fog_enabled;
       texturealpha3d_shader->fog_enabled = !texturealpha3d_shader->fog_enabled;
       terrain3d_shader->fog_enabled = !terrain3d_shader->fog_enabled;
+
+      if (terrain3d_shader->fog_enabled)
+      {
+        skybox_shader->ctrans_limits[0] = 0.0f;
+        skybox_shader->ctrans_limits[1] = 50.0f;
+      }
+      else
+      {
+        skybox_shader->ctrans_limits[0] = 0.0f;
+        skybox_shader->ctrans_limits[1] = 0.0f;
+      }
+      
       
       SU_BEGIN(texture3d_shader)
         KRR_TEXSHADERPROG3D_update_fog_enabled(texture3d_shader);
@@ -877,7 +896,9 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
         KRR_TEXALPHASHADERPROG3D_update_fog_enabled(texturealpha3d_shader);
       SU_BEGIN(terrain3d_shader)
         KRR_TERRAINSHADERPROG3D_update_fog_enabled(terrain3d_shader);
-      SU_END(terrain3d_shader)
+      SU_BEGIN(skybox_shader)
+        KRR_SKYBOXSHADERPROG_update_ctrans_limits(skybox_shader);
+      SU_END(skybox_shader)
     }
   }
   else if (e->type == SDL_MOUSEBUTTONDOWN)

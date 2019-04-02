@@ -14,6 +14,14 @@ typedef struct KRR_SKYBOXSHADERPROG_S
 
   // uniform cubemap texture
   GLint cubemap_sampler_location;
+  // fog color
+  GLint fog_color_location;
+  vec3 fog_color;
+
+  // color transitions limits
+  // to make it seamless for scene and skybox
+  GLint ctrans_limits_location;
+  vec2 ctrans_limits;
 
   // projection matrix
   mat4 projection_matrix;
@@ -82,6 +90,22 @@ extern void KRR_SKYBOXSHADERPROG_set_vertex_pointer(KRR_SKYBOXSHADERPROG* progra
 /// \param sampler cubemap sampler name
 ///
 extern void KRR_SKYBOXSHADERPROG_set_cubemap_sampler(KRR_SKYBOXSHADERPROG* program, GLuint sampler);
+
+///
+/// update fog color to GPU
+/// set fog color (see header) first then call this function to update to GPU
+///
+/// \param program skybox shader-program
+///
+extern void KRR_SKYBOXSHADERPROG_update_fog_color(KRR_SKYBOXSHADERPROG* program);
+
+///
+/// update color transitioning limits (lower, and upper)
+/// set color transitioning limits (see header) first then call this function to update to GPU
+///
+/// \param program skybox shader-program
+///
+extern void KRR_SKYBOXSHADERPROG_update_ctrans_limits(KRR_SKYBOXSHADERPROG* program);
 
 ///
 /// enable all attribute pointers
