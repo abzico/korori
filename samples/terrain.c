@@ -241,9 +241,6 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // enable depth test
   glEnable(GL_DEPTH_TEST);
 
-  // enable gamma correction
-  glEnable(GL_FRAMEBUFFER_SRGB);
-
   // initially start user's camera looking at -z, and up with +y
   glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, cam.forward);
   glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, cam.up);
@@ -368,7 +365,7 @@ bool usercode_loadmedia()
     return false;
   }
   glBindTexture(GL_TEXTURE_2D, terrain_texture->texture_id);
-  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, 0.0f);
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1000, 1000);
 
   // stall texture
   stall_texture = KRR_TEXTURE_new();
@@ -421,7 +418,7 @@ bool usercode_loadmedia()
     return false;
   }
   glBindTexture(GL_TEXTURE_2D, mt_r_texture->texture_id);
-  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, 0.0f);
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1000, 1000);
 
   // multitexture g
   mt_g_texture = KRR_TEXTURE_new();
@@ -431,7 +428,7 @@ bool usercode_loadmedia()
     return false;
   }
   glBindTexture(GL_TEXTURE_2D, mt_g_texture->texture_id);
-  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, 0.0f);
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1000, 1000);
 
   // multitexture b
   mt_b_texture = KRR_TEXTURE_new();
@@ -443,7 +440,8 @@ bool usercode_loadmedia()
   // generate mipmap stack for multitexture b
   // note: bind texture first, then call util function
   glBindTexture(GL_TEXTURE_2D, mt_b_texture->texture_id);
-  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1.2f);
+  // FIXME: might have to adjust this lod values
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1000, 4);
 
   // multitexture blendmap
   mt_blendmap = KRR_TEXTURE_new();
@@ -629,6 +627,8 @@ bool usercode_loadmedia()
 
   SU_BEGIN(font_shader)
     SU_FONTSHADER(font_shader)
+    // set texture color
+    KRR_FONTSHADERPROG2D_set_text_color(font_shader, (COLOR32){1.0f, 1.0f, 1.0f, 1.0f});
     // set texture unit
     KRR_FONTSHADERPROG2D_set_texture_sampler(font_shader, 0);
   SU_END(font_shader)
