@@ -259,8 +259,20 @@ bool KRR_FONT_load_bitmap(KRR_FONT* font, const char* path)
 
   // set texture wrap
   glBindTexture(GL_TEXTURE_2D, texture->texture_id);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+#ifdef GL_NV_texture_border_clamp
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_NV);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_NV);
+#elif defined(GL_EXT_texture_border_clamp)
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_EXT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_EXT);
+#elif defined(GL_OES_texture_border_clamp)
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_OES);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_OES);
+#endif
   glBindTexture(GL_TEXTURE_2D, 0);
 
   // setup vao's binding
@@ -447,8 +459,19 @@ bool KRR_FONT_load_freetype(KRR_FONT* font, const char* path, GLuint pixel_size)
 
   // set texture wrap
   glBindTexture(GL_TEXTURE_2D, font->spritesheet->ltexture->texture_id);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+#ifdef GL_NV_texture_border_clamp
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_NV);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_NV);
+#elif defined(GL_EXT_texture_border_clamp)
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_EXT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_EXT);
+#elif defined(GL_OES_texture_border_clamp)
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_OES);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_OES);
+#endif
   glBindTexture(GL_TEXTURE_2D, 0);
 
   // setup vao's binding
