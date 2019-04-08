@@ -229,13 +229,6 @@ bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const char* pat
 
 bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* path)
 {
-  // pre-check if user's system doesn't have required capability to load S3TC texture
-  if (GLEW_EXT_texture_compression_s3tc == 0)
-  {
-    KRR_LOGE("S3TC texture not support for this system. Quit now");
-    return false;
-  }
-
   FILE* fp = NULL;
   fp = fopen(path, "rb");
   if (fp == NULL)
@@ -319,6 +312,13 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
     return false;
   }
 
+  // pre-check if user's system doesn't have required capability to load S3TC texture
+  if (GLAD_GL_EXT_texture_compression_s3tc == 0)
+  {
+    KRR_LOGE("S3TC texture not support for this system. Quit now");
+    return false;
+  }
+
   // read base image's pixel data
   // 0x31545844 represents "DXT1" in hexadecimal, we could convert fourcc to char* then compare to string literal as well
   KRR_LOG("header.dds_pixel_format.fourcc: 0x%X", header.dds_pixel_format.fourcc);
@@ -330,12 +330,21 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   {
     if ((header.dds_pixel_format.flags & 0x1) == 0)
     {
+      // check preprocessor as if it's enabled, then device should support sRGB
+#ifdef GL_COMPRESSED_SRGB_S3TC_DXT1_EXT
       gl_format = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
+#else
+      gl_format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+#endif
       KRR_LOG("RGB DXT1");
     }
     else
     {
+#ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT
       gl_format = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
+#else
+      gl_format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+#endif
       KRR_LOG("RGBA DXT1");
     }
   }
@@ -347,12 +356,20 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
     {
       // DXT3
       case 0x33545844:
+#ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT
         gl_format = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
+#else
+        gl_format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+#endif
         KRR_LOG("RGBA DXT3");
         break;
       // DXT5
       case 0x35545844:
+#ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT
         gl_format = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+#else
+        gl_format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+#endif
         KRR_LOG("RGBA DXT5");
         break;
     }
@@ -571,11 +588,19 @@ bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels
   // generate texture
   if (is_need_to_resize)
   {
+#ifdef GL_SRGB8_ALPHA8
     glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, texture->physical_width_, texture->physical_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, resized_pixels);
+#else
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture->physical_width_, texture->physical_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, resized_pixels);
+#endif
   }
   else
   {
+#ifdef GL_SRGB8_ALPHA8
     glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+#else
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+#endif
   }
 
   // unbind texture
@@ -690,7 +715,18 @@ bool KRR_TEXTURE_lock(KRR_TEXTURE* texture)
     glBindTexture(GL_TEXTURE_2D, texture->texture_id);
 
     // get pixels
-    glGetTexImage(GL_TEXTURE_2D, 0, texture->pixel_format, GL_UNSIGNED_BYTE, texture->pixels);
+    if (texture->pixel_format == GL_RED)
+    {
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, texture->physical_width_, texture->physical_height_, 0, texture->pixel_format, GL_UNSIGNED_BYTE, texture->pixels);
+    }
+    else
+    {
+#ifdef GL_SRGB8_ALPHA8
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, texture->physical_width_, texture->physical_height_, 0, texture->pixel_format, GL_UNSIGNED_BYTE, texture->pixels);
+#else
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture->physical_width_, texture->physical_height_, 0, texture->pixel_format, GL_UNSIGNED_BYTE, texture->pixels);
+#endif
+    }
 
     // unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -1074,7 +1110,11 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels32(KRR_TEXTURE* texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     
     // generate texture
+#ifdef GL_SRGB8_ALPHA8
     glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, texture->physical_width_, texture->physical_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->pixels);
+#else
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture->physical_width_, texture->physical_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->pixels);
+#endif
 
     // unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -1139,7 +1179,7 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     
     // generate texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8_SNORM, texture->physical_width_, texture->physical_height_, 0, GL_RED, GL_UNSIGNED_BYTE, texture->pixels8);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, texture->physical_width_, texture->physical_height_, 0, GL_RED, GL_UNSIGNED_BYTE, texture->pixels8);
 
     // unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);

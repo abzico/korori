@@ -144,6 +144,9 @@ extern void KRR_TEXTURE_unbind_vao(KRR_TEXTURE* texture);
 /// Lock texture to manipulate pixel data.
 /// Make sure your texture is in RGBA8 format. If it is not, then this will change your
 /// image's format unexpectedly.
+/// 
+/// Note: only make sense if it's uncompressed texture format
+/// if called on compressed texture format, behavior is undefined.
 ///
 /// \param texture Pointer to KRR_TEXTURE
 /// \return True if lock successfully, otherwise return false.
