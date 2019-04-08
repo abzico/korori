@@ -112,7 +112,7 @@ GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type
   glGetShaderiv(shader_id, GL_COMPILE_STATUS, &shader_compiled);
   if (shader_compiled != GL_TRUE)
   {
-    KRR_LOGE("Unable to compile shader %d. Source: %s", shader_id, shader_source);
+    KRR_LOGE("Unable to compile shader %s [%d]. Source:\n%s", path, shader_id, shader_source);
     KRR_SHADERPROG_print_shader_log(shader_id);
     
     // delete shader
