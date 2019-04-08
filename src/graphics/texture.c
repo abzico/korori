@@ -237,7 +237,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   }
 
   FILE* fp = NULL;
-  fp = fopen(path, "r");
+  fp = fopen(path, "rb");
   if (fp == NULL)
   {
     KRR_LOGE("Unable to open file for read with errno: %d", errno);
