@@ -1,8 +1,6 @@
-#version 330
+#version 300 es
 
-// texture color
-// to be applied to texture's pixels
-uniform vec4 texture_color = vec4(1.0, 1.0, 1.0, 1.0);
+precision mediump float;
 
 // texture unit
 uniform sampler2D texture_sampler;
@@ -15,5 +13,5 @@ out vec4 final_color;
 
 void main()
 {
-  final_color = texture(texture_sampler, outin_texcoord) * texture_color;
+  final_color = texture(texture_sampler, outin_texcoord);
 }

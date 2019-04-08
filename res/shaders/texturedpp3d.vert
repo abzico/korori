@@ -1,11 +1,11 @@
-#version 330 core
+#version 300 es
 
 uniform mat4 projection_matrix;
 uniform mat4 view_matrix;
 uniform mat4 model_matrix;
-uniform int light_num;
+uniform lowp int light_num;
 uniform vec3 light_position[4];
-uniform float fog_enabled;
+uniform lowp float fog_enabled;
 uniform float fog_density;
 uniform float fog_gradient;
 // packed x-axis in first two vecs, and y-axis for second two vecs

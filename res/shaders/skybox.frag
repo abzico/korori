@@ -1,6 +1,7 @@
-#version 330 core
+#version 300 es
 
-uniform mat4 view_matrix;
+precision mediump float;
+
 uniform samplerCube cubemap_sampler;
 uniform vec3 fog_color;
 // color transition

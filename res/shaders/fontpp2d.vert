@@ -1,4 +1,4 @@
-#version 330
+#version 300 es
 
 //transformation matrices
 uniform mat4 projection_matrix;
