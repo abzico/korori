@@ -141,13 +141,14 @@ void KRR_gputil_create_view_matrix(vec3 trans, vec3 rot, float scale, mat4 dst)
   glm_translate(dst, (vec3){-trans[0], -trans[1], -trans[2]});
 }
 
-void KRR_gputil_generate_mipmaps(GLenum target, float lod_bias)
+void KRR_gputil_generate_mipmaps(GLenum target, int min_lod, int max_lod)
 {
   // always set the maximum index of mipmap level as at the loading time, it usually be set to 0
   // thus this will make genarating mipmaps correctly perform
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1000);
   glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameterf(target, GL_TEXTURE_LOD_BIAS, lod_bias);
+  glTexParameterf(target, GL_TEXTURE_MIN_LOD, min_lod);
+  glTexParameterf(target, GL_TEXTURE_MAX_LOD, max_lod);
 
   glGenerateMipmap(target);
 }
