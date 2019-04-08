@@ -58,21 +58,17 @@ void KRR_gputil_adapt_to_letterbox(int screen_width, int screen_height, int logi
 const char* KRR_gputil_error_string(GLenum error)
 {
   if (error == GL_NO_ERROR)
-    return "No error";
+    return "No error has been recorded. The value of this symbolic constant is guaranteed to be 0.";
   else if (error == GL_INVALID_ENUM)
-    return "An unacceptable value is specified for an enumerated argument";
+    return "An unacceptable value is specified for an enumerated argument. The offending command is ignored and has no other side effect than to set the error flag.";
   else if (error == GL_INVALID_VALUE)
-    return "A numeric argument is out of range";
+    return "A numeric argument is out of range. The offending command is ignored and has no other side effect than to set the error flag.";
   else if (error == GL_INVALID_OPERATION)
-    return "The specified operation is not allowed in the current state";
-  else if (error == GL_STACK_OVERFLOW)
-    return "This command would cause a stack overflow";
-  else if (error == GL_STACK_UNDERFLOW)
-    return "This command would cause a stack underflow";
+    return "The specified operation is not allowed in the current state. The offending command is ignored and has no side effect than to set the error flag";
+  else if (error == GL_INVALID_FRAMEBUFFER_OPERATION)
+    return "The framebuffer object is not complete. The offending command is ignored and has no side effect than to set the error flag.";
   else if (error == GL_OUT_OF_MEMORY)
     return "There is not enough memory left to execute the command";
-  else if (error == GL_TABLE_TOO_LARGE)
-    return " The specified table exceeds the implementation's maximum supported table size";
   else
     return "Unknown error"; // should not happen anyway if you get error from glGetError()
 }
