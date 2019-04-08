@@ -6,6 +6,7 @@
 #define KRR_common_h_
 
 #include <stdbool.h>
+#include "krr/platforms/platforms_config.h"
 #include "krr/foundation/window.h"
 
 // use library call

@@ -87,6 +87,9 @@ krr_graphics_HEADERS = include/krr/graphics/common.h \
 krr_uidir=$(includedir)/krr/ui
 krr_ui_HEADERS = include/krr/ui/button.h
 
+krr_platformsdir=$(includedir)/krr/platforms
+krr_platforms_HEADERS = include/krr/platforms/platforms_config.h
+
 # samples
 SUBDIRS = . samples
 
