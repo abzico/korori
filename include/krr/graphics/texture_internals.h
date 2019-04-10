@@ -4,6 +4,10 @@
 #include "krr/graphics/texture.h"
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// these API meant to be used internally by library only (not limited to only KRR_TEXTURE.c), not expose to user.
 /// yeah technically, users can use if include this header, but you need to know what you're doing with these APIs.
 /// Implementation source file is in KRR_TEXTURE.c.
@@ -53,5 +57,9 @@ extern bool KRR_TEXTURE_load_texture_from_precreated_pixels32(KRR_TEXTURE* textu
 /// \return True if successfully load, otherwise return false.
 ///
 extern bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

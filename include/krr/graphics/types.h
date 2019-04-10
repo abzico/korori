@@ -3,6 +3,10 @@
 
 #include <glad/glad.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
   GLfloat x;
@@ -103,5 +107,9 @@ typedef struct
   GLfloat shine_dumper;
   GLfloat reflectvity;
 } MATERIAL;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

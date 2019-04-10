@@ -3,6 +3,7 @@
  */
 
 #include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -84,15 +85,6 @@ bool init() {
     KRR_LOGE("SDL could not initialize! SDL_Error: %s", SDL_GetError());
     return false;
   }
-
-#ifdef SDL_HEADLESS
-  // define environment variable to videodriver
-  // note: do this after SDL_Init() but before creating a new window with KRR_WINDOW_new()
-  if (putenv("SDL_VIDEODRIVER=dummy") != 0)
-  {
-    KRR_LOGW("Warning: cannot set environment variable 'dummy' to cleanly go headless.");
-  }
-#endif
 
 #define STRF(str) "Warning: " #str " failed to configured"
 #define GLATTR_WLOG(r, str) if (r != 0) KRR_LOGW(STRF(str));
@@ -341,4 +333,3 @@ int main(int argc, char* args[])
 
   return 0;
 }
-

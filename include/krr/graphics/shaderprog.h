@@ -4,6 +4,10 @@
 #include "krr/graphics/common.h"
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ///
 /// Maximum lights supported all across the board for all shaders
 ///
@@ -73,5 +77,9 @@ extern void KRR_SHADERPROG_print_program_log(GLuint program_id);
 /// \param shader_id Shader id to print log
 ///
 extern void KRR_SHADERPROG_print_shader_log(GLuint shader_id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

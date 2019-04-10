@@ -5,6 +5,10 @@
 #include "krr/foundation/types.h"
 #include "krr/foundation/common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern float KRR_math_lerp(float a, float b, float t);
 
 /// lerp vector
@@ -100,5 +104,9 @@ extern float KRR_math_barycentric_xz(vec3 p1, vec3 p2, vec3 p3, vec2 p);
 /// \param dest output quaternion
 ///
 extern void KRR_math_quat_v2rot(vec3 v1, vec3 v2, versor dest);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

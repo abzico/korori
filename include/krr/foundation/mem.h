@@ -3,6 +3,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ///
 /// Dynamically allocate chunk of aligned memory in 8 bytes.
 ///
@@ -47,5 +51,9 @@ extern void* KRR_MEM_malloc32(size_t s);
 /// \param p pointer points to 32 bytes aligned memory
 ///
 extern void KRR_MEM_free32(void* p);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

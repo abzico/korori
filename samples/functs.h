@@ -3,6 +3,10 @@
 
 #include "krr/foundation/common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SU_BEGIN(x) \
   KRR_SHADERPROG_bind(x->program);
 
@@ -68,5 +72,9 @@ extern mat4 g_base_model_matrix;
 /// \param program pointer to shader program.
 ///
 extern void usercode_set_matrix_then_update_to_shader(enum USERCODE_MATRIXTYPE matrix_type, enum USERCODE_SHADERTYPE shader_type, void* program);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -3,6 +3,10 @@
 
 #include "krr/graphics/common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct KRR_SKYBOX_S
 {
   GLuint vbo_id;
@@ -52,5 +56,9 @@ extern void KRR_SKYBOX_render(KRR_SKYBOX* sb);
 /// \param sb pointer to skybox
 ///
 extern void KRR_SKYBOX_free(KRR_SKYBOX* sb);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -3,6 +3,10 @@
 
 #include "krr/graphics/common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
   /// current frame position
@@ -20,5 +24,9 @@ typedef struct
   /// up vector
   vec3 up;
 } KRR_CAM;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

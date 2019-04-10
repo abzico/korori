@@ -4,6 +4,10 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct KRR_TIMER {
   // clock time when timer started
   Uint32 started_ticks;
@@ -59,5 +63,9 @@ extern Uint32 KRR_TIMER_getTicks(KRR_TIMER* timer);
  * It will set NULL to timer after successfully free it, otherwise it won't.
  */
 extern void KRR_TIMER_free(KRR_TIMER* timer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
