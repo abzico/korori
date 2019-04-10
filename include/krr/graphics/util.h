@@ -3,6 +3,10 @@
 
 #include "krr/graphics/common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// Utility functions to work with OpenGL
 
 ///
@@ -118,5 +122,9 @@ extern void KRR_gputil_generate_mipmaps(GLenum target, int min_lod, int max_lod)
 /// \return generated texture name which can be used with OpenGL operations right away, otherwise if not successful or error occurs, -1 is returned.
 ///
 extern int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top, const char* bottom, const char* back, const char* front);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

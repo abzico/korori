@@ -3,6 +3,10 @@
 
 #include "krr/graphics/common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
   /// (internally used)
@@ -109,6 +113,8 @@ extern void KRR_TERRAIN_free(TERRAIN* tr);
 ///
 extern bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor, VERTEXTEXNORM3D** dst_vertices, int* vertices_count, GLuint** dst_indices, int* indices_count, int* rst_grid_width, int* rst_grid_height, float** rst_heights, vec3** rst_normals);
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif

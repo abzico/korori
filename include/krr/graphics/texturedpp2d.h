@@ -4,6 +4,10 @@
 #include "krr/graphics/common.h"
 #include "krr/graphics/shaderprog.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct KRR_TEXSHADERPROG2D_
 {
   // underlying shader program
@@ -126,5 +130,9 @@ extern void KRR_TEXSHADERPROG2D_enable_attrib_pointers(KRR_TEXSHADERPROG2D* prog
 /// \param program pointer to KRR_TEXSHADERPROG2D
 ///
 extern void KRR_TEXSHADERPROG2D_disable_attrib_pointers(KRR_TEXSHADERPROG2D* program);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

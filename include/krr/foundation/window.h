@@ -4,6 +4,10 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ORIGINAL_WINDOW_TITLE_BUFFER 50
 
 ///
@@ -143,5 +147,9 @@ extern void KRR_WINDOW_free_internals(KRR_WINDOW *window);
 /// Use this to free memory created by KRR_WINDOW via KRR_WINDOW_new().
 ///
 extern void KRR_WINDOW_free(KRR_WINDOW *window);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

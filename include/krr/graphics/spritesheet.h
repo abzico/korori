@@ -6,6 +6,10 @@
 #include "krr/graphics/texture.h"
 #include <vector/vector.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
   KRR_TEXTURE* ltexture;
@@ -94,5 +98,9 @@ extern void KRR_SPRITESHEET_render_sprite(KRR_SPRITESHEET* spritesheet, int inde
 /// \param spritesheet pointer to KRR_SPRITESHEET
 ///
 extern void KRR_SPRITESHEET_unbind_vao(KRR_SPRITESHEET* spriteshet);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

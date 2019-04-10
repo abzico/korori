@@ -3,6 +3,10 @@
 
 #include "krr/graphics/common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
   /// (internally used)
@@ -63,5 +67,9 @@ extern void SIMPLEMODEL_render(SIMPLEMODEL* sm);
 /// \param sm pointer to pointer of SIMPLEMODEL
 ///
 extern void SIMPLEMODEL_free(SIMPLEMODEL* sm);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

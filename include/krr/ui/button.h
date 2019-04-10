@@ -14,6 +14,10 @@
 
 #include <SDL2/SDL.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// state of button
 enum KRR_BUTTON_STATE
 {
@@ -57,6 +61,10 @@ extern void KRR_BUTTON_handleEvent(KRR_BUTTON* button, SDL_Event* e, SDL_Rect bu
  * 	- button KRR_BUTTON* : pointer to KRR_BUTTON to free
  */
 extern void KRR_BUTTON_free(KRR_BUTTON* button);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif 	/* KRR_BUTTON_h_ */
 

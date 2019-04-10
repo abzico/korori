@@ -4,6 +4,10 @@
 #include "krr/graphics/common.h"
 #include "krr/graphics/shaderprog.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct KRR_TEXALPHASHADERPROG3D_
 {
   // underlying shader program
@@ -243,5 +247,9 @@ extern void KRR_TEXALPHASHADERPROG3D_enable_attrib_pointers(KRR_TEXALPHASHADERPR
 /// \param program pointer to KRR_TEXALPHASHADERPROG3D
 ///
 extern void KRR_TEXALPHASHADERPROG3D_disable_attrib_pointers(KRR_TEXALPHASHADERPROG3D* program);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

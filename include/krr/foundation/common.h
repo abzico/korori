@@ -17,6 +17,10 @@
 
 #include "krr/foundation/log.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * The window we'll be rendering to.
  */
@@ -30,6 +34,10 @@ extern double common_frameTime;
 extern int common_frameCount;
 extern double common_frameAccumTime;
 extern double common_avgFPS;
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

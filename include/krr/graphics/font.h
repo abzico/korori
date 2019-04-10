@@ -6,6 +6,10 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum KRR_FONT_TEXTALIGNMENT
 {
   // horizontal set
@@ -128,5 +132,9 @@ extern void KRR_FONT_unbind_vao(KRR_FONT* font);
 /// \return Area in SIZE covering the rendering size
 ///
 extern SIZE KRR_FONT_get_string_area_size(KRR_FONT* font, const char* text);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

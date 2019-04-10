@@ -5,6 +5,10 @@
 #include "krr/graphics/common.h"
 #include "krr/graphics/types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// global shared variable that all instance of KRR_TEXTURE will use
 struct KRR_TEXSHADERPROG2D_;
 extern struct KRR_TEXSHADERPROG2D_* shared_textured_shaderprogram;
@@ -283,5 +287,9 @@ extern void KRR_TEXTURE_blit_pixels32(KRR_TEXTURE* texture, GLuint dst_x, GLuint
 /// \param dst_texture Destination texture to place pixels
 ///
 extern void KRR_TEXTURE_blit_pixels8(KRR_TEXTURE* texture, GLuint dst_x, GLuint dst_y, const KRR_TEXTURE* dst_texture);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
