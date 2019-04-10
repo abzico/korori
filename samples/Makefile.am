@@ -124,7 +124,7 @@ common: main.c functs.c functs.h usercode.h
 
 common-headless: main.c functs.c functs.h usercode.h
 	@echo "Build common headless"
-	$(CC) $(CFLAGS) -DSDL_HEADLESS -c main.c -o main-headless.o
+	$(CC) $(CFLAGS) -DSDL_HEADLESS -DSDL_VIDEODRIVER=dummy -c main.c -o main-headless.o
 	$(CC) $(CFLAGS) -DSDL_HEADLESS -c functs.c -o functs-headless.o
 
 sample-doublemulticolorshader-local: copy-res common
