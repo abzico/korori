@@ -37,35 +37,19 @@ case "${host_os}" in
 
     AC_MSG_NOTICE("Detected OS as Windows")
 
-    dnl check for opengl es 3.0 library (backward compatible with opengl es 2.0, and use 2.0 library to check)
-    AC_SEARCH_LIBS([glTexImage2D], [GLESv2], [], [AC_MSG_ERROR("Not found OpenGL ES 2.0/3.0 on system. Please make sure you install it.")], [])
-    dnl check opengl es 3.0's header file
-    AC_CHECK_HEADERS([GLES3/gl3.h], [], [],
-                     [#ifdef HAVE_GLAD_H
-                      #include <glad/glad.h>
-                      #endif
-                     ])
     ;;
   *-*-darwin*)
     ISMACOSX="true"
 
     AC_MSG_NOTICE("Detected OS as macOS")
 
-    #AX_CHECK_GL(,[AC_MSG_ERROR("Not found any OpenGL on system")])
-    #AC_CHECK_HEADERS([GL/gl.h], [], [],
-    #                 [#ifdef HAVE_GLAD_H
-    #                  #include <glad/glad.h>
-    #                  #endif
-    #                 ])
-    
-    dnl check for opengl es 3.0 library (backward compatible with opengl es 2.0, and use 2.0 library to check)
-    AC_SEARCH_LIBS([glTexImage2D], [GLESv2], [], [AC_MSG_ERROR("Not found OpenGL ES 2.0/3.0 on system. Please make sure you install it.")], [])
-    dnl check opengl es 3.0's header file
-    AC_CHECK_HEADERS([GLES3/gl3.h], [], [],
-                     [#ifdef HAVE_GLAD_H
-                      #include <glad/glad.h>
-                      #endif
-                     ])
+    ;;
+  *linux-android*)
+    dnl android
+    ISANDROID="true"
+
+    AC_MSG_NOTICE("Detected OS as Android")
+
     ;;
   *linux*)
     dnl treat it as unix/linux
@@ -73,29 +57,6 @@ case "${host_os}" in
 
     AC_MSG_NOTICE("Detected OS as Unix/Linux")
 
-    dnl check for opengl es 3.0 library (backward compatible with opengl es 2.0, and use 2.0 library to check)
-    AC_SEARCH_LIBS([glTexImage2D], [GLESv2], [], [AC_MSG_ERROR("Not found OpenGL ES 2.0/3.0 on system. Please make sure you install it.")], [])
-    dnl check opengl es 3.0's header file
-    AC_CHECK_HEADERS([GLES3/gl3.h], [], [],
-                     [#ifdef HAVE_GLAD_H
-                      #include <glad/glad.h>
-                      #endif
-                     ])
-    ;;
-  *android*)
-    dnl android
-    ISANDROID="true"
-
-    AC_MSG_NOTICE("Detected OS as Android")
-
-    dnl check for opengl es 3.0 library (backward compatible with opengl es 2.0, and use 2.0 library to check)
-    AC_SEARCH_LIBS([glTexImage2D], [GLESv2], [], [AC_MSG_ERROR("Not found OpenGL ES 2.0/3.0 on system. Please make sure you install it.")], [])
-    dnl check opengl es 3.0's header file
-    AC_CHECK_HEADERS([GLES3/gl3.h], [], [],
-                     [#ifdef HAVE_GLAD_H
-                      #include <glad/glad.h>
-                      #endif
-                     ])
     ;;
 esac
 
@@ -119,23 +80,76 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
-# Checks for libraries.
-AC_CHECK_LIB([SDL2], [SDL_Init], [],
-             [AC_MSG_ERROR("Not found SDL2. See https://www.libsdl.org/download-2.0.php and install it on your system.")], [])
-AC_CHECK_LIB([SDL2_image], [IMG_Init], [],
-             [AC_MSG_ERROR("Not found SDL2_image. See https://www.libsdl.org/projects/SDL_image/ and install it on your system.")], [])
-AC_CHECK_LIB([SDL2_mixer], [Mix_Init], [],
-             [AC_MSG_ERROR("Not found SDL2_mixer. See https://www.libsdl.org/projects/SDL_mixer/ and install it on your system.")], [])
-AC_CHECK_LIB([cglm], [glmc_vec4], [],
-             [AC_MSG_ERROR("Not found cglm. See https://github.com/recp/cglm and install it on your system.")], [])
-AC_CHECK_LIB([freetype], [FT_Init_FreeType], [],
-             [AC_MSG_ERROR("Not found freetype. See https://www.freetype.org/download.html and install on your system.")], [])
-AC_CHECK_LIB([vector], [vector_new], [],
-             [AC_MSG_ERROR("Not found vector. See https://github.com/haxpor/vector_c and install on your system.")], [])
-AC_CHECK_LIB([hashmap_c], [hashmapc_new], [],
-             [AC_MSG_ERROR("Not found hashmapc_new. See https://github.com/haxpor/hashmap_c and install on your system.")], [])
-AC_CHECK_LIB([texpackr], [texpackr_sheet_new], [],
-             [AC_MSG_ERROR("Not found texpackr. See https://github.com/abzico/texpackr and install on your system.")], [])
+dnl Check existence of libraries
+dnl Note to check from least dependant to most dependant one
+dnl These libraries have the least of dependant
+AC_SEARCH_LIBS([FT_Init_FreeType], [freetype], [], [AC_MSG_ERROR("Not found freetype. See https://www.freetype.org/download.html and install on your system.")], [])
+AC_SEARCH_LIBS([sinf], [m], [], [AC_MSG_ERROR("Unusual error. Not found libm. Check your system to install basic development package.")], [])
+AC_SEARCH_LIBS([glmc_vec4], [cglm], [], [AC_MSG_ERROR("Not found cglm. See https://github.com/recp/cglm and install it on your system.")], [])
+AC_SEARCH_LIBS([vector_new], [vector], [], [AC_MSG_ERROR("Not found vector. See https://github.com/haxpor/vector_c and install on your system.")], [])
+AC_SEARCH_LIBS([hashmapc_new], [hashmap_c], [], [AC_MSG_ERROR("Not found hashmapc_new. See https://github.com/haxpor/hashmap_c and install on your system.")], [])
+AC_SEARCH_LIBS([zlibVersion], [z], [], [AC_MSG_ERROR("Not found libz. Check your system to install basic development package.")], [])
+AC_SEARCH_LIBS([dlopen], [dl], [], [AC_MSG_ERROR("Not found libdl. Check your system to install basic development package.")], [])
+AC_SEARCH_LIBS([png_read_image], [png], [], [AC_MSG_ERROR("Not found libpng. Please install it on your system first")], [])
+dnl libpng before texpackr as texpackr depends on libpng
+AC_SEARCH_LIBS([texpackr_sheet_new], [texpackr], [], [AC_MSG_ERROR("Not found texpackr. See https://github.com/abzico/texpackr and install on your system.")], [])
+
+# part that need special care, as each path is different
+# -- Check for Android
+if test x$ISANDROID = xtrue; then
+  dnl check for opengl es 3.0 library (backward compatible with opengl es 2.0, and use 2.0 library to check)
+  AC_SEARCH_LIBS([glTexImage2D], [GLESv2], [], [AC_MSG_ERROR("Not found OpenGL ES 2.0/3.0 on system. Please make sure you install it.")], [])
+  dnl check opengl es 3.0's header file
+  AC_CHECK_HEADERS([GLES3/gl3.h], [], [],
+                   [#ifdef HAVE_GLAD_H
+                    #include <glad/glad.h>
+                    #endif
+                   ])
+
+# -- Check for Windows
+elif test x$ISWINDOWS = xtrue; then
+  dnl check for opengl es 3.0 library (backward compatible with opengl es 2.0, and use 2.0 library to check)
+  AC_SEARCH_LIBS([glTexImage2D], [GLESv2], [], [AC_MSG_ERROR("Not found OpenGL ES 2.0/3.0 on system. Please make sure you install it.")], [])
+  dnl check opengl es 3.0's header file
+  AC_CHECK_HEADERS([GLES3/gl3.h], [], [],
+                   [#ifdef HAVE_GLAD_H
+                    #include <glad/glad.h>
+                    #endif
+                   ])
+
+# -- Check for macOS
+elif test x$ISMACOSX = xtrue; then
+  dnl check for opengl es 3.0 library (backward compatible with opengl es 2.0, and use 2.0 library to check)
+  AC_SEARCH_LIBS([glTexImage2D], [GLESv2], [], [AC_MSG_ERROR("Not found OpenGL ES 2.0/3.0 on system. Please make sure you install it.")], [])
+  dnl check opengl es 3.0's header file
+  AC_CHECK_HEADERS([GLES3/gl3.h], [], [],
+                   [#ifdef HAVE_GLAD_H
+                    #include <glad/glad.h>
+                    #endif
+                   ])
+
+# -- Check for Unix/Linux
+elif test x$ISUNIX = xtrue; then
+  dnl check for opengl es 3.0 library (backward compatible with opengl es 2.0, and use 2.0 library to check)
+  AC_SEARCH_LIBS([glTexImage2D], [GLESv2], [], [AC_MSG_ERROR("Not found OpenGL ES 2.0/3.0 on system. Please make sure you install it.")], [])
+  dnl check opengl es 3.0's header file
+  AC_CHECK_HEADERS([GLES3/gl3.h], [], [],
+                   [#ifdef HAVE_GLAD_H
+                    #include <glad/glad.h>
+                    #endif
+                   ])
+fi
+
+dnl Another special care for SDL2 especially for Android
+if test x$ISANDROID = xtrue; then
+  AC_SEARCH_LIBS([SDL_Init], [SDL2], [], [AC_MSG_ERROR("Not found SDL2. See https://www.libsdl.org/download-2.0.php and install it on your system.")], [-lhidapi -lGLESv1_CM -llog -landroid -lstdc++])
+  AC_SEARCH_LIBS([IMG_Init], [SDL2_image], [], [AC_MSG_ERROR("Not found SDL2_image. See https://www.libsdl.org/projects/SDL_image/ and install it on your system.")], [-lhidapi -lGLESv1_CM -llog -landroid -lstdc++])
+  AC_SEARCH_LIBS([Mix_Init], [SDL2_mixer], [], [AC_MSG_ERROR("Not found SDL2_mixer. See https://www.libsdl.org/projects/SDL_mixer/ and install it on your system.")], [-lhidapi -lGLESv1_CM -llog -landroid -lstdc++ -lmpg123])
+else
+  AC_SEARCH_LIBS([SDL_Init], [SDL2], [], [AC_MSG_ERROR("Not found SDL2. See https://www.libsdl.org/download-2.0.php and install it on your system.")], [])
+  AC_SEARCH_LIBS([IMG_Init], [SDL2_image], [], [AC_MSG_ERROR("Not found SDL2_image. See https://www.libsdl.org/projects/SDL_image/ and install it on your system.")], [])
+  AC_SEARCH_LIBS([Mix_Init], [SDL2_mixer], [], [AC_MSG_ERROR("Not found SDL2_mixer. See https://www.libsdl.org/projects/SDL_mixer/ and install it on your system.")], [])
+fi
 
 # Checks for header files.
 AC_CHECK_HEADERS([stddef.h stdlib.h string.h stdbool.h assert.h time.h math.h stdio.h stdarg.h glad/glad.h KHR/khrplatform.h])
