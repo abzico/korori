@@ -11,7 +11,7 @@ extern "C" {
 ///
 /// Only supported on Linux, Unix, and macOS. It will be no-op for Windows and other platforms.
 ///
-void KRR_util_print_callstack();
+extern void KRR_util_print_callstack();
 
 #ifdef __cplusplus
 }
