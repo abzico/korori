@@ -10,6 +10,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include "krr/platforms/platforms_config.h"
 #include "krr/foundation/common.h"
 #include "krr/foundation/window.h"
 #include "krr/graphics/common.h"
@@ -99,16 +100,25 @@ bool init() {
     GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_MAJOR_VERSION")
   attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_MINOR_VERSION")
+
+#ifdef KRR_TARGET_PLATFORM_CATEGORY_PC
+  // only explicitly ask for sRGB color space only on PC platform
+  // on mobile, if it supports, it's enabled by default
+  // this will prevent SDL error of "Invalid Window" when create OpenGL context
   attr_res = SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
     GLATTR_WLOG(attr_res, "SDL_GL_FRAMEBUFFER_SRGB_CAPABLE")
+#endif
       
   // it should automatically detect, but we're just being pragmatic
   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles");
 
   // following these 3 lines might not be needed
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  attr_res = SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    GLATTR_WLOG(attr_res, "SDL_GL_DEPTH_SIZE")
+  attr_res = SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+    GLATTR_WLOG(attr_res, "SDL_GL_STENCIL_SIZE")
+  attr_res = SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    GLATTR_WLOG(attr_res, "SDL_GL_DOUBLEBUFFER")
 
   // preprocessor check for sample for 'headless' sample only
 #if defined(SDL_HEADLESS)
