@@ -1011,15 +1011,16 @@ bool KRR_TEXTURE_lock(KRR_TEXTURE* texture)
     {
       // note: use real width/height of texture which are physical_* in this case
       size = texture->physical_width_ * texture->physical_height_ * sizeof(GLubyte);
+      // allocate memory space
+      texture->pixels8 = malloc(size);
     }
     // otherwise treat it with GL_RGBA
     else
     {
       size = texture->physical_width_ * texture->physical_height_ * sizeof(GLuint);
+      // allocate memory space
+      texture->pixels = malloc(size);
     }
-
-    // allocate memory space
-    texture->pixels = malloc(size);
 
     // bind texture
     glBindTexture(GL_TEXTURE_2D, texture->texture_id);
@@ -1027,7 +1028,8 @@ bool KRR_TEXTURE_lock(KRR_TEXTURE* texture)
     // get pixels
     if (texture->pixel_format == GL_RED)
     {
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, texture->physical_width_, texture->physical_height_, 0, texture->pixel_format, GL_UNSIGNED_BYTE, texture->pixels);
+      // not to apply sRGB color space
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texture->physical_width_, texture->physical_height_, 0, texture->pixel_format, GL_UNSIGNED_BYTE, texture->pixels8);
     }
     else
     {
@@ -1489,7 +1491,7 @@ bool KRR_TEXTURE_load_texture_from_precreated_pixels8(KRR_TEXTURE* texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     
     // generate texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, texture->physical_width_, texture->physical_height_, 0, GL_RED, GL_UNSIGNED_BYTE, texture->pixels8);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texture->physical_width_, texture->physical_height_, 0, GL_RED, GL_UNSIGNED_BYTE, texture->pixels8);
 
     // unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
