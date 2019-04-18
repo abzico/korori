@@ -106,20 +106,16 @@ extern bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const ch
 extern bool KRR_TEXTURE_load_grayscale_texture_from_file(KRR_TEXTURE* texture, const char* path);
 
 ///
-/// Load texture with extra parameters
-/// Currently only load in format of RGBA8 for now.
+/// Load compressed texture as specified wrapped in DDS container.
+/// Input file must be in compressed format; possible are DXT1, DXT3, DXT5, and ETC2 format.
+/// Texture also needs to be in POT (power-of-two), and square.
 ///
-/// \param texture Pointer to KRR_TEXTURE
-/// \param path Path to texture file to load
-/// \param color_key Packed color key value in RGBA. This is a target color to replace it with transparent color in texture.
-/// \return True if load successfully, otherwise return false.
+/// Implementation checks dwFourCC value of DDS header. We added our own values for ETC2 texture format.
+/// As standard values only include DXT compreseed texture format, not others. Thus input texture that has such
+/// dwFourCC values will be working only with this function.
 ///
-extern bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const char* path, GLuint color_key);
-
-///
-/// Load compressed texture, DDS from file.
-/// Input file needs to be in .dds (DXT1, DXT3, or DXT5) format.
-/// To be loaded texture needs to be in POT (power-of-two) texture, and square.
+/// Additional dwFourCC values
+/// - "ETC2" to represent ETC2 texture format.
 ///
 /// \param texture Pointer to KRR_TEXTURE
 /// \param path Path to texture file to load

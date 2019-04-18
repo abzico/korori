@@ -282,28 +282,25 @@ bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const char* pat
 
 bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* path)
 {
-  FILE* fp = NULL;
-  fp = fopen(path, "rb");
-  if (fp == NULL)
+  SDL_RWops *file = SDL_RWFromFile(path, "rb");
+  if (file == NULL)
   {
-    KRR_LOGE("Unable to open file for read with errno: %d", errno);
+    KRR_LOGE("Unable to open file for read %s", path);
     return false;
   }
 
-  long total_size = 0;
-
-  // find the total size of dds texture
-  fseek(fp, 0, SEEK_END);
-  total_size = ftell(fp);
-  // reset file offset pointer back to start
-  fseek(fp, 0, SEEK_SET);
+  // get file size
+  Sint64 total_size = SDL_RWsize(file);
+  KRR_LOGI("total size of dds file %ld", total_size);
 
   // ensure that total size is at least 124 + 4 to accomodate for
   // its magic number, and header
   if (total_size < 128)
   {
     KRR_LOGE("file might be corrupted or not recognized as DDS file format. It has less bytes that it should be.");
-    fclose(fp);
+    // close file
+    SDL_RWclose(file);
+    file = NULL;
     return false;
   }
 
@@ -311,22 +308,26 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   
   // 1st way to check for magic words of dds file - via integer
   int magic_number = 0;
-  f_nobj_read = fread(&magic_number, 4, 1, fp);
+  f_nobj_read = SDL_RWread(file, &magic_number, 4, 1);
   if (f_nobj_read != 1)
   {
     KRR_LOGE("Unable to read file (1st approach to read magic number)");
-    fclose(fp);
+    // close file
+    SDL_RWclose(file);
+    file = NULL;
     return false;
   }
   
   if (magic_number != 0x20534444)
   {
     KRR_LOGE("not dds file, found %d", magic_number);
-    fclose(fp);
+    // clsoe file
+    SDL_RWclose(file);
+    file = NULL;
     return false;
   }
 
-  KRR_LOG("current file offset is at %ld", ftell(fp));
+  KRR_LOG("current file offset is at %ld", SDL_RWtell(file));
 
   // header section
   struct DDS_Header header;
@@ -335,11 +336,13 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   KRR_LOG("size of header section for dds file format: %lu", sizeof(header));
 
   // read header section
-  f_nobj_read = fread(&header, sizeof(header), 1, fp);
+  f_nobj_read = SDL_RWread(file, &header, sizeof(header), 1);
   if (f_nobj_read != 1)
   {
     KRR_LOGE("read head section error");
-    fclose(fp);
+    // clsoe file
+    SDL_RWclose(file);
+    file = NULL;
     return false;
   }
 
@@ -352,7 +355,9 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   if (header.width != header.height)
   {
     KRR_LOGE("Input texture %s is not square, stop reading further now.", path);
-    fclose(fp);
+    // clsoe file
+    SDL_RWclose(file);
+    file = NULL;
     return false;
   }
 
@@ -361,10 +366,150 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
       ((header.height & (header.height - 1)) != 0))
   {
     KRR_LOGE("Texture %s sides are not in power of two", path);
-    fclose(fp);
+    // clsoe file
+    SDL_RWclose(file);
+    file = NULL;
     return false;
   }
 
+  // attempt to find ETC2 compressed texture formats for android
+  // but use S3TC for desktop
+#if KRR_TARGET_PLATFORM == KRR_PLATFORM_ANDROID
+
+  // check that it's ETC2 or its variants or not
+  // find blocksize depending on which compressed texture format it is
+  // find reference of blocksize at https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glCompressedTexImage2D.xhtml
+  int blocksize;
+  GLenum compressed_format;
+  // - ETC2 RGB ("ETC2")
+  if (header.dds_pixel_format.fourcc == 0x32435445)
+  {
+    blocksize = 8;
+#if GL_EXT_sRGB
+    compressed_format = GL_COMPRESSED_SRGB8_ETC2;
+#else
+    compressed_format = GL_COMPRESSED_RGB8_ETC2;
+#endif
+    KRR_LOGI("detected 'ETC2' compressed texture [format: 0x%X, blocksize: %d]", header.dds_pixel_format.fourcc, blocksize);
+  }
+  // - ETC2 RGBA1 ("ETCP")
+  else if (header.dds_pixel_format.fourcc == 0x50435445)
+  {
+    blocksize = 8;
+#if GL_EXT_sRGB
+    compressed_format = GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+#else
+    compressed_format = GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+#endif
+    KRR_LOGI("detected 'ETCP' compressed texture [format: 0x%X, blocksize: %d]", header.dds_pixel_format.fourcc, blocksize);
+  }
+  // - ETC2 RGBA ("ETCA")
+  else if (header.dds_pixel_format.fourcc == 0x41435445)
+  {
+    blocksize = 16;
+#if GL_EXT_sRGB
+    compressed_format = GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC;
+#else
+    compressed_format = GL_COMPRESSED_RGBA8_ETC2_EAC;
+#endif
+    KRR_LOGI("detected 'ETCA' compressed texture [format: 0x%X, blocksize: %d]", header.dds_pixel_format.fourcc, blocksize);
+  }
+  else
+  {
+    KRR_LOGE("Only support ETC2 compressed texture (ETC2-RGB, ETC2-RGBA1, and ETC2-RGBA) and its variants. You probably try to load other kind of formats which we don't support.");
+    // close file
+    SDL_RWclose(file);
+    file = NULL;
+
+    return false;
+  }
+
+  // get total size of base image + mipmaps (if any)
+  // by calculating from the less of file size
+  Sint64 images_size = total_size - SDL_RWtell(file);
+
+  // define images buffer space
+  unsigned char* images_buffer = calloc(1, images_size * sizeof(unsigned char));
+  // read all image data into buffer
+  f_nobj_read = SDL_RWread(file, images_buffer, images_size, 1);
+  if (f_nobj_read != 1)
+  {
+    KRR_LOGE("Error read images data: %s", SDL_GetError());
+    // close file
+    SDL_RWclose(file);
+    file = NULL;
+    return false;
+  }
+  // close file
+  SDL_RWclose(file);
+  file = NULL;
+
+  KRR_LOG("---");
+
+  // texture id
+  GLuint texture_id;
+  // generate texture id
+  glGenTextures(1, &texture_id);
+  // bind texture
+  glBindTexture(GL_TEXTURE_2D, texture_id);
+
+  // set texture paremters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, header.mipmap_count == 0 ? 0 : header.mipmap_count - 1);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, DEFAULT_TEXTURE_WRAP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, DEFAULT_TEXTURE_WRAP);
+
+  int offset = 0;
+  int width = header.width;
+  int height = header.height;
+
+  for (int level=0; level<header.mipmap_count; level++)
+  {
+    // calculate size for this level of image
+    int size  = ceil(width / 4.0) * ceil(height / 4.0) * blocksize;
+
+    // create compressed texture
+    glCompressedTexImage2D(GL_TEXTURE_2D, level, compressed_format, width, height, 0, size, images_buffer + offset);
+
+    KRR_LOG("level %d, width: %d, height: %d, size: %d", level, width, height, size);
+
+    // proceed next
+    offset += size;
+    // re-calculate size for mipmap
+    width = KRR_math_max(1, width/2);
+    height = KRR_math_max(1, height/2);
+  }
+
+  // free images data buffer
+  free(images_buffer);
+  images_buffer = NULL;
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  texture->texture_id = texture_id;
+  texture->width = header.width;
+  texture->height = header.height;
+  texture->physical_width_ = header.width;
+  texture->physical_height_ = header.height;
+
+  // check for errors
+  GLenum error = glGetError();
+  if (error != GL_NO_ERROR)
+  {
+    KRR_util_print_callstack();
+    KRR_LOGE("Error loading compressed texture %s", KRR_gputil_error_string(error));
+    return false;
+  }
+
+  // init VBO and IBO
+  init_VAO_VBO_IBO(texture);
+
+  // FIXME: add lock texture handler for this type of compressed texture
+  // set pixel format
+  texture->pixel_format = compressed_format;
+
+  return true;
+#else
   // pre-check if user's system doesn't have required capability to load S3TC texture
   if (GLAD_GL_EXT_texture_compression_s3tc == 0)
   {
@@ -431,53 +576,24 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   KRR_LOG("blocksize: %d", blocksize);
 
   // get total size of base image + mipmaps (if any)
-  int images_size = ceil(header.width / 4.0) * ceil(header.height / 4.0) * blocksize;
-  KRR_LOG("level 0 width: %d, height: %d, size: %d", header.width, header.height, images_size);
-  {
-    int width = KRR_math_max(1, header.width);
-    int height = KRR_math_max(1, header.height);
-    int pre_width = width;
-    int pre_height = height;
-
-    for (int level=1; level<=header.mipmap_count; level++)
-    {
-      width = KRR_math_max(1, width/2);
-      height = KRR_math_max(1, height/2);
-
-      if (width == pre_width && height == pre_height)
-      {
-        // no need to proceed
-        break;
-      }
-      else
-      {
-        // update previous width and height
-        pre_width = width;
-        pre_height = height;
-      }
-
-      int level_size = ceil(width / 4.0) * ceil(height / 4.0) * blocksize;
-      KRR_LOG("level %d width: %d, height: %d, size: %d", level, width, height, level_size);
-
-      images_size += level_size;
-    }
-    KRR_LOG("images_size: %d", images_size);
-  }
+  // by calculating from the less of file size
+  Sint64 images_size = total_size - SDL_RWtell(file);
 
   // define images buffer space
-  unsigned char images_buffer[images_size];
-  memset(images_buffer, 0, images_size);
+  unsigned char* images_buffer = calloc(1, images_size * sizeof(unsigned char));
   // read all image data into buffer
-  f_nobj_read = fread(images_buffer, images_size, 1, fp);
+  f_nobj_read = SDL_RWread(file, images_buffer, images_size, 1);
   if (f_nobj_read != 1)
   {
-    KRR_LOGE("read images data errno [EOF?:%d]", feof(fp));
-    fclose(fp);
+    KRR_LOGE("read images data");
+    // close file
+    SDL_RWclose(file);
+    file = NULL;
     return false;
   }
-  // close file, we don't need reading from file anymore
-  fclose(fp);
-  fp = NULL;
+  // close file
+  SDL_RWclose(file);
+  file = NULL;
 
   KRR_LOG("---");
 
@@ -516,6 +632,10 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
     height = KRR_math_max(1, height/2);
   }
 
+  // free images data buffer
+  free(images_buffer);
+  images_buffer = NULL;
+
   glBindTexture(GL_TEXTURE_2D, 0);
 
   texture->texture_id = texture_id;
@@ -540,6 +660,7 @@ bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* pa
   texture->pixel_format = gl_format;
 
   return true;
+#endif
 }
 
 bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels, GLuint width, GLuint height)
