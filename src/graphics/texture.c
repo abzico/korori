@@ -172,14 +172,36 @@ bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char* path)
   if (converted_surface == NULL)
   {
     KRR_LOGE("Cannot convert to ABGR8888 format");
+
+    // free loaded surface
+    SDL_FreeSurface(loaded_surface);
+    loaded_surface = NULL;
+
     return false;
   }
 
+  // enable rle for this surface, but we have to lock before
+  // accessing pixels directly
+  SDL_SetSurfaceRLE(converted_surface, 1);
+  SDL_LockSurface(converted_surface);
+  // load texture from converted surface
   if (!KRR_TEXTURE_load_texture_from_pixels32(texture, converted_surface->pixels, converted_surface->w, converted_surface->h))
   {
     KRR_LOGE("Failed to set pixel data to texture");
+    
+    // unlock surface
+    SDL_UnlockSurface(converted_surface);
+
+    // free surfaces
+    SDL_FreeSurface(loaded_surface);
+    SDL_FreeSurface(converted_surface);
+    loaded_surface = NULL;
+    converted_surface = NULL;
+
     return false;
   }
+  // unlock surface
+  SDL_UnlockSurface(converted_surface);
 
   KRR_LOGI("format: %s", SDL_GetPixelFormatName(converted_surface->format->format));
 
@@ -1176,6 +1198,9 @@ bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
   KRR_LOG("original width: %d", width);
   KRR_LOG("original height: %d", height);
 
+  // enable RLE
+  SDL_SetSurfaceRLE(converted_surface, 1);
+
   // if need to resize, then put original pixels data at the top left
   // and pad the less with fully transparent white color
   GLuint* resized_pixels = NULL;
@@ -1186,6 +1211,8 @@ bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
 
     int offset = 0;
 
+    // lock surface
+    SDL_LockSurface(converted_surface);
     // convert type of underlying pixels in surface to known type
     GLuint* surface_pixels = (GLuint*)converted_surface->pixels;
 
@@ -1214,6 +1241,9 @@ bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
         }
       }
     }
+
+    // unlock surface
+    SDL_UnlockSurface(converted_surface);
   }
 
   // now we get pixels data ready
@@ -1230,7 +1260,12 @@ bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
     GLuint* pixels_ptr = malloc(size_bytes);
     // copy pixel data
     // note: we need to copy as we will free converted surface soon after this
+
+    // lock surface
+    SDL_LockSurface(converted_surface);
     memcpy(pixels_ptr, converted_surface->pixels, size_bytes);
+    // unlock surface
+    SDL_UnlockSurface(converted_surface);
 
     // set pixel pointer to texture
     texture->pixels = pixels_ptr;
@@ -1321,6 +1356,9 @@ bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
   KRR_LOG("original width: %d", width);
   KRR_LOG("original height: %d", height);
 
+  // enable rle
+  SDL_SetSurfaceRLE(loaded_surface, 1);
+
   // if need to resize, then put original pixels data at the top left
   // and pad the less with fully transparent white color
   // this is the final buffer to store 8-bit pixel data
@@ -1332,6 +1370,8 @@ bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
 
     int offset = 0;
 
+    // lock surface
+    SDL_LockSurface(loaded_surface);
     // convert type of underlying pixels in surface to known type
     GLuint* surface_pixels = (GLuint*)loaded_surface->pixels;
 
@@ -1361,6 +1401,9 @@ bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
         }
       }
     }
+
+    // unlock surface
+    SDL_UnlockSurface(loaded_surface);
   }
   // only need to get relevant pixel data setting to final buffer
   else
@@ -1370,6 +1413,8 @@ bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
 
     int offset = 0;
 
+    // lock surface
+    SDL_LockSurface(loaded_surface);
     // convert type of underlying pixels in surface to known type
     GLuint* surface_pixels = (GLuint*)loaded_surface->pixels;
 
@@ -1388,6 +1433,9 @@ bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
         resized_pixels[offset] = surface_pixels[existing_offset] & 0xff;
       }
     }
+
+    // unlock surface
+    SDL_UnlockSurface(loaded_surface);
   }
 
   // now we get pixels data ready
