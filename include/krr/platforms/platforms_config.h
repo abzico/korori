@@ -17,28 +17,28 @@
 /// detect and define for category of platform first
 /// either mobile or PC
 #ifdef __ANDROID__
-  #define KRR_PLATFORM_MOBILE
+  #define KRR_TARGET_PLATFORM_CATEGORY_MOBILE
 
   #undef KRR_TARGET_PLATFORM
   #define KRR_TARGET_PLATFORM   KRR_PLATFORM_ANDROID
 #else
-  #define KRR_PLATFORM_PC
+  #define KRR_TARGET_PLATFORM_CATEGORY_PC
 #endif
 
 /// detect Windows 32 bit
-#if defined(_WIN32) || defined(__CYGWIN32__) || defined(__MINGW32__)
+#if (defined(_WIN32) || defined(__CYGWIN32__) || defined(__MINGW32__)) && !defined(__ANDROID__)
   #undef KRR_TARGET_PLATFORM
   #define KRR_TARGET_PLATFORM   KRR_PLATFORM_WIN32
 #endif
 
 /// detect Windows 64 bit
-#if defined(_WIN64) || defined(__CYGWIN__) || defined(__MINGW64__)
+#if (defined(_WIN64) || defined(__CYGWIN__) || defined(__MINGW64__)) && !defined(__ANDROID__)
   #undef KRR_TARGET_PLATFORM
   #define KRR_TARGET_PLATFORM   KRR_PLATFORM_WIN64
 #endif
 
 /// detect Linux
-#if defined(__linux__) || defined(__CYGWIN__) || defined(__MINGW64__)
+#if (defined(__linux__) || defined(__CYGWIN__) || defined(__MINGW64__)) && !defined(__ANDROID__)
   #undef KRR_TARGET_PLATFORM
   #define KRR_TARGET_PLATFORM   KRR_PLATFORM_LINUX
 #endif
