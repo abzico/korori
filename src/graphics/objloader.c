@@ -5,7 +5,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
+#include <SDL2/SDL_system.h>
+#include "krr/platforms/platforms_config.h"
 #include "krr/foundation/log.h"
+#include "krr/foundation/util.h"
 
 // start with 100 empty space to hold elements
 #define INITIAL_ELEM_COUNT 100
@@ -65,7 +68,16 @@ static void free_dups(DUPS** dups_table, int count)
 
 int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* vertices_count, GLuint** dst_indices, int* indices_count)
 {
-  FILE* file = fopen(filepath, "r");
+#if KRR_TARGET_PLATFORM == KRR_PLATFORM_ANDROID
+  SDL_RWops* file = SDL_RWFromFile(filepath, "rb");
+  if (file == NULL)
+  {
+    KRR_LOGE("Error opening %s file", filepath);
+    return -1;
+  }
+#else
+  FILE* file = fopen(filepath, "rb");
+#endif
   if (file == NULL)
   {
     KRR_LOGE("Cannot read .obj file");
@@ -124,7 +136,11 @@ int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* 
   // read file line by line
   GLfloat temp_v[3];
   int idx[9];
+#if KRR_TARGET_PLATFORM == KRR_PLATFORM_ANDROID
+  while (KRR_util_rwopsgets(file, line, sizeof(line)))
+#else
   while (fgets(line, sizeof(line), file))
+#endif
   {
     if (strncmp(line, "v ", strlen("v ")) == 0)
     {
@@ -241,9 +257,15 @@ int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* 
     }
   }
 
+#if KRR_TARGET_PLATFORM == KRR_PLATFORM_ANDROID
+  // close file
+  SDL_RWclose(file);
+  file = NULL;
+#else
   // close file
   fclose(file);
   file = NULL;
+#endif
 
   // free un-needed anymore vertex data
   free(vertices);
