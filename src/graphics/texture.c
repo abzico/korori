@@ -118,26 +118,26 @@ struct DDS_Header {
 
 static void _print_dds_header_struct(struct DDS_Header* header)
 {
-  fprintf(stdout, "DDS_Header\n");
-  fprintf(stdout, "- size of struct (should be 124): %d\n", header->size);
-  fprintf(stdout, "- flags: 0x%X\n", header->flags);
-  fprintf(stdout, "- height: %d\n", header->height);
-  fprintf(stdout, "- width: %d\n", header->width);
-  fprintf(stdout, "- pitch or linear size: %d\n", header->pitch_or_linear_size);
-  fprintf(stdout, "- depth (for volume texture): %d\n", header->depth);
-  fprintf(stdout, "- mipmap count: %d\n", header->mipmap_count);
-  fprintf(stdout, "- DDS_PixelFormat\n");
-  fprintf(stdout, "\t- size of struct (should be 32): %d\n", header->dds_pixel_format.size);
-  fprintf(stdout, "\t- flags: 0x%X\n", header->dds_pixel_format.flags);
+  KRR_LOGI("DDS_Header");
+  KRR_LOGI("- size of struct (should be 124): %d", header->size);
+  KRR_LOGI("- flags: 0x%X", header->flags);
+  KRR_LOGI("- height: %d", header->height);
+  KRR_LOGI("- width: %d", header->width);
+  KRR_LOGI("- pitch or linear size: %d", header->pitch_or_linear_size);
+  KRR_LOGI("- depth (for volume texture): %d", header->depth);
+  KRR_LOGI("- mipmap count: %d", header->mipmap_count);
+  KRR_LOGI("- DDS_PixelFormat");
+  KRR_LOGI("\t- size of struct (should be 32): %d", header->dds_pixel_format.size);
+  KRR_LOGI("\t- flags: 0x%X", header->dds_pixel_format.flags);
   char fourcc_chrs[5];
   memset(fourcc_chrs, 0, sizeof(fourcc_chrs));
   strncpy(fourcc_chrs, (char*)&header->dds_pixel_format.fourcc, 4);
-  fprintf(stdout, "\t- fourCC: %s [0x%X]\n", fourcc_chrs, header->dds_pixel_format.fourcc);
-  fprintf(stdout, "\t- RGB bit count: %d\n", header->dds_pixel_format.rgb_bitcount);
-  fprintf(stdout, "\t- R bitmask: %d\n", header->dds_pixel_format.r_bitmask);
-  fprintf(stdout, "\t- G bitmask: %d\n", header->dds_pixel_format.g_bitmask);
-  fprintf(stdout, "\t- B bitmask: %d\n", header->dds_pixel_format.b_bitmask);
-  fprintf(stdout, "\t- A bitmask: %d\n", header->dds_pixel_format.a_bitmask);
+  KRR_LOGI("\t- fourCC: '%s' [in hex 0x%X]", fourcc_chrs, header->dds_pixel_format.fourcc);
+  KRR_LOGI("\t- RGB bit count: %d", header->dds_pixel_format.rgb_bitcount);
+  KRR_LOGI("\t- R bitmask: %d", header->dds_pixel_format.r_bitmask);
+  KRR_LOGI("\t- G bitmask: %d", header->dds_pixel_format.g_bitmask);
+  KRR_LOGI("\t- B bitmask: %d", header->dds_pixel_format.b_bitmask);
+  KRR_LOGI("\t- A bitmask: %d", header->dds_pixel_format.a_bitmask);
 }
 
 void KRR_TEXTURE_free(KRR_TEXTURE* texture)
@@ -154,7 +154,8 @@ void KRR_TEXTURE_free(KRR_TEXTURE* texture)
 
 bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char* path)
 {
-  // free internal stuff will be done inside KRR_TEXTURE_load_texture_from_pixels32() function
+  // free internal stuff will be done inside KRR_TEXTURE_load_texture_from_pixels32() function depending on texture format
+  KRR_LOGI("load texture from %s", path);
 
   SDL_Surface* loaded_surface = IMG_Load(path);
   if (loaded_surface == NULL)
@@ -167,7 +168,6 @@ bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char* path)
 
   // convert pixel format
   SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(loaded_surface, SDL_PIXELFORMAT_ABGR8888, 0);
-
   if (converted_surface == NULL)
   {
     KRR_LOGE("Cannot convert to ABGR8888 format");
@@ -180,9 +180,9 @@ bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char* path)
     return false;
   }
 
-  KRR_LOG("format: %s", SDL_GetPixelFormatName(converted_surface->format->format));
+  KRR_LOGI("format: %s", SDL_GetPixelFormatName(converted_surface->format->format));
 
-  // free surface
+  // free surfaces
   SDL_FreeSurface(loaded_surface);
   SDL_FreeSurface(converted_surface);
   loaded_surface = NULL;
