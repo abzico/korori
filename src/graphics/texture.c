@@ -1,3 +1,4 @@
+#include "krr/platforms/platforms_config.h"
 #include "krr/graphics/texture.h"
 #include "krr/foundation/common.h"
 #include "krr/foundation/math.h"
@@ -187,6 +188,58 @@ bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char* path)
   SDL_FreeSurface(converted_surface);
   loaded_surface = NULL;
   converted_surface = NULL;
+
+  return true;
+}
+
+bool KRR_TEXTURE_load_grayscale_texture_from_file(KRR_TEXTURE* texture, const char* path)
+{
+  // free internal stuff will be done inside KRR_TEXTURE_load_texture_from_pixels8() function
+  KRR_LOGI("load texture RED-8bit from %s", path);
+
+  SDL_Surface* loaded_surface = IMG_Load(path);
+  if (loaded_surface == NULL)
+  {
+    KRR_LOGE("Unable to load image %s! SDL_image error: %s", path, IMG_GetError());
+    return false;
+  }
+
+  KRR_LOGI("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
+
+  // check that input texture is really in grayscale (8-bit and 1 channel) which is usually is grayscale indexed color, if not then return failure immediately
+  if (loaded_surface->format->format != SDL_PIXELFORMAT_INDEX8 && loaded_surface->format->BytesPerPixel != 1)
+  {
+    // clear loaded surface
+    SDL_FreeSurface(loaded_surface);
+    loaded_surface = NULL;
+
+    return false;
+  }
+
+  // enable rle for this surface, but we have to lock before
+  // accessing pixels directly
+  SDL_SetSurfaceRLE(loaded_surface, 1);
+  SDL_LockSurface(loaded_surface);
+  // ready to load as pixels8
+  if (!KRR_TEXTURE_load_texture_from_pixels8(texture, loaded_surface->pixels, loaded_surface->w, loaded_surface->h))
+  {
+    KRR_LOGE("Failed to set pixel data to texture");
+
+    // unlock surface
+    SDL_UnlockSurface(loaded_surface);
+    
+    // clear loaded surface
+    SDL_FreeSurface(loaded_surface);
+    loaded_surface = NULL;
+
+    return false;
+  }
+  // unlock surface
+  SDL_UnlockSurface(loaded_surface);
+
+  // free surface
+  SDL_FreeSurface(loaded_surface);
+  loaded_surface = NULL;
 
   return true;
 }
@@ -629,6 +682,142 @@ bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels
   texture->pixel_format = GL_RGBA;
 
   return true;
+}
+
+bool KRR_TEXTURE_load_texture_from_pixels8(KRR_TEXTURE* texture, GLubyte* pixels, GLuint width, GLuint height)
+{
+  // free existing texture first if it exists
+  // because user can load texture from pixels data multiple times
+  KRR_TEXTURE_free_internal_texture(texture);
+
+  bool is_need_to_resize = false;
+
+  // check whether width is not POT
+  if ((width & (width - 1)) != 0)
+  {
+    // find next POT for width
+    texture->physical_width_ = find_next_pot(width);
+    KRR_LOG("physical_width: %u", texture->physical_width_);
+    is_need_to_resize = true;
+  }
+  // otherwise width is the same as original input texture
+  else
+  {
+    texture->physical_width_ = width;
+  }
+
+  // check whether height is not POT
+  if ((height & (height - 1)) != 0)
+  {
+    // find next POT for height
+    texture->physical_height_ = find_next_pot(height);
+    KRR_LOG("physical_height: %u", texture->physical_height_);
+    is_need_to_resize = true;
+  }
+  // otherwise height is the same as original input texture
+  else
+  {
+    texture->physical_height_ = height;
+  }
+
+  // get texture dimensions
+  // these are the ones we gonna clip (if needed) to render finally
+  texture->width = width;
+  texture->height = height;
+
+  KRR_LOG("original width: %d", width);
+  KRR_LOG("original height: %d", height);
+
+  // if need to resize, then put original pixels data at the top left
+  // and pad the less with fully transparent white color
+  GLuint* resized_pixels = NULL;
+  if (is_need_to_resize)
+  {
+    // allocate 1D memory for resized pixels data
+    resized_pixels = malloc(texture->physical_width_ * texture->physical_height_ * sizeof(GLubyte));
+
+    int offset = 0;
+
+    // loop through all the pixels to set pixel data
+    for (unsigned int x=0; x<texture->physical_width_; x++)
+    {
+      for (unsigned int y=0; y<texture->physical_height_; y++)
+      {
+        // calculate offset from 1D buffer
+        offset = y * texture->physical_width_ + x;
+
+        // if offset is in range to set pixel data from existing one
+        // place existing pixels at the top left corner
+        if (x >= 0 && x < texture->width &&
+            y >= 0 && y < texture->height)
+        {
+          // calculate the offset for existing pixel data
+          int existing_offset = y * texture->width + x;
+          // set existing pixel data to final buffer we will use
+          resized_pixels[offset] = pixels[existing_offset];
+        }
+        // if not then set it to fully black color
+        else
+        {
+          resized_pixels[offset] = 0;
+        }
+      }
+    }
+  }
+
+
+  // generate texture id
+  glGenTextures(1, &texture->texture_id);
+
+  // bind texture id
+  glBindTexture(GL_TEXTURE_2D, texture->texture_id);
+
+  // set texture parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, DEFAULT_TEXTURE_WRAP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, DEFAULT_TEXTURE_WRAP);
+  
+  // there's no mipmap for this single texture
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+
+  // generate texture
+  if (is_need_to_resize)
+  {
+    // no need to apply sRGB color space
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texture->physical_width_, texture->physical_height_, 0, GL_RED, GL_UNSIGNED_BYTE, resized_pixels);
+  }
+  else
+  {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, pixels);
+  }
+
+  // unbind texture
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  // free resized buffer (if need)
+  if (is_need_to_resize)
+  {
+    free(resized_pixels);
+    resized_pixels = NULL;
+  }
+
+  // check for errors
+  GLenum error = glGetError();
+  if (error != GL_NO_ERROR)
+  {
+    KRR_util_print_callstack();
+    KRR_LOGE("Error loading texture from %p pixels! %s", pixels, KRR_gputil_error_string(error));
+    return false;
+  }
+
+  // init VBO and IBO
+  init_VAO_VBO_IBO(texture);
+
+  // set pixel format
+  texture->pixel_format = GL_RED;
+
+  return true;
+
 }
 
 void KRR_TEXTURE_bind_vao(KRR_TEXTURE* texture)

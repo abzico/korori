@@ -83,6 +83,16 @@ extern void KRR_TEXTURE_free(KRR_TEXTURE* texture);
 ///
 extern bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char* path);
 
+/*
+ * Load grayscale texture from file.
+ * If not grayscale image, it will return false immediately.
+ *
+ * \param texture Pointer to KRR_TEXTURE
+ * \param path Path to texture file to load
+ * \return True if load successfully, otherwise return false.
+ */
+extern bool KRR_TEXTURE_load_grayscale_texture_from_file(KRR_TEXTURE* texture, const char* path);
+
 ///
 /// Load texture with extra parameters
 /// Currently only load in format of RGBA8 for now.
@@ -115,6 +125,17 @@ extern bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const c
 /// \return True if loading is successful, otherwise return false.
 ///
 extern bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels, GLuint width, GLuint height);
+
+/*
+ * Load pixels 8-bit (gray scale), a single channel color into texture.
+ *
+ * \param texture KRR_TEXTURE to load input pixels data into it.
+ * \param pixels Pixel data; 8-bit, 8-bit per pixel, gray scale.
+ * \param width Width of input pixel data
+ * \param height Height of input pixel data
+ * \return True if loading is successful, otherwise return false.
+ */
+extern bool KRR_TEXTURE_load_texture_from_pixels8(KRR_TEXTURE* texture, GLubyte* pixels, GLuint width, GLuint height);
 
 ///
 /// Bind VAO of this texture.
