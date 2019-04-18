@@ -73,6 +73,8 @@ static bool g_need_clipping = false;
 // -- section of function signatures -- //
 static void usercode_app_went_windowed_mode();
 static void usercode_app_went_fullscreen();
+static void handle_widowed_mode();
+static void handle_fullscreen_mode();
 
 // -- end of section of function signatures -- //
 
@@ -241,9 +243,6 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // enable depth test
   glEnable(GL_DEPTH_TEST);
 
-  // enable gamma correction
-  glEnable(GL_FRAMEBUFFER_SRGB);
-
   // initially start user's camera looking at -z, and up with +y
   glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, cam.forward);
   glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, cam.up);
@@ -368,7 +367,7 @@ bool usercode_loadmedia()
     return false;
   }
   glBindTexture(GL_TEXTURE_2D, terrain_texture->texture_id);
-  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, 0.0f);
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1000, 1000);
 
   // stall texture
   stall_texture = KRR_TEXTURE_new();
@@ -392,7 +391,34 @@ bool usercode_loadmedia()
     return false;
   }
   // load sheet meta
+#if KRR_TARGET_PLATFORM == KRR_PLATFORM_ANDROID
+  SDL_RWops* file = SDL_RWFromFile("res/models/fern-sheet.tpr", "rb");
+  if (file == NULL)
+  {
+    KRR_LOGE("Unable to open %s file for read", "res/models/fern-sheet.tpr");
+    return false;
+  }
+  // get file size
+  Sint64 file_size = SDL_RWsize(file);
+
+  unsigned char file_buffer[file_size];
+  memset(file_buffer, 0, file_size);
+  // read into buffer
+  if (SDL_RWread(file, file_buffer, file_size, 1) != 1)
+  {
+    KRR_LOGE("Error reading %s file", "res/models/fern-sheet.tpr");
+    // close file
+    SDL_RWclose(file);
+    file = NULL;
+  }
+  // close file
+  SDL_RWclose(file);
+  file = NULL;
+
+  texpackr_sheetmeta* fern_sheetmeta = texpackr_parse_mem(file_buffer, file_size);
+#else
   texpackr_sheetmeta* fern_sheetmeta = texpackr_parse("res/models/fern-sheet.tpr");
+#endif
   if (fern_sheetmeta == NULL)
   {
     KRR_LOGE("Error loading fern-sheet.tpr");
@@ -421,7 +447,7 @@ bool usercode_loadmedia()
     return false;
   }
   glBindTexture(GL_TEXTURE_2D, mt_r_texture->texture_id);
-  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, 0.0f);
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1000, 1000);
 
   // multitexture g
   mt_g_texture = KRR_TEXTURE_new();
@@ -431,7 +457,7 @@ bool usercode_loadmedia()
     return false;
   }
   glBindTexture(GL_TEXTURE_2D, mt_g_texture->texture_id);
-  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, 0.0f);
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1000, 1000);
 
   // multitexture b
   mt_b_texture = KRR_TEXTURE_new();
@@ -443,7 +469,8 @@ bool usercode_loadmedia()
   // generate mipmap stack for multitexture b
   // note: bind texture first, then call util function
   glBindTexture(GL_TEXTURE_2D, mt_b_texture->texture_id);
-  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1.2f);
+  // FIXME: might have to adjust this lod values
+  KRR_gputil_generate_mipmaps(GL_TEXTURE_2D, -1000, 4);
 
   // multitexture blendmap
   mt_blendmap = KRR_TEXTURE_new();
@@ -469,7 +496,7 @@ bool usercode_loadmedia()
 
   // load from generation of terrain
   tr = KRR_TERRAIN_new();
-  if (!KRR_TERRAIN_load_from_generation(tr, "res/models/heightmap.png", TERRAIN_SLOT_SIZE, TERRAIN_HFACTOR))
+  if (!KRR_TERRAIN_load_from_generation(tr, "res/models/heightmap-taranaki.png", TERRAIN_SLOT_SIZE, TERRAIN_HFACTOR))
   {
     KRR_LOGE("Error loading terrain from generation");
     return false;
@@ -491,7 +518,7 @@ bool usercode_loadmedia()
     {-200.0f, compute_posy(-200.0f, -200.0f) + light_yoffsets[3], -200.0f}
   };
   COLOR3F light_colors[] = {
-    {0.05f, 0.05f, 0.05f},
+    {0.8f, 0.8f, 0.8f},
     {2.0f, 0.0f, 0.0f},     // set value more than 1.0f to accomodate the loss of light intensity when we use light calculation
     {0.0f, 2.0f, 2.0f},     // same
     {0.0f, 2.0f, 0.0f}      // same
@@ -512,7 +539,7 @@ bool usercode_loadmedia()
   SU_BEGIN(texture3d_shader)
     SU_TEXSHADERPROG3D(texture3d_shader)
     // update ambient color
-    glm_vec3_copy((vec3){0.0f, 0.0f, 0.0f}, texture3d_shader->ambient_color);
+    glm_vec3_copy((vec3){0.4f, 0.4f, 0.4f}, texture3d_shader->ambient_color);
     KRR_TEXSHADERPROG3D_update_ambient_color(texture3d_shader);
     // set texture unit
     KRR_TEXSHADERPROG3D_set_texture_sampler(texture3d_shader, 0);
@@ -533,7 +560,7 @@ bool usercode_loadmedia()
     glm_vec3_copy(SKY_COLOR_INIT, texture3d_shader->sky_color);
     KRR_TEXSHADERPROG3D_update_sky_color(texture3d_shader);
     // enable fog
-    texture3d_shader->fog_enabled = true;
+    texture3d_shader->fog_enabled = false;
     KRR_TEXSHADERPROG3D_update_fog_enabled(texture3d_shader);
     // configure fog
     texture3d_shader->fog_density = 0.0025f;
@@ -544,7 +571,7 @@ bool usercode_loadmedia()
   SU_BEGIN(texturealpha3d_shader)
     SU_TEXALPHASHADERPROG3D(texturealpha3d_shader)
     // update ambient color
-    glm_vec3_copy((vec3){0.0f, 0.0f, 0.0f}, texturealpha3d_shader->ambient_color);
+    glm_vec3_copy((vec3){0.4f, 0.4f, 0.4f}, texturealpha3d_shader->ambient_color);
     KRR_TEXALPHASHADERPROG3D_update_ambient_color(texturealpha3d_shader);
     // set texture unit
     KRR_TEXALPHASHADERPROG3D_set_texture_sampler(texturealpha3d_shader, 0);
@@ -565,7 +592,7 @@ bool usercode_loadmedia()
     glm_vec3_copy(SKY_COLOR_INIT, texturealpha3d_shader->sky_color);
     KRR_TEXALPHASHADERPROG3D_update_sky_color(texturealpha3d_shader);
     // enable fog
-    texturealpha3d_shader->fog_enabled = true;
+    texturealpha3d_shader->fog_enabled = false;
     KRR_TEXALPHASHADERPROG3D_update_fog_enabled(texturealpha3d_shader);
     // configure fog
     texturealpha3d_shader->fog_density = 0.0025f;
@@ -576,7 +603,7 @@ bool usercode_loadmedia()
   SU_BEGIN(terrain3d_shader)
     SU_TERRAINSHADER(terrain3d_shader)
     // set ambient color
-    glm_vec3_copy((vec3){0.0f, 0.0f, 0.0f}, terrain3d_shader->ambient_color);
+    glm_vec3_copy((vec3){0.4f, 0.4f, 0.4f}, terrain3d_shader->ambient_color);
     KRR_TERRAINSHADERPROG3D_update_ambient_color(terrain3d_shader);
     // set texture unit (at the same time this is multiteture background texture)
     KRR_TERRAINSHADERPROG3D_set_texture_sampler(terrain3d_shader, 0);
@@ -607,7 +634,7 @@ bool usercode_loadmedia()
     glm_vec3_copy(SKY_COLOR_INIT, terrain3d_shader->sky_color);
     KRR_TERRAINSHADERPROG3D_update_sky_color(terrain3d_shader);
     // enable fog
-    terrain3d_shader->fog_enabled = true;
+    terrain3d_shader->fog_enabled = false;
     KRR_TERRAINSHADERPROG3D_update_fog_enabled(terrain3d_shader);
     // configure fog
     terrain3d_shader->fog_density = 0.0025f;
@@ -629,6 +656,8 @@ bool usercode_loadmedia()
 
   SU_BEGIN(font_shader)
     SU_FONTSHADER(font_shader)
+    // set texture color
+    KRR_FONTSHADERPROG2D_set_text_color(font_shader, (COLOR32){1.0f, 1.0f, 1.0f, 1.0f});
     // set texture unit
     KRR_FONTSHADERPROG2D_set_texture_sampler(font_shader, 0);
   SU_END(font_shader)
@@ -781,6 +810,9 @@ bool usercode_loadmedia()
   texpackr_sheetmeta_free(fern_sheetmeta);
   fern_sheetmeta = NULL;
 
+  // start with fullscreen mode
+  handle_fullscreen_mode();
+
   return true;
 }
 
@@ -788,6 +820,58 @@ void usercode_set_screen_dimension(Uint32 window_id, int screen_width, int scree
 {
   g_screen_width = screen_width;
   g_screen_height = screen_height;
+}
+
+void handle_windowed_mode()
+{
+  KRR_WINDOW_set_fullscreen(gWindow, false);
+  // set projection matrix back to normal
+  KRR_gputil_adapt_to_normal(g_screen_width, g_screen_height);
+  // reset relavant values back to normal
+  g_offset_x = 0.0f;
+  g_offset_y = 0.0f;
+  g_ri_scale_x = 1.0f;
+  g_ri_scale_y = 1.0f;
+  g_ri_view_width = g_screen_width;
+  g_ri_view_height = g_screen_height;
+  g_need_clipping = false;
+  
+  // re-calculate projection matrices for both ui and 3d view
+  glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0f, 6000.0, g_ui_projection_matrix);
+  glm_perspective(GLM_PI_4f, g_ri_view_width * 1.0f / g_ri_view_height, 0.01f, 10000.0f, g_projection_matrix);
+
+  // re-calculate base model matrix
+  // no need to scale as it's uniform 1.0 now
+  glm_mat4_identity(g_base_ui_model_matrix);
+
+  // signal that app went windowed mode
+  usercode_app_went_windowed_mode();
+}
+
+void handle_fullscreen_mode()
+{
+  KRR_WINDOW_set_fullscreen(gWindow, true);
+  // get new window's size
+  int w, h;
+  SDL_GetWindowSize(gWindow->window, &w, &h);
+  // also adapt to letterbox
+  KRR_gputil_adapt_to_letterbox(w, h, g_logical_width, g_logical_height, &g_ri_view_width, &g_ri_view_height, &g_offset_x, &g_offset_y);
+  // calculate scale 
+  g_ri_scale_x = g_ri_view_width * 1.0f / g_logical_width;
+  g_ri_scale_y = g_ri_view_height * 1.0f / g_logical_height;
+  g_need_clipping = true;
+
+  // re-calculate projection matrices for both ui and 3d view
+  glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0f, 6000.0, g_ui_projection_matrix);
+  glm_perspective(GLM_PI_4f, g_ri_view_width * 1.0f / g_ri_view_height, 0.01f, 10000.0f, g_projection_matrix);
+
+  // re-calculate base model matrix
+  glm_mat4_identity(g_base_ui_model_matrix);
+  // also scale
+  glm_scale(g_base_ui_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
+
+  // signal that app went fullscreen mode
+  usercode_app_went_fullscreen();
 }
 
 void usercode_handle_event(SDL_Event *e, float delta_time)
@@ -802,53 +886,11 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       // go windowed mode, currently in fullscreen mode
       if (gWindow->fullscreen)
       {
-        KRR_WINDOW_set_fullscreen(gWindow, false);
-        // set projection matrix back to normal
-        KRR_gputil_adapt_to_normal(g_screen_width, g_screen_height);
-        // reset relavant values back to normal
-        g_offset_x = 0.0f;
-        g_offset_y = 0.0f;
-        g_ri_scale_x = 1.0f;
-        g_ri_scale_y = 1.0f;
-        g_ri_view_width = g_screen_width;
-        g_ri_view_height = g_screen_height;
-        g_need_clipping = false;
-				
-				// re-calculate projection matrices for both ui and 3d view
-				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0f, 6000.0, g_ui_projection_matrix);
-        glm_perspective(GLM_PI_4f, g_ri_view_width * 1.0f / g_ri_view_height, 0.01f, 10000.0f, g_projection_matrix);
-
-				// re-calculate base model matrix
-				// no need to scale as it's uniform 1.0 now
-				glm_mat4_identity(g_base_ui_model_matrix);
-
-				// signal that app went windowed mode
-				usercode_app_went_windowed_mode();
+        handle_windowed_mode();
       }
       else
       {
-        KRR_WINDOW_set_fullscreen(gWindow, true);
-        // get new window's size
-        int w, h;
-        SDL_GetWindowSize(gWindow->window, &w, &h);
-        // also adapt to letterbox
-        KRR_gputil_adapt_to_letterbox(w, h, g_logical_width, g_logical_height, &g_ri_view_width, &g_ri_view_height, &g_offset_x, &g_offset_y);
-        // calculate scale 
-        g_ri_scale_x = g_ri_view_width * 1.0f / g_logical_width;
-        g_ri_scale_y = g_ri_view_height * 1.0f / g_logical_height;
-        g_need_clipping = true;
-
-				// re-calculate projection matrices for both ui and 3d view
-				glm_ortho(0.0, g_ri_view_width, g_ri_view_height, 0.0, -300.0f, 6000.0, g_ui_projection_matrix);
-        glm_perspective(GLM_PI_4f, g_ri_view_width * 1.0f / g_ri_view_height, 0.01f, 10000.0f, g_projection_matrix);
-
-				// re-calculate base model matrix
-				glm_mat4_identity(g_base_ui_model_matrix);
-				// also scale
-				glm_scale(g_base_ui_model_matrix, (vec3){ g_ri_scale_x, g_ri_scale_y, 1.f});
-
-				// signal that app went fullscreen mode
-				usercode_app_went_fullscreen();
+        handle_fullscreen_mode();
       }
     }
     else if (k == SDLK_TAB)

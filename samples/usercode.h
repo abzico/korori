@@ -2,10 +2,17 @@
 /// User can implement their own user's code for game logic and rendering in this file.
 /// It can include either OpenGL and normal SDL2 stuff.
 ///
+///
+#ifndef KRR_TEST_USERCODE_h_
+#define KRR_TEST_USERCODE_h_
 
 #include <SDL2/SDL.h>
 #include "krr/graphics/common.h"
 #include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 ///
 /// Initialize
@@ -73,3 +80,9 @@ extern void usercode_handle_event(SDL_Event *e, float delta_time);
 /// Free all resource
 ///
 extern void usercode_close(void);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#endif

@@ -3,6 +3,10 @@
 
 #include "krr/graphics/common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ///
 /// Load .obj file then return result of formed vertices.
 /// Load vertex, texture coordinate and normals.
@@ -15,5 +19,9 @@
 /// \return return 0 for success. Returned -1 if there's any error occurred.
 ///
 extern int KRR_load_objfile(const char* filepath, VERTEXTEXNORM3D** dst_vertices, int* vertices_count, GLuint** dst_indices, int* indices_count);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

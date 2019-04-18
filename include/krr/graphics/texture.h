@@ -5,6 +5,10 @@
 #include "krr/graphics/common.h"
 #include "krr/graphics/types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// global shared variable that all instance of KRR_TEXTURE will use
 struct KRR_TEXSHADERPROG2D_;
 extern struct KRR_TEXSHADERPROG2D_* shared_textured_shaderprogram;
@@ -70,8 +74,8 @@ extern void KRR_TEXTURE_free(KRR_TEXTURE* texture);
 
 ///
 /// Load texture from file.
-/// Currently only load in format of RGBA8888 for now.
-/// Make sure input file format is in RGBA8888.
+/// It will attempt to convert input texture into ABGR8888 which is convenient to access pixel data later.
+/// Input texture should not be swizzled between red and blue channel; if so it will nullify the the automatic process done in this function.
 ///
 /// \param texture Pointer to KRR_TEXTURE
 /// \param path Path to texture file to load
@@ -81,7 +85,8 @@ extern bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char*
 
 ///
 /// Load texture with extra parameters
-/// Currently only load in format of RGBA8 for now.
+/// It will attempt to convert input texture to ABGR8888 which is convenient to access pixel data later.
+/// Input texture should not be swizzled between red and blue channel; if so it will nullify the the automatic process done in this function.
 ///
 /// \param texture Pointer to KRR_TEXTURE
 /// \param path Path to texture file to load
@@ -90,10 +95,27 @@ extern bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char*
 ///
 extern bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const char* path, GLuint color_key);
 
+/*
+ * Load grayscale texture from file.
+ * If not grayscale image, it will return false immediately.
+ *
+ * \param texture Pointer to KRR_TEXTURE
+ * \param path Path to texture file to load
+ * \return True if load successfully, otherwise return false.
+ */
+extern bool KRR_TEXTURE_load_grayscale_texture_from_file(KRR_TEXTURE* texture, const char* path);
+
 ///
-/// Load compressed texture, DDS from file.
-/// Input file needs to be in .dds (DXT1, DXT3, or DXT5) format.
-/// To be loaded texture needs to be in POT (power-of-two) texture, and square.
+/// Load compressed texture as specified wrapped in DDS container.
+/// Input file must be in compressed format; possible are DXT1, DXT3, DXT5, and ETC2 format.
+/// Texture also needs to be in POT (power-of-two), and square.
+///
+/// Implementation checks dwFourCC value of DDS header. We added our own values for ETC2 texture format.
+/// As standard values only include DXT compreseed texture format, not others. Thus input texture that has such
+/// dwFourCC values will be working only with this function.
+///
+/// Additional dwFourCC values
+/// - "ETC2" to represent ETC2 texture format.
 ///
 /// \param texture Pointer to KRR_TEXTURE
 /// \param path Path to texture file to load
@@ -102,15 +124,26 @@ extern bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const ch
 extern bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* path);
 
 ///
-/// Load pixels 32-bit (8 bit per pixel) data into texture.
+/// Load pixel 32-bit (8 bit per pixel) data into texture.
 ///
-/// \param texture KRR_TEXTURE to load input pixels data into it.
-/// \param pixels Pixels data; 32-bit, 8-bit per pixel
-/// \param width Width of input pixels data
-/// \param height Height of input pixels data
+/// \param texture KRR_TEXTURE to load input pixel data into it.
+/// \param pixels Pixel data; 32-bit, 8-bit per pixel
+/// \param width Width of input pixel data
+/// \param height Height of input pixel data
 /// \return True if loading is successful, otherwise return false.
 ///
 extern bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels, GLuint width, GLuint height);
+
+/*
+ * Load pixels 8-bit (gray scale), a single channel color into texture.
+ *
+ * \param texture KRR_TEXTURE to load input pixels data into it.
+ * \param pixels Pixel data; 8-bit, 8-bit per pixel, gray scale.
+ * \param width Width of input pixel data
+ * \param height Height of input pixel data
+ * \return True if loading is successful, otherwise return false.
+ */
+extern bool KRR_TEXTURE_load_texture_from_pixels8(KRR_TEXTURE* texture, GLubyte* pixels, GLuint width, GLuint height);
 
 ///
 /// Bind VAO of this texture.
@@ -144,6 +177,9 @@ extern void KRR_TEXTURE_unbind_vao(KRR_TEXTURE* texture);
 /// Lock texture to manipulate pixel data.
 /// Make sure your texture is in RGBA8 format. If it is not, then this will change your
 /// image's format unexpectedly.
+/// 
+/// Note: only make sense if it's uncompressed texture format
+/// if called on compressed texture format, behavior is undefined.
 ///
 /// \param texture Pointer to KRR_TEXTURE
 /// \return True if lock successfully, otherwise return false.
@@ -280,5 +316,9 @@ extern void KRR_TEXTURE_blit_pixels32(KRR_TEXTURE* texture, GLuint dst_x, GLuint
 /// \param dst_texture Destination texture to place pixels
 ///
 extern void KRR_TEXTURE_blit_pixels8(KRR_TEXTURE* texture, GLuint dst_x, GLuint dst_y, const KRR_TEXTURE* dst_texture);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

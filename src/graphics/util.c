@@ -58,21 +58,17 @@ void KRR_gputil_adapt_to_letterbox(int screen_width, int screen_height, int logi
 const char* KRR_gputil_error_string(GLenum error)
 {
   if (error == GL_NO_ERROR)
-    return "No error";
+    return "No error has been recorded. The value of this symbolic constant is guaranteed to be 0.";
   else if (error == GL_INVALID_ENUM)
-    return "An unacceptable value is specified for an enumerated argument";
+    return "An unacceptable value is specified for an enumerated argument. The offending command is ignored and has no other side effect than to set the error flag.";
   else if (error == GL_INVALID_VALUE)
-    return "A numeric argument is out of range";
+    return "A numeric argument is out of range. The offending command is ignored and has no other side effect than to set the error flag.";
   else if (error == GL_INVALID_OPERATION)
-    return "The specified operation is not allowed in the current state";
-  else if (error == GL_STACK_OVERFLOW)
-    return "This command would cause a stack overflow";
-  else if (error == GL_STACK_UNDERFLOW)
-    return "This command would cause a stack underflow";
+    return "The specified operation is not allowed in the current state. The offending command is ignored and has no side effect than to set the error flag";
+  else if (error == GL_INVALID_FRAMEBUFFER_OPERATION)
+    return "The framebuffer object is not complete. The offending command is ignored and has no side effect than to set the error flag.";
   else if (error == GL_OUT_OF_MEMORY)
     return "There is not enough memory left to execute the command";
-  else if (error == GL_TABLE_TOO_LARGE)
-    return " The specified table exceeds the implementation's maximum supported table size";
   else
     return "Unknown error"; // should not happen anyway if you get error from glGetError()
 }
@@ -145,13 +141,14 @@ void KRR_gputil_create_view_matrix(vec3 trans, vec3 rot, float scale, mat4 dst)
   glm_translate(dst, (vec3){-trans[0], -trans[1], -trans[2]});
 }
 
-void KRR_gputil_generate_mipmaps(GLenum target, float lod_bias)
+void KRR_gputil_generate_mipmaps(GLenum target, int min_lod, int max_lod)
 {
   // always set the maximum index of mipmap level as at the loading time, it usually be set to 0
   // thus this will make genarating mipmaps correctly perform
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1000);
   glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameterf(target, GL_TEXTURE_LOD_BIAS, lod_bias);
+  glTexParameterf(target, GL_TEXTURE_MIN_LOD, min_lod);
+  glTexParameterf(target, GL_TEXTURE_MAX_LOD, max_lod);
 
   glGenerateMipmap(target);
 }
@@ -187,6 +184,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
 
   // create texture for each side of cubemap
   SDL_Surface* temptex = NULL;
+  SDL_Surface* ctemptex = NULL;
   // => right
   temptex = IMG_Load(right);
   if (temptex == NULL)
@@ -196,13 +194,31 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
     glDeleteTextures(1, &textureID);
     return -1;
   }
-  // note: lock texture in case RLE compression is applied, but no harm if not
-  SDL_LockSurface(temptex);
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
-  SDL_UnlockSurface(temptex);
-  // free surface
+  // convert pixel format
+  ctemptex = SDL_ConvertSurfaceFormat(temptex, SDL_PIXELFORMAT_RGB24, 0);
+  if (ctemptex == NULL)
+  {
+    KRR_LOGE("Cannot convert to ABGR8888 format");
+    SDL_FreeSurface(temptex);
+    
+    glDeleteTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    return -1;
+  }
   SDL_FreeSurface(temptex);
   temptex = NULL;
+
+  // note: lock texture in case RLE compression is applied, but no harm if not
+  SDL_LockSurface(ctemptex);
+#ifdef GL_SRGB8
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0,  GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#else
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0,  GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#endif
+  SDL_UnlockSurface(ctemptex);
+  // free surface
+  SDL_FreeSurface(ctemptex);
+  ctemptex = NULL;
 
   // => left
   temptex = IMG_Load(left);
@@ -213,12 +229,30 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
     glDeleteTextures(1, &textureID);
     return -1;
   }
-  SDL_LockSurface(temptex);
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
-  SDL_UnlockSurface(temptex);
-  // free surface
+  // convert pixel format
+  ctemptex = SDL_ConvertSurfaceFormat(temptex, SDL_PIXELFORMAT_RGB24, 0);
+  if (ctemptex == NULL)
+  {
+    KRR_LOGE("Cannot convert to ABGR8888 format");
+    SDL_FreeSurface(temptex);
+    
+    glDeleteTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    return -1;
+  }
   SDL_FreeSurface(temptex);
   temptex = NULL;
+
+  SDL_LockSurface(ctemptex);
+#ifdef GL_SRGB8
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#else
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#endif
+  SDL_UnlockSurface(ctemptex);
+  // free surface
+  SDL_FreeSurface(ctemptex);
+  ctemptex = NULL;
 
   // => top
   temptex = IMG_Load(top);
@@ -229,12 +263,30 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
     glDeleteTextures(1, &textureID);
     return -1;
   }
-  SDL_LockSurface(temptex);
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
-  SDL_UnlockSurface(temptex);
-  // free surface
+  // convert pixel format
+  ctemptex = SDL_ConvertSurfaceFormat(temptex, SDL_PIXELFORMAT_RGB24, 0);
+  if (ctemptex == NULL)
+  {
+    KRR_LOGE("Cannot convert to ABGR8888 format");
+    SDL_FreeSurface(temptex);
+    
+    glDeleteTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    return -1;
+  }
   SDL_FreeSurface(temptex);
   temptex = NULL;
+  
+  SDL_LockSurface(ctemptex);
+#ifdef GL_SRGB8
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#else
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#endif
+  SDL_UnlockSurface(ctemptex);
+  // free surface
+  SDL_FreeSurface(ctemptex);
+  ctemptex = NULL;
 
   // => bottom
   temptex = IMG_Load(bottom);
@@ -245,12 +297,30 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
     glDeleteTextures(1, &textureID);
     return -1;
   }
-  SDL_LockSurface(temptex);
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
-  SDL_UnlockSurface(temptex);
-  // free surface
+  // convert pixel format
+  ctemptex = SDL_ConvertSurfaceFormat(temptex, SDL_PIXELFORMAT_RGB24, 0);
+  if (ctemptex == NULL)
+  {
+    KRR_LOGE("Cannot convert to ABGR8888 format");
+    SDL_FreeSurface(temptex);
+    
+    glDeleteTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    return -1;
+  }
   SDL_FreeSurface(temptex);
   temptex = NULL;
+
+  SDL_LockSurface(ctemptex);
+#ifdef GL_SRGB8
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#else
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#endif
+  SDL_UnlockSurface(ctemptex);
+  // free surface
+  SDL_FreeSurface(ctemptex);
+  ctemptex = NULL;
 
   // => back
   temptex = IMG_Load(back);
@@ -261,12 +331,30 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
     glDeleteTextures(1, &textureID);
     return -1;
   }
-  SDL_LockSurface(temptex);
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
-  SDL_UnlockSurface(temptex);
-  // free surface
+  // convert pixel format
+  ctemptex = SDL_ConvertSurfaceFormat(temptex, SDL_PIXELFORMAT_RGB24, 0);
+  if (ctemptex == NULL)
+  {
+    KRR_LOGE("Cannot convert to ABGR8888 format");
+    SDL_FreeSurface(temptex);
+    
+    glDeleteTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    return -1;
+  }
   SDL_FreeSurface(temptex);
   temptex = NULL;
+
+  SDL_LockSurface(ctemptex);
+#ifdef GL_SRGB8
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#else
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#endif
+  SDL_UnlockSurface(ctemptex);
+  // free surface
+  SDL_FreeSurface(ctemptex);
+  ctemptex = NULL;
 
   // => front 
   temptex = IMG_Load(front);
@@ -277,12 +365,30 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
     glDeleteTextures(1, &textureID);
     return -1;
   }
-  SDL_LockSurface(temptex);
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_SRGB8, temptex->w, temptex->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temptex->pixels);
-  SDL_UnlockSurface(temptex);
-  // free surface
+  // convert pixel format
+  ctemptex = SDL_ConvertSurfaceFormat(temptex, SDL_PIXELFORMAT_RGB24, 0);
+  if (ctemptex == NULL)
+  {
+    KRR_LOGE("Cannot convert to ABGR8888 format");
+    SDL_FreeSurface(temptex);
+    
+    glDeleteTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    return -1;
+  }
   SDL_FreeSurface(temptex);
   temptex = NULL;
+
+  SDL_LockSurface(ctemptex);
+#ifdef GL_SRGB8
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#else
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
+#endif
+  SDL_UnlockSurface(ctemptex);
+  // free surface
+  SDL_FreeSurface(ctemptex);
+  ctemptex = NULL;
 
   // unbind cubemap texture
   glBindTexture(GL_TEXTURE_CUBE_MAP, 0);

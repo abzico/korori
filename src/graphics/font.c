@@ -1,6 +1,7 @@
 #include "krr/graphics/font.h"
 #include <stdlib.h>
 #include <stddef.h>
+#include <SDL2/SDL_rwops.h>
 #include "krr/foundation/log.h"
 #include <vector/vector.h>
 #include "krr/graphics/texture_internals.h"
@@ -32,7 +33,7 @@ void init_defaults_(KRR_FONT* font)
 
 void report_freetype_error_(const FT_Error* error)
 {
-  KRR_LOGE("FreeType error with code: %X", *error);
+  KRR_LOGE("FreeType error with code: 0x%X", *error);
 }
 
 void free_internals_(KRR_FONT* font)
@@ -259,8 +260,20 @@ bool KRR_FONT_load_bitmap(KRR_FONT* font, const char* path)
 
   // set texture wrap
   glBindTexture(GL_TEXTURE_2D, texture->texture_id);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+#ifdef GL_NV_texture_border_clamp
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_NV);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_NV);
+#elif defined(GL_EXT_texture_border_clamp)
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_EXT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_EXT);
+#elif defined(GL_OES_texture_border_clamp)
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_OES);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_OES);
+#endif
   glBindTexture(GL_TEXTURE_2D, 0);
 
   // setup vao's binding
@@ -316,10 +329,36 @@ bool KRR_FONT_load_freetype(KRR_FONT* font, const char* path, GLuint pixel_size)
   // this is an array of pointer to KRR_TEXTURE
   KRR_TEXTURE* bitmaps[256];
   FT_Glyph_Metrics metrics[256];
+
+  // load font from memory
+  // prepare its data buffer to be fed into FT_New_Memory_Face
+  // this is for reason of portability
+  SDL_RWops *file = SDL_RWFromFile(path, "rb");
+  if (file == NULL)
+  {
+    KRR_LOGE("Error opening file %s", path);
+    return false;
+  }
+  Sint64 file_size = SDL_RWsize(file);
+  // use stack, as if using dynamically allocated, it's still needed
+  // to be around until all procedures are done in this function
+  FT_Byte file_buffer[file_size];
+  if (SDL_RWread(file, file_buffer, file_size, 1) != 1)
+  {
+    KRR_LOGE("Error reading file %s", path);
+    // close file
+    SDL_RWclose(file);
+    file = NULL;
+    return false;
+  }
+  // close file
+  // we now have font's byte data in file_buffer
+  SDL_RWclose(file);
+  file = NULL;
   
   // load face
   FT_Face face = NULL;
-  error = FT_New_Face(freetype_library_, path, 0, &face);
+  error = FT_New_Memory_Face(freetype_library_, file_buffer, file_size, 0, &face);
   // error 0 means success for FreeType
   if (error)
   {
@@ -447,8 +486,19 @@ bool KRR_FONT_load_freetype(KRR_FONT* font, const char* path, GLuint pixel_size)
 
   // set texture wrap
   glBindTexture(GL_TEXTURE_2D, font->spritesheet->ltexture->texture_id);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+#ifdef GL_NV_texture_border_clamp
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_NV);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_NV);
+#elif defined(GL_EXT_texture_border_clamp)
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_EXT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_EXT);
+#elif defined(GL_OES_texture_border_clamp)
+  // nvidia extension
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_OES);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_OES);
+#endif
   glBindTexture(GL_TEXTURE_2D, 0);
 
   // setup vao's binding

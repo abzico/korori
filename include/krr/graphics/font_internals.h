@@ -4,6 +4,10 @@
 #include "krr/graphics/common.h"
 #include "krr/graphics/font.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// This header is meant to be used internally by library itself.
 /// If you include this, you should know what you're doing.
 
@@ -25,5 +29,9 @@ extern GLfloat KRR_FONT_string_width(KRR_FONT* font, const char* string);
 /// \return String's height
 ///
 extern GLfloat KRR_FONT_string_height(KRR_FONT* font, const char* string);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

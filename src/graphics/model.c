@@ -2,6 +2,7 @@
 #include "krr/graphics/objloader.h"
 #include "krr/graphics/texturedpp3d.h"
 #include <stdlib.h>
+#include <stddef.h>
 
 static void init_defaults(SIMPLEMODEL* sm)
 {

@@ -64,13 +64,31 @@ static bool took_snapshot = false;
 
 static bool take_frame_snapshot_tofile(const char* dst_filepath)
 {
-  const int number_of_pixels = g_logical_width * g_logical_height * 3;
+  const int number_of_pixels = g_logical_width * g_logical_height * 4;
+  const int number_of_real_pixels = g_logical_width * g_logical_height * 3;
+
   unsigned char pixels[number_of_pixels];
+  unsigned char pixels_real[number_of_real_pixels];
 
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glReadBuffer(GL_BACK);
-  // use GL_BGR because TGA stores its data in file in little-endian
-  glReadPixels(0, 0, g_logical_width, g_logical_height, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+  // GL_BGR is not available on opengl es 3.0
+  // we need to convert to rgb ourselves
+  glReadPixels(0, 0, g_logical_width, g_logical_height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+  // convert to bgr
+  int i_real = 0;
+  for (int i=0; i<number_of_pixels; i+=4)
+  {
+    unsigned char r = pixels[i];
+    unsigned char g = pixels[i+1];
+    unsigned char b = pixels[i+2];
+    unsigned char a = pixels[i+3];
+
+    pixels_real[i_real++] = b;
+    pixels_real[i_real++] = g;
+    pixels_real[i_real++] = r;
+  }
 
   FILE *out_file = fopen(dst_filepath, "wb");
   if (out_file == NULL)
@@ -96,7 +114,7 @@ static bool take_frame_snapshot_tofile(const char* dst_filepath)
     fclose(out_file);
     return false;
   }
-  if (fwrite(pixels, sizeof(pixels), 1, out_file) != 1)
+  if (fwrite(pixels_real, sizeof(pixels_real), 1, out_file) != 1)
   {
     KRR_LOGE("Error writing image data section for .tga file");
     fclose(out_file);
@@ -257,18 +275,25 @@ bool usercode_loadmedia()
 
   SU_BEGIN(texture3d_shader)
     SU_TEXSHADERPROG3D(texture3d_shader)
+    // update ambient color
+    glm_vec3_copy((vec3){0.0f, 0.0f, 0.0f}, texture3d_shader->ambient_color);
+    KRR_TEXSHADERPROG3D_update_ambient_color(texture3d_shader);
     // set texture unit
     KRR_TEXSHADERPROG3D_set_texture_sampler(texture3d_shader, 0);
     // set lighting
     vec3 light_pos = {0.0f, 6.0f, 10.0f};
     vec3 light_color = {1.0f, 1.f, 1.f};
-    memcpy(&texture3d_shader->light.pos, &light_pos, sizeof(VERTEXPOS3D));
-    memcpy(&texture3d_shader->light.color, &light_color, sizeof(COLOR3F));
-    KRR_TEXSHADERPROG3D_update_light(texture3d_shader);
+    memcpy(&texture3d_shader->lights[0].pos, &light_pos, sizeof(VERTEXPOS3D));
+    memcpy(&texture3d_shader->lights[0].color, &light_color, sizeof(COLOR3F));
+    // update lights we have
+    KRR_TEXSHADERPROG3D_update_lights_num(texture3d_shader, 1);
     // set specular lighting
     texture3d_shader->shine_damper = 10.0f;
     texture3d_shader->reflectivity = 0.1f;
     KRR_TEXSHADERPROG3D_update_shininess(texture3d_shader);
+    // disable fog
+    texture3d_shader->fog_enabled = false;
+    KRR_TEXSHADERPROG3D_update_fog_enabled(texture3d_shader);
     
   SU_BEGIN(font_shader)
     SU_FONTSHADER(font_shader)
@@ -417,10 +442,10 @@ void usercode_render()
   }
 
   // TODO: render code goes here...
-  // bind vao
-  glBindVertexArray(sm->vao_id);
-    // bind shader
-    KRR_SHADERPROG_bind(texture3d_shader->program);
+  // bind shader
+  KRR_SHADERPROG_bind(texture3d_shader->program);
+    // bind vao
+    glBindVertexArray(sm->vao_id);
 
     // bind texture
     glBindTexture(GL_TEXTURE_2D, texture->texture_id);
@@ -433,11 +458,11 @@ void usercode_render()
     // render
     SIMPLEMODEL_render(sm);
 
-    // unbind shader
-    KRR_SHADERPROG_unbind(texture3d_shader->program);
+    // unbind vao
+    glBindVertexArray(0);
 
-  // unbind vao
-  glBindVertexArray(0);
+  // unbind shader
+  KRR_SHADERPROG_unbind(texture3d_shader->program);
 
   // disable scissor (if needed)
   if (g_need_clipping)

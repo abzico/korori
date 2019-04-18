@@ -1,15 +1,13 @@
 ACLOCAL_AMFLAGS = -I m4
 
-AM_CFLAGS = -Wall \
-	    -std=c99 \
-	    -O2 \
-	    -pedantic
-
 EXTRA_DIST = README.md LICENSE autogen.sh res
 
 # lib
 lib_LTLIBRARIES = libkrr.la
-libkrr_la_CFLAGS = -I./include
+libkrr_la_CFLAGS = -Wall \
+									 -std=c99 \
+									 -O2 \
+									 -I./include
 
 if CD_IS_MACOSX
 libkrr_la_CFLAGS += -I/usr/local/include/freetype2
@@ -21,12 +19,13 @@ libkrr_la_LDFLAGS = -no-defined -version-info 0:1:0 \
 		    -lSDL2 \
 		    -lSDL2_image \
 		    -lSDL2_mixer \
-		    -lGLEW \
 		    -lfreetype \
 		    -lcglm \
 		    -lvector \
 		    -lhashmap_c \
-		    -ltexpackr
+		    -ltexpackr \
+				-ldl
+
 libkrr_la_SOURCES = src/foundation/common.c \
 		    src/foundation/math.c \
 		    src/foundation/mem.c \
@@ -48,6 +47,7 @@ libkrr_la_SOURCES = src/foundation/common.c \
 		    src/graphics/util.c \
 				src/graphics/skybox.c \
 				src/graphics/skybox_shader.c \
+				src/graphics/glad.c \
 		    src/ui/button.c
 
 krr_foundationdir=$(includedir)/krr/foundation
@@ -86,6 +86,9 @@ krr_graphics_HEADERS = include/krr/graphics/common.h \
 
 krr_uidir=$(includedir)/krr/ui
 krr_ui_HEADERS = include/krr/ui/button.h
+
+krr_platformsdir=$(includedir)/krr/platforms
+krr_platforms_HEADERS = include/krr/platforms/platforms_config.h
 
 # samples
 SUBDIRS = . samples

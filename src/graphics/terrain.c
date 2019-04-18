@@ -203,7 +203,7 @@ bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor,
 {
   // load the heightmap
   KRR_TEXTURE* heightmap = KRR_TEXTURE_new();
-  if (!KRR_TEXTURE_load_texture_from_file(heightmap, heightmap_path))
+  if (!KRR_TEXTURE_load_grayscale_texture_from_file(heightmap, heightmap_path))
   {
     KRR_LOGE("Error loading height map file file");
     return false;
@@ -263,7 +263,7 @@ bool KRR_TERRAIN_generate(const char* heightmap_path, float size, float hfactor,
       // as it's grayscale, each color component has the same value, thus we just get value
       // from a single component (not alpha)
       // then we try to convert it into range that has no need to be adjusted in-game later i.e. [-N,N]
-#define H_VAL(i, j) (heightmap->pixels[i + j*heightmap->width] & 0xFF)
+#define H_VAL(i, j) (heightmap->pixels8[i + j*heightmap->width])
 #define H_CONV(h) (MAX_TERRAIN_HEIGHT - MIN_TERRAIN_HEIGHT) * h / 255.0f + MIN_TERRAIN_HEIGHT
       float height_val = H_VAL(heightmap_i, heightmap_j);
       height_val = H_CONV(height_val);

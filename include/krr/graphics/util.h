@@ -3,6 +3,10 @@
 
 #include "krr/graphics/common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// Utility functions to work with OpenGL
 
 ///
@@ -98,9 +102,10 @@ extern void KRR_gputil_create_view_matrix(vec3 trans, vec3 rot, float scale, mat
 /// after loading texture as necessary to generate mipmap stack.
 ///
 /// \param target target to generate mipmaps.
-/// \param lod_bias level of detail bias value. This value will be set to GL_TEXTURE_LOD_BIAS. Normal value is 0.0, so if you don't want to configure this value, set it to 0.0.
+/// \param min_lod lowest mipmap level to be set, if not interested to set this value thus generate full chain of mipmap, set it to -1000
+/// \param max_lod highest mipmap level to be set, if not interested to set this value thus generate full chain of mipmap, set it to 1000.
 ///
-extern void KRR_gputil_generate_mipmaps(GLenum target, float lod_bias);
+extern void KRR_gputil_generate_mipmaps(GLenum target, int min_lod, int max_lod);
 
 ///
 /// Load and return cubemap texture name from specified texture paths of all side of cubemap.
@@ -117,5 +122,9 @@ extern void KRR_gputil_generate_mipmaps(GLenum target, float lod_bias);
 /// \return generated texture name which can be used with OpenGL operations right away, otherwise if not successful or error occurs, -1 is returned.
 ///
 extern int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top, const char* bottom, const char* back, const char* front);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

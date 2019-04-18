@@ -3,12 +3,14 @@
  */
 
 #include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include "krr/platforms/platforms_config.h"
 #include "krr/foundation/common.h"
 #include "krr/foundation/window.h"
 #include "krr/graphics/common.h"
@@ -85,40 +87,41 @@ bool init() {
     return false;
   }
 
-#ifdef SDL_HEADLESS
-  // define environment variable to videodriver
-  // note: do this after SDL_Init() but before creating a new window with KRR_WINDOW_new()
-  if (putenv("SDL_VIDEODRIVER=dummy") != 0)
-  {
-    KRR_LOGW("Warning: cannot set environment variable 'dummy' to cleanly go headless.");
-  }
-#endif
-
 #define STRF(str) "Warning: " #str " failed to configured"
 #define GLATTR_WLOG(r, str) if (r != 0) KRR_LOGW(STRF(str));
 
   // use core profile of opengl 3.3
   int attr_res = -1;
-  attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // Always required on Mac
-    GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG")
-  attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_PROFILE_CORE")
+  // rendering context for both pc and mobile
+  attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_PROFILE_ES")
+  // mesa on linux mostly support until opengl es 3.0
   attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_MAJOR_VERSION")
-  attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+  attr_res = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     GLATTR_WLOG(attr_res, "SDL_GL_CONTEXT_MINOR_VERSION")
+
+#ifdef KRR_TARGET_PLATFORM_CATEGORY_PC
+  // only explicitly ask for sRGB color space only on PC platform
+  // on mobile, if it supports, it's enabled by default
+  // this will prevent SDL error of "Invalid Window" when create OpenGL context
   attr_res = SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
     GLATTR_WLOG(attr_res, "SDL_GL_FRAMEBUFFER_SRGB_CAPABLE")
+#endif
+      
+  // it should automatically detect, but we're just being pragmatic
+  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles");
 
-  // just to be pragmatic
-  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
   // following these 3 lines might not be needed
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  attr_res = SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    GLATTR_WLOG(attr_res, "SDL_GL_DEPTH_SIZE")
+  attr_res = SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+    GLATTR_WLOG(attr_res, "SDL_GL_STENCIL_SIZE")
+  attr_res = SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    GLATTR_WLOG(attr_res, "SDL_GL_DOUBLEBUFFER")
 
   // preprocessor check for sample for 'headless' sample only
-#ifdef SDL_HEADLESS
+#if defined(SDL_HEADLESS)
   // create window headless
   gWindow = KRR_WINDOW_new("Korori - Test", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL, 0);
 #else
@@ -149,24 +152,16 @@ bool init() {
     KRR_LOGW("Warning: Unable to enable vsync! %s", SDL_GetError());
   }
 
-  // init glew
-  glewExperimental = GL_TRUE;
-  GLenum glewError = glewInit();
-  if (glewError != GLEW_OK)
+  // init glad
+  if (!gladLoadGLES2Loader((GLADloadproc)SDL_GL_GetProcAddress))
   {
-    KRR_LOGE("Failed initialize glew! %s", glewGetErrorString(glewError));
+    KRR_LOGE("Failed to initialize glad");
     return false;
   }
 
   // check opengl version we got
-  KRR_LOG("OpenGL version %s\nGLSL version: %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
-
-  // make sure OpenGL 3.3 is supported
-  if (!GLEW_VERSION_3_3)
-  {
-    SDL_Log("OpenGL 3.3 not supported!");
-    return false;
-  }
+  KRR_LOG("[Direct call to OpenGL] OpenGL version %s\nGLSL version: %s", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+  KRR_LOG("[GLAD] OpenGL version %d.%d", GLVersion.major, GLVersion.minor);
 
   // relay call to user's code in separate file
   if (!usercode_init(SCREEN_WIDTH, SCREEN_HEIGHT, LOGICAL_WIDTH, LOGICAL_HEIGHT))
@@ -348,4 +343,3 @@ int main(int argc, char* args[])
 
   return 0;
 }
-

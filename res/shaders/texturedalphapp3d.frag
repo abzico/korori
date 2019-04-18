@@ -1,15 +1,16 @@
-#version 330 core
+#version 300 es
 
-uniform mat4 view_matrix;
+precision mediump float;
+
 uniform sampler2D texture_sampler;
-uniform int light_num;
+uniform lowp int light_num;
 uniform float light_attenuation[4];
 uniform vec3 light_color[4];
 uniform float shine_damper;
 uniform float reflectivity;
 uniform vec3 ambient_color;
 uniform vec3 sky_color;
-uniform float fog_enabled;
+uniform lowp float fog_enabled;
 
 // texture coordinate
 in vec2 outin_texcoord;
@@ -38,7 +39,7 @@ void main()
     for (int i=0; i<light_num; ++i)
     {
       // use equation attenuation_factor = 1 + c*(d^2)
-      float dist_sq = pow(tolight_dir[i].x, 2) + pow(tolight_dir[i].y, 2) + pow(tolight_dir[i].z, 2);
+      float dist_sq = pow(tolight_dir[i].x, 2.0f) + pow(tolight_dir[i].y, 2.0f) + pow(tolight_dir[i].z, 2.0f);
       float attenuation_denom = 1.0f + light_attenuation[i]*dist_sq;
 
       vec3 light_dir = normalize(tolight_dir[i]);

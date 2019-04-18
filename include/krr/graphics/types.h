@@ -1,12 +1,10 @@
 #ifndef KRR_graphics_types_h_
 #define KRR_graphics_types_h_
 
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(__CYGWIN32__) || defined(__MINGW32__) || defined(__MINGW64__)
-#include <GL/gl.h>
-#elif defined(__APPLE__) || defined(__MACH__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
+#include <glad/glad.h>
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 typedef struct
@@ -109,5 +107,9 @@ typedef struct
   GLfloat shine_dumper;
   GLfloat reflectvity;
 } MATERIAL;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

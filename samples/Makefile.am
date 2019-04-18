@@ -7,8 +7,14 @@ CFLAGS = -g \
 
 if CD_IS_WINDOWS
 LINK_KRR_FLAGS = ../.libs/libkrr.lib
-else
+endif
+
+if CD_IS_UNIX
 LINK_KRR_FLAGS = ../.libs/libkrr.a
+endif
+
+if CD_IS_ANDROID
+LINK_KRR_FLAGS = ../.libs/libkrr.so
 endif
 
 LDFLAGS =	main.o functs.o \
@@ -16,24 +22,24 @@ LDFLAGS =	main.o functs.o \
 					-lm \
 					-lSDL2 \
 					-lSDL2_image \
-					-lGLEW \
 					-lfreetype \
 					-lcglm \
 					-lvector \
 					-lhashmap_c \
-					-ltexpackr
+					-ltexpackr \
+					-ldl
 
 LDFLAGS_HEADLESS = main-headless.o functs-headless.o \
 		   $(LINK_KRR_FLAGS) \
 		   -lm \
 		   -lSDL2 \
 		   -lSDL2_image \
-		   -lGLEW \
 		   -lfreetype \
 		   -lcglm \
 		   -lvector \
 		   -lhashmap_c \
-		   -ltexpackr
+		   -ltexpackr \
+			 -ldl
 
 dist_data_DATA = template.c \
 								 main.c \
@@ -49,6 +55,7 @@ dist_data_DATA = template.c \
 								 terrain.c \
 								 dds.c
 
+# FIXME: fix LDFLAGS for macOS
 if CD_IS_MACOSX
 CFLAGS += -DGL_SILENCE_DEPRECATION \
 					-I/usr/local/include/freetype2
@@ -60,18 +67,24 @@ endif
 
 if CD_IS_WINDOWS
 CFLAGS += -I/usr/include/freetype2
-LDFLAGS += -lGL \
+LDFLAGS += -lGLESv2 \
 					 -Wl,-rpath,/usr/local/lib
-LDFLAGS_HEADLESS += -lGL \
+LDFLAGS_HEADLESS += -lGLESv2 \
 		    -Wl,-rpath,/usr/local/lib
 endif
 
 if CD_IS_UNIX
 CFLAGS += -I/usr/include/freetype2
-LDFLAGS += -lGL \
+LDFLAGS += -lGLESv2 \
 					 -Wl,-rpath,/usr/local/lib
-LDFLAGS_HEADLESS += -lGL \
+LDFLAGS_HEADLESS += -lGLESv2 \
 		    -Wl,-rpath,/usr/local/lib
+endif
+
+if CD_IS_ANDROID
+CFLAGS += -I/usr/include/freetype2
+LDFLAGS += -lGLESv2
+LDFLAGS_HEADLESS += -lGLESv2
 endif
 
 clean-samples-local:
@@ -111,7 +124,7 @@ common: main.c functs.c functs.h usercode.h
 
 common-headless: main.c functs.c functs.h usercode.h
 	@echo "Build common headless"
-	$(CC) $(CFLAGS) -DSDL_HEADLESS -c main.c -o main-headless.o
+	$(CC) $(CFLAGS) -DSDL_HEADLESS -DSDL_VIDEODRIVER=dummy -c main.c -o main-headless.o
 	$(CC) $(CFLAGS) -DSDL_HEADLESS -c functs.c -o functs-headless.o
 
 sample-doublemulticolorshader-local: copy-res common

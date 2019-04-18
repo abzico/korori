@@ -1,7 +1,9 @@
-#version 330
+#version 300 es
+
+precision mediump float;
 
 // texture color
-uniform vec4 text_color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+uniform vec4 text_color;
 uniform sampler2D texture_sampler;
 
 // texture coordinate

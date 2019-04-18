@@ -10,7 +10,7 @@
 #include "krr/graphics/fontpp2d.h"
 
 // don't use this elsewhere
-#define CONTENT_BG_COLOR 0.f, 0.f, 0.f, 1.f
+#define CONTENT_BG_COLOR 1.f, 1.f, 1.f, 1.f
 
 #ifndef DISABLE_FPS_CALC
 #define FPS_BUFFER 7+1
@@ -113,9 +113,6 @@ bool usercode_init(int screen_width, int screen_height, int logical_width, int l
   // enable depth test
   glEnable(GL_DEPTH_TEST);
 
-  // enable sRGB
-  glEnable(GL_FRAMEBUFFER_SRGB);
-
   // initially start user's camera looking at -z, and up with +y
   glm_vec3_copy((vec3){0.0f, 0.0f, -1.0f}, cam.forward);
   glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, cam.up);
@@ -175,14 +172,23 @@ bool usercode_loadmedia()
     return false;
   }
 
-  // TODO: Load media here...
   dds_texture = KRR_TEXTURE_new();
+
+#if KRR_TARGET_PLATFORM == KRR_PLATFORM_ANDROID
+  // load ETC2 compressed texture if on android
+  if (!KRR_TEXTURE_load_dds_texture_from_file(dds_texture, "res/images/zombie-stand-etc2rgba-swizzled.dds"))
+  {
+    KRR_LOGE("Unable to load zombie-stand-etc2rgba-swizzled.dds file");
+    return false;
+  }
+#else
+  // load S3TC compressed texture if on pc
   if (!KRR_TEXTURE_load_dds_texture_from_file(dds_texture, "res/images/zombie-stand.dds"))
   {
     KRR_LOGE("Unable to load zombie-stand.dds file");
     return false;
   }
-	// END OF TODO
+#endif
 
   // initially update all related matrices and related graphics stuff for both basic shaders
   SU_BEGIN(texture_shader)
@@ -192,6 +198,8 @@ bool usercode_loadmedia()
 
   SU_BEGIN(font_shader)
     SU_FONTSHADER(font_shader)
+    // set texture color
+    KRR_FONTSHADERPROG2D_set_text_color(font_shader, (COLOR32){1.0f, 1.0f, 1.0f, 1.0f});
     // set texture unit
     KRR_FONTSHADERPROG2D_set_texture_sampler(font_shader, 0);
   SU_END(font_shader)
