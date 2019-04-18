@@ -32,7 +32,7 @@ void init_defaults_(KRR_FONT* font)
 
 void report_freetype_error_(const FT_Error* error)
 {
-  KRR_LOGE("FreeType error with code: %X", *error);
+  KRR_LOGE("FreeType error with code: 0x%X", *error);
 }
 
 void free_internals_(KRR_FONT* font)
