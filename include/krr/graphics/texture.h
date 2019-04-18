@@ -74,14 +74,26 @@ extern void KRR_TEXTURE_free(KRR_TEXTURE* texture);
 
 ///
 /// Load texture from file.
-/// Currently only load in format of RGBA8888 for now.
-/// Make sure input file format is in RGBA8888.
+/// It will attempt to convert input texture into ABGR8888 which is convenient to access pixel data later.
+/// Input texture should not be swizzled between red and blue channel; if so it will nullify the the automatic process done in this function.
 ///
 /// \param texture Pointer to KRR_TEXTURE
 /// \param path Path to texture file to load
 /// \return True if load successfully, otherwise return false.
 ///
 extern bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char* path);
+
+///
+/// Load texture with extra parameters
+/// It will attempt to convert input texture to ABGR8888 which is convenient to access pixel data later.
+/// Input texture should not be swizzled between red and blue channel; if so it will nullify the the automatic process done in this function.
+///
+/// \param texture Pointer to KRR_TEXTURE
+/// \param path Path to texture file to load
+/// \param color_key Packed color key value in RGBA. This is a target color to replace it with transparent color in texture.
+/// \return True if load successfully, otherwise return false.
+///
+extern bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const char* path, GLuint color_key);
 
 /*
  * Load grayscale texture from file.
@@ -116,12 +128,12 @@ extern bool KRR_TEXTURE_load_texture_from_file_ex(KRR_TEXTURE* texture, const ch
 extern bool KRR_TEXTURE_load_dds_texture_from_file(KRR_TEXTURE* texture, const char* path);
 
 ///
-/// Load pixels 32-bit (8 bit per pixel) data into texture.
+/// Load pixel 32-bit (8 bit per pixel) data into texture.
 ///
-/// \param texture KRR_TEXTURE to load input pixels data into it.
-/// \param pixels Pixels data; 32-bit, 8-bit per pixel
-/// \param width Width of input pixels data
-/// \param height Height of input pixels data
+/// \param texture KRR_TEXTURE to load input pixel data into it.
+/// \param pixels Pixel data; 32-bit, 8-bit per pixel
+/// \param width Width of input pixel data
+/// \param height Height of input pixel data
 /// \return True if loading is successful, otherwise return false.
 ///
 extern bool KRR_TEXTURE_load_texture_from_pixels32(KRR_TEXTURE* texture, GLuint* pixels, GLuint width, GLuint height);
