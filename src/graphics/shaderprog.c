@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <SDL2/SDL_system.h>
+#include "krr/platforms/platforms_config.h"
 #include "krr/foundation/log.h"
 #include "krr/foundation/util.h"
 #include "krr/graphics/shaderprog_internals.h"
@@ -32,8 +34,8 @@ void KRR_SHADERPROG_free(KRR_SHADERPROG* shader_program)
 
 GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type)
 {
-  // open file for read
-  FILE* file = fopen(path, "r");
+  // remember to use SDL_RWFromFile() for portability in file IO across multiple platforms
+  SDL_RWops *file = SDL_RWFromFile(path, "rb");
   if (file == NULL)
   {
     KRR_LOGE("Unable to open file for read %s", path);
@@ -41,10 +43,8 @@ GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type
     return 0;
   }
 
-  // find the total byte size of file
-  fseek(file, 0, SEEK_END);
-  const long file_size = ftell(file);
-  fseek(file, 0, SEEK_SET);
+  // get file size
+  Sint64 file_size = SDL_RWsize(file);
 
   // check if file size is zero
   if (file_size <= 0)
@@ -52,7 +52,7 @@ GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type
     KRR_LOGE("Shader file has zero bytes");
 
     // close the file
-    fclose(file);
+    SDL_RWclose(file);
     file = NULL;
 
     return 0;
@@ -64,34 +64,18 @@ GLuint KRR_SHADERPROG_load_shader_from_file(const char* path, GLenum shader_type
 
   // FIXME: should we fix this to read line-by-line or chunk by chunk in case the limitation of RAM?
   // read the whole file as once
-  if (fread(shader_source, file_size, 1, file) != 1)
+  if (SDL_RWread(file, shader_source, file_size, 1) != 1)
   {
-    // something wrong happen
-    // check if it's end-of-file error
-    if (feof(file))
-    {
-      KRR_LOGE("Read error, end-of-file detected");
-      // close the file
-      fclose(file);
-      file = NULL;
+    KRR_LOGE("Read file error %s", path);
+    // close file
+    SDL_RWclose(file);
+    file = NULL;
 
-      return 0;
-    }
-
-    // there's something else
-    if (ferror(file))
-    {
-      KRR_LOGE("Read error");
-      // close the file
-      fclose(file);
-      file = NULL;
-
-      return 0;
-    }
+    return 0;
   }
 
   // close the file
-  fclose(file);
+  SDL_RWclose(file);
   file = NULL;
 
   // create shader id

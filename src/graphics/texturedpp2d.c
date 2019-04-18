@@ -129,11 +129,12 @@ bool KRR_TEXSHADERPROG2D_load_program(KRR_TEXSHADERPROG2D* program)
   {
     KRR_LOGW("Warning: texcoord_location is invalid glsl variable name");
   }
-  program->texture_color_location = glGetUniformLocation(uprog->program_id, "texture_color");
-  if (program->texture_color_location == -1)
-  {
-    KRR_LOGW("Warning: texture_color is invalid glsl variable name");
-  }
+  // FIXME: we'll uncomment these lines once again when we have support for 'texture_color'
+  //program->texture_color_location = glGetUniformLocation(uprog->program_id, "texture_color");
+  //if (program->texture_color_location == -1)
+  //{
+  //  KRR_LOGW("Warning: texture_color is invalid glsl variable name");
+  //}
   program->texture_sampler_location = glGetUniformLocation(uprog->program_id, "texture_sampler");
   if (program->texture_sampler_location == -1)
   {

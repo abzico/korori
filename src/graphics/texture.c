@@ -163,7 +163,7 @@ bool KRR_TEXTURE_load_texture_from_file(KRR_TEXTURE* texture, const char* path)
     return false;
   }
   
-  KRR_LOGE("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
+  KRR_LOGI("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
 
   // convert pixel format
   SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(loaded_surface, SDL_PIXELFORMAT_ABGR8888, 0);
@@ -805,7 +805,7 @@ bool KRR_TEXTURE_load_pixels_from_file(KRR_TEXTURE* texture, const char* path)
     return false;
   }
   
-  KRR_LOG("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
+  KRR_LOGI("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
 
   // convert pixel format
   SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(loaded_surface, SDL_PIXELFORMAT_ABGR8888, 0);
@@ -943,7 +943,7 @@ bool KRR_TEXTURE_load_pixels_from_file8(KRR_TEXTURE* texture, const char* path)
     return false;
   }
   
-  KRR_LOG("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
+  KRR_LOGI("format loaded surface: %s", SDL_GetPixelFormatName(loaded_surface->format->format));
 
   // check if the pixel format is not already in our interested format of BGR888
   Uint32 image_pixel_format = loaded_surface->format->format;
