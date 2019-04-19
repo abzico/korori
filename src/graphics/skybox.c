@@ -100,6 +100,9 @@ bool KRR_SKYBOX_load(KRR_SKYBOX* sb, const char* right, const char* left, const 
 
     // bind cubemap
     glBindTexture(GL_TEXTURE_CUBE_MAP, sb->cubemap_id);
+    // set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   // unbind vao
   glBindVertexArray(0);
