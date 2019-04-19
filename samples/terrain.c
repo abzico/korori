@@ -650,8 +650,8 @@ bool usercode_loadmedia()
     glm_vec3_copy(SKY_COLOR_INIT, skybox_shader->fog_color);
     KRR_SKYBOXSHADERPROG_update_fog_color(skybox_shader);
     // set lower / upper limits
-    skybox_shader->ctrans_limits[0] = 0.0f;
-    skybox_shader->ctrans_limits[1] = 50.0f;
+    skybox_shader->ctrans_limits[0] = -300.0f;
+    skybox_shader->ctrans_limits[1] = 100.0f;
     KRR_SKYBOXSHADERPROG_update_ctrans_limits(skybox_shader);
 
   SU_BEGIN(font_shader)
@@ -922,8 +922,8 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
 
       if (terrain3d_shader->fog_enabled)
       {
-        skybox_shader->ctrans_limits[0] = 0.0f;
-        skybox_shader->ctrans_limits[1] = 50.0f;
+        skybox_shader->ctrans_limits[0] = -300.0f;
+        skybox_shader->ctrans_limits[1] = 100.0f;
       }
       else
       {
