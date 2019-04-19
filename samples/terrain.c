@@ -483,12 +483,12 @@ bool usercode_loadmedia()
   // skybox
   skybox = KRR_SKYBOX_new();
   if (!KRR_SKYBOX_load(skybox,
-        "res/images/miramar_rt-compressed.tga",
-        "res/images/miramar_lf-compressed.tga",
-        "res/images/miramar_up-compressed.tga",
-        "res/images/miramar_dn-compressed.tga",
-        "res/images/miramar_bk-compressed.tga",
-        "res/images/miramar_ft-compressed.tga"))
+        "res/images/miramar_rt-compressed.png",
+        "res/images/miramar_lf-compressed.png",
+        "res/images/miramar_up-compressed.png",
+        "res/images/miramar_dn-compressed.png",
+        "res/images/miramar_bk-compressed.png",
+        "res/images/miramar_ft-compressed.png"))
   {
     KRR_LOGE("Error loading skybox");
     return false;
