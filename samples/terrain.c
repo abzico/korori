@@ -1589,6 +1589,46 @@ void usercode_render(void)
   CGLM_ALIGN_MAT mat4 t_mat;  // for temp converted from quaternion, rotate object according
                               // to current terrain's normal
 
+  // TERRAIN
+  KRR_SHADERPROG_bind(terrain3d_shader->program);
+  // render terrain
+  glBindVertexArray(tr->vao_id);
+    // bind background texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, terrain_texture->texture_id);
+    // wrap texture
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
+    // multitexture r
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, mt_r_texture->texture_id);
+
+    // multitexture g
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, mt_g_texture->texture_id);
+
+    // multitexture b
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, mt_b_texture->texture_id);
+
+    // blendmap
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, mt_blendmap->texture_id);
+
+    // transform model matrix
+    glm_mat4_copy(g_base_model_matrix, terrain3d_shader->model_matrix);
+    // rotate around itself
+    //glm_rotate(terrain3d_shader->model_matrix, glm_rad(roty), GLM_YUP);
+    glm_translate(terrain3d_shader->model_matrix, (vec3){-tr->grid_width*TERRAIN_SLOT_SIZE/2, 0.0f, -tr->grid_height*TERRAIN_SLOT_SIZE/2});
+    //update model matrix
+    KRR_TERRAINSHADERPROG3D_update_model_matrix(terrain3d_shader);
+
+    // render
+    KRR_TERRAIN_render(tr);
+
+    // set back to default texture
+    glActiveTexture(GL_TEXTURE0);
   
   // STALL & TREE & PLAYER
   KRR_SHADERPROG_bind(texture3d_shader->program);
@@ -1662,52 +1702,6 @@ void usercode_render(void)
     // render
     SIMPLEMODEL_render(player);
 
-  // unbind shader
-  KRR_SHADERPROG_unbind(texture3d_shader->program);
-
-  // TERRAIN
-  KRR_SHADERPROG_bind(terrain3d_shader->program);
-  // render terrain
-  glBindVertexArray(tr->vao_id);
-    // bind background texture
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, terrain_texture->texture_id);
-    // wrap texture
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-
-    // multitexture r
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, mt_r_texture->texture_id);
-
-    // multitexture g
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, mt_g_texture->texture_id);
-
-    // multitexture b
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, mt_b_texture->texture_id);
-
-    // blendmap
-    glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, mt_blendmap->texture_id);
-
-    // transform model matrix
-    glm_mat4_copy(g_base_model_matrix, terrain3d_shader->model_matrix);
-    // rotate around itself
-    //glm_rotate(terrain3d_shader->model_matrix, glm_rad(roty), GLM_YUP);
-    glm_translate(terrain3d_shader->model_matrix, (vec3){-tr->grid_width*TERRAIN_SLOT_SIZE/2, 0.0f, -tr->grid_height*TERRAIN_SLOT_SIZE/2});
-    //update model matrix
-    KRR_TERRAINSHADERPROG3D_update_model_matrix(terrain3d_shader);
-
-    // render
-    KRR_TERRAIN_render(tr);
-
-    // set back to default texture
-    glActiveTexture(GL_TEXTURE0);
-  // unbind shader
-  KRR_SHADERPROG_unbind(terrain3d_shader->program);
-
   // TEXTURE ALPHA fern
   KRR_SHADERPROG_bind(texturealpha3d_shader->program);
   // disable backface culling as fern made up of crossing polygon
@@ -1741,8 +1735,6 @@ void usercode_render(void)
 
   // enable backface culling again
   glEnable(GL_CULL_FACE);
-  // unbind shader
-  KRR_SHADERPROG_unbind(texturealpha3d_shader->program);
 
   // SKYBOX
   KRR_SHADERPROG_bind(skybox_shader->program);
