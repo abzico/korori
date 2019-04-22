@@ -810,8 +810,10 @@ bool usercode_loadmedia()
   texpackr_sheetmeta_free(fern_sheetmeta);
   fern_sheetmeta = NULL;
 
+#ifdef KRR_TARGET_PLATFORM_CATEGORY_MOBILE
   // start with fullscreen mode
   handle_fullscreen_mode();
+#endif
 
   return true;
 }
