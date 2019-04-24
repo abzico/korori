@@ -24,7 +24,7 @@ typedef struct
   int grid_height;
 
   /// height information for terrain
-  /// note: it will be available only when load via KRR_TERRAIN_load_objfile()
+  /// note: it will be available only when load via KRR_TERRAIN_load_from_generation()
   float* heights;
 
   /// normals information for terrain
