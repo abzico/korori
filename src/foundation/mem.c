@@ -21,7 +21,7 @@ static void KRR_MEM_free_generic(void* p)
 void* KRR_MEM_malloc16(size_t s)
 {
   // allocate memory 16 bytes (15 bytes for alignment size + 1 byte more to store offset size)
-  // this means at worst case, we can possibly waste memory for up to 16 bytes unused to
+  // this means at worst case, we can possibly waste memory for up to 15 bytes unused to
   // satisfy the memory alignment
   unsigned char* p_original = malloc(s + 0x10);
 
