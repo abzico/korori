@@ -1,6 +1,8 @@
 # korori
 
-SDL2 + OpenGL ES 3.0 - Android + PC target lightweight game library
+SDL2 + OpenGL ES 3.0 - Android + Windows/Linux target lightweight game library
+
+See [TODO](TODO.md) for development roadmap.
 
 # Dependencies
 
@@ -38,7 +40,7 @@ Build system is based on autotools.
 * `make samples` - to build all the sample programs in `samples/` directory
 * `make sample-...` - to build specific sample program, but you need to execute `make` first once. The list of available sample program listed next section
 
-# Build on Android
+## Build for Android
 
 Take benefit from another two of our projects to help ease in cross compiling for Android.
 Check the following two projects
