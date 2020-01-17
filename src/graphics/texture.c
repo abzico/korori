@@ -242,6 +242,7 @@ bool KRR_TEXTURE_load_grayscale_texture_from_file(KRR_TEXTURE* texture, const ch
   // accessing pixels directly
   SDL_SetSurfaceRLE(loaded_surface, 1);
   SDL_LockSurface(loaded_surface);
+
   // ready to load as pixels8
   if (!KRR_TEXTURE_load_texture_from_pixels8(texture, loaded_surface->pixels, loaded_surface->w, loaded_surface->h))
   {
@@ -1044,23 +1045,62 @@ bool KRR_TEXTURE_lock(KRR_TEXTURE* texture)
       texture->pixels = malloc(size);
     }
 
+    // opengl es, need to bind with framebuffer, it doesn't have direct way to read pixels from texture
+    // but opengl it can glGetTexImage()
+    GLuint fbo = -1;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
     // bind texture
     glBindTexture(GL_TEXTURE_2D, texture->texture_id);
 
-    // get pixels
+    // get pixels data from opengl texture
+    // no need to consider sRGB here as we just read in data in texture
+    // bind texture to fbo
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture->texture_id, 0);
+    // check status of framebuffer
+    GLenum fbo_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (fbo_status != GL_FRAMEBUFFER_COMPLETE)
+    {
+      // free allocated pixels buffer
+      if (texture->pixel_format == GL_RED)
+      {
+        free(texture->pixels8);
+        texture->pixels8 = NULL;
+      }
+      else
+      {
+        free(texture->pixels);
+        texture->pixels = NULL;
+      }
+
+      return false;
+    }
+    // save current viewport setting, set these values back after reading pixel from fbo
+    GLint main_viewport[4];
+    glGetIntegerv(GL_VIEWPORT, main_viewport);
+    // set viewport to fbo
+    glViewport(0, 0, texture->physical_width_, texture->physical_height_);
+
+    // read pixels
     if (texture->pixel_format == GL_RED)
     {
-      // not to apply sRGB color space
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texture->physical_width_, texture->physical_height_, 0, texture->pixel_format, GL_UNSIGNED_BYTE, texture->pixels8);
+      glPixelStorei(GL_PACK_ALIGNMENT, 1);
+      glReadPixels(0, 0, texture->physical_width_, texture->physical_height_, GL_RED, GL_UNSIGNED_BYTE, texture->pixels8);
     }
     else
     {
-#ifdef GL_SRGB8_ALPHA8
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, texture->physical_width_, texture->physical_height_, 0, texture->pixel_format, GL_UNSIGNED_BYTE, texture->pixels);
-#else
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture->physical_width_, texture->physical_height_, 0, texture->pixel_format, GL_UNSIGNED_BYTE, texture->pixels);
-#endif
+      glReadPixels(0, 0, texture->physical_width_, texture->physical_height_, GL_RGBA, GL_UNSIGNED_BYTE, texture->pixels);
     }
+
+    // bind to main fbo again
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // set back default viewport
+    glViewport(main_viewport[0], main_viewport[1], main_viewport[2], main_viewport[3]);
+
+    // delete fbo
+    glDeleteFramebuffers(1, &fbo);
+    fbo = -1;
 
     // unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -1083,6 +1123,7 @@ bool KRR_TEXTURE_unlock(KRR_TEXTURE* texture)
     // get proper pixel buffer from pixel format texture was created to
     void* pixels = texture->pixel_format == GL_RGBA ? (void*)texture->pixels : (void*)texture->pixels8;
     // update texture
+    // note: as we've done updating the pixel data, then we update them back to texture
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture->physical_width_, texture->physical_height_, texture->pixel_format, GL_UNSIGNED_BYTE, pixels); 
 
     // delete pixel data

@@ -15,7 +15,8 @@ void main()
 {
   // check if limits leads to divide by zero, if so then disable transitioning
   float chk_denom = ctrans_limits.y - ctrans_limits.x;
-  if (chk_denom > 0.0001f)
+  // to prevent divide by zero, or support disabling blending color
+  if (chk_denom > 0.00009f)
   {
     vec4 skybox_color = texture(cubemap_sampler, outin_texcoord);
     float factor = (outin_texcoord.y - ctrans_limits.x) / (ctrans_limits.y - ctrans_limits.x);

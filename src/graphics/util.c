@@ -185,6 +185,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   // create texture for each side of cubemap
   SDL_Surface* temptex = NULL;
   SDL_Surface* ctemptex = NULL;
+    KRR_LOGI("load cubemap right texture");
   // => right
   temptex = IMG_Load(right);
   if (temptex == NULL)
@@ -210,7 +211,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
 
   // note: lock texture in case RLE compression is applied, but no harm if not
   SDL_LockSurface(ctemptex);
-#ifdef GL_SRGB8
+#ifdef GL_EXT_sRGB
   glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0,  GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
 #else
   glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0,  GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
@@ -220,6 +221,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   SDL_FreeSurface(ctemptex);
   ctemptex = NULL;
 
+    KRR_LOGI("load cubemap left texture");
   // => left
   temptex = IMG_Load(left);
   if (temptex == NULL)
@@ -244,7 +246,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   temptex = NULL;
 
   SDL_LockSurface(ctemptex);
-#ifdef GL_SRGB8
+#ifdef GL_EXT_sRGB
   glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
 #else
   glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
@@ -254,6 +256,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   SDL_FreeSurface(ctemptex);
   ctemptex = NULL;
 
+    KRR_LOGI("load cubemap top texture");
   // => top
   temptex = IMG_Load(top);
   if (temptex == NULL)
@@ -278,7 +281,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   temptex = NULL;
   
   SDL_LockSurface(ctemptex);
-#ifdef GL_SRGB8
+#ifdef GL_EXT_sRGB
   glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
 #else
   glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
@@ -288,6 +291,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   SDL_FreeSurface(ctemptex);
   ctemptex = NULL;
 
+    KRR_LOGI("load cubemap bottom texture");
   // => bottom
   temptex = IMG_Load(bottom);
   if (temptex == NULL)
@@ -312,7 +316,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   temptex = NULL;
 
   SDL_LockSurface(ctemptex);
-#ifdef GL_SRGB8
+#ifdef GL_EXT_sRGB
   glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
 #else
   glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
@@ -322,6 +326,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   SDL_FreeSurface(ctemptex);
   ctemptex = NULL;
 
+    KRR_LOGI("load cubemap back texture");
   // => back
   temptex = IMG_Load(back);
   if (temptex == NULL)
@@ -346,7 +351,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   temptex = NULL;
 
   SDL_LockSurface(ctemptex);
-#ifdef GL_SRGB8
+#ifdef GL_EXT_sRGB
   glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
 #else
   glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
@@ -356,6 +361,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   SDL_FreeSurface(ctemptex);
   ctemptex = NULL;
 
+    KRR_LOGI("load cubemap front texture");
   // => front 
   temptex = IMG_Load(front);
   if (temptex == NULL)
@@ -380,7 +386,7 @@ int KRR_gputil_load_cubemap(const char* right, const char* left, const char* top
   temptex = NULL;
 
   SDL_LockSurface(ctemptex);
-#ifdef GL_SRGB8
+#ifdef GL_EXT_sRGB
   glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_SRGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
 #else
   glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB8, ctemptex->w, ctemptex->h, 0, GL_RGB, GL_UNSIGNED_BYTE, ctemptex->pixels);
