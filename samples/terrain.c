@@ -989,7 +989,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       int flip = e->wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.0 : 1.0;
       int sign = e->wheel.y < 0.0 ? -1.0 : 1.0;
 
-      float abs_amount = fabsf(e->wheel.y * delta_time * 40.0f);
+      float abs_amount = fabsf(e->wheel.y * delta_time * 700.0f);
       if (abs_amount > 6.0f)
         abs_amount = 6.0f;
 
@@ -1020,7 +1020,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       
       // re-compute dummy's quaternion
       CGLM_ALIGN(16) versor dummy_additional_rot;
-      glm_quatv(dummy_additional_rot, -glm_rad(sign * d_amount * delta_time * 30.0f), GLM_YUP);
+      glm_quatv(dummy_additional_rot, -glm_rad(sign * d_amount * delta_time * 150.0f), GLM_YUP);
       glm_quat_mul(player_dummy_object_rot, dummy_additional_rot, player_dummy_object_rot);
     }
 
@@ -1035,7 +1035,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       
       // re-compute dummy's quaternion
       CGLM_ALIGN(16) versor dummy_additional_rot;
-      glm_quatv(dummy_additional_rot, -glm_rad(sign * d_amount * delta_time * 30.0f), GLM_XUP);
+      glm_quatv(dummy_additional_rot, -glm_rad(sign * d_amount * delta_time * 150.0f), GLM_XUP);
       glm_quat_mul(player_dummy_object_rot, dummy_additional_rot, player_dummy_object_rot);
     }
   }
@@ -1051,7 +1051,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       if (d_amount > 5)
         d_amount = 5;
 
-      float angle_amount = sign * d_amount * delta_time * 30.0f;
+      float angle_amount = sign * d_amount * delta_time * 150.0f;
       player_cam_pitch_angle += angle_amount;
       if (player_cam_pitch_angle < 5.0f)
         player_cam_pitch_angle = 5.0f;
@@ -1067,7 +1067,7 @@ void usercode_handle_event(SDL_Event *e, float delta_time)
       if (d_amount > 5)
         d_amount = 5;
 
-      float angle_amount = sign * d_amount * delta_time * 30.0f;
+      float angle_amount = sign * d_amount * delta_time * 150.0f;
       player_cam_yaw_angle = (int)(player_cam_yaw_angle + angle_amount) % 360;
     }
   }
@@ -1389,7 +1389,7 @@ void usercode_update(float delta_time)
     else
     {
       player_forward_rotation += PLAYER_TURN_SPEED * delta_time;
-      player_forward_rotation = lroundf(player_forward_rotation) % 360;
+      player_forward_rotation = (int)(ceilf(player_forward_rotation)) % 360;
     }
   }
   if (key_state[SDL_SCANCODE_D])
@@ -1416,7 +1416,7 @@ void usercode_update(float delta_time)
     else
     {
       player_forward_rotation -= PLAYER_TURN_SPEED * delta_time;
-      player_forward_rotation = lroundf(player_forward_rotation) % 360;
+      player_forward_rotation = (int)(floorf(player_forward_rotation)) % 360;
     }
   }
   if (key_state[SDL_SCANCODE_W])
