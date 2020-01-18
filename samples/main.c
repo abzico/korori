@@ -32,6 +32,9 @@
     var.h = arg4;							\
   } while(0)
 
+// set to 1 to use fixe-step updating loop, otherwise set to 0 to disable it
+// if set to 1, this will make FIXED_UPDATERATE taking into effective
+#define USE_FIXEDSTEP 0
 // cap thus using fixed deltaTime step
 #define FIXED_UPDATERATE .01666666666666666666
 // slow down fps when app doesn't have focus
@@ -147,7 +150,7 @@ bool init() {
 
   // use vsync
   // we need to enable vsync to resolve stuttering issue for now
-  if (SDL_GL_SetSwapInterval(1) != 0)
+  if (SDL_GL_SetSwapInterval(0) != 0)
   {
     KRR_LOGW("Warning: Unable to enable vsync! %s", SDL_GetError());
   }
@@ -277,20 +280,28 @@ int main(int argc, char* args[])
       while (!quit)
       {
         // prepare delta time to feed to both handleEvent(), update(), and render()
-        prevTime = currTime;
         currTime = SDL_GetTicks();
         // calculate per second
         double deltaTime = (currTime - prevTime) / 1000.0;
 
+        // if loop updates very fast, then at least it's 1 ms
+        if (deltaTime == 0.0)
+            deltaTime = 0.000001;
+
+#if USE_FIXEDSTEP == 1
         // fixed step
         common_frameTime += deltaTime;
+#endif
 
 #ifndef DISABLE_FPS_CALC
 				// update accumulated time for calculating framerate
         common_frameAccumTime += deltaTime;
 #endif
+
+#if USE_FIXEDSTEP == 1
         if (common_frameTime >= active_updaterate)
         {
+#endif
 #ifndef DISABLE_FPS_CALC
           common_frameCount++;
 
@@ -303,6 +314,7 @@ int main(int argc, char* args[])
           }
 #endif
 
+#if USE_FIXEDSTEP == 1
           // catch up updating time
           while ( common_frameTime >= active_updaterate )
           {
@@ -322,18 +334,33 @@ int main(int argc, char* args[])
             // left over will be carried on to the next frame
             common_frameTime -= active_updaterate;
           }
-
+#else
+          while (SDL_PollEvent(&e) != 0)
+          {
+              // handle window's events
+              KRR_WINDOW_handle_event(gWindow, &e, deltaTime);
+              // update user's handleEvent()
+              handleEvent(&e, deltaTime);
+          }
+          update(deltaTime);
+#endif
           render();
 
           // update screen
           SDL_GL_SwapWindow(gWindow->window);
+
+#if USE_FIXEDSTEP == 1
         }
+#endif
 
         // eat less CPU cycles
         if (!app_active)
         {
           SDL_Delay(COLDSTATE_UPDATERATE * 1000.0);
         }
+
+        // update previous time
+        prevTime = currTime;
       }
     }
   }
