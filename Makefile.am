@@ -7,6 +7,7 @@ lib_LTLIBRARIES = libkrr.la
 libkrr_la_CFLAGS = -Wall \
 									 -std=c99 \
 									 -O2 \
+									 -g \
 									 -I./include
 
 if CD_IS_MACOSX
