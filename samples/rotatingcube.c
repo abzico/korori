@@ -219,9 +219,9 @@ bool usercode_loadmedia()
     // set lighting
     vec3 light_pos = {0.0f, 2.0f, 6.0f};
     vec3 light_color = {1.0f, 1.f, 1.f};
-    memcpy(&texture3d_shader->light.pos, &light_pos, sizeof(VERTEXPOS3D));
-    memcpy(&texture3d_shader->light.color, &light_color, sizeof(COLOR3F));
-    KRR_TEXSHADERPROG3D_update_light(texture3d_shader);
+    memcpy(&texture3d_shader->lights[0].pos, &light_pos, sizeof(VERTEXPOS3D));
+    memcpy(&texture3d_shader->lights[0].color, &light_color, sizeof(COLOR3F));
+    KRR_TEXSHADERPROG3D_update_lights(texture3d_shader);
     // set specular lighting
     texture3d_shader->shine_damper = 10.0f;
     texture3d_shader->reflectivity = 0.5f;
@@ -530,19 +530,19 @@ void usercode_update(float delta_time)
 {
   update_camera(delta_time);
 
-  rotx += 1.f;
+  rotx += 10.f * delta_time;
   if (rotx >= 360.f)
   {
     rotx -= 360.f;
   }
 
-  roty += 1.5f;
+  roty += 12.5f * delta_time;
   if (roty >= 360.f)
   {
     roty -= 360.f;
   }
 
-  rotz += 2.f;
+  rotz += 10.f * delta_time;
   if (rotz >= 360.0f)
   {
     rotz -= 360.0f;
