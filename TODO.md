@@ -7,3 +7,5 @@ This page keeps track of what to be done in sense as a roadmap
 * [] Migrate to use GLM
 * [] Fix from majorly use heap allocation to stack, and minimally heap allocation
 * [] Improve and reduce complexity of `objloader` code. It can be much simpler.
+* [] Add `clean` command for makefile for all samples
+* [] Fix getting back to non-full screen break the positioning of content in the scene
